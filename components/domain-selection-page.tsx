@@ -1,10 +1,7 @@
 "use client"
 
-import type React from "react"
-
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import {
   Dialog,
   DialogContent,
@@ -19,64 +16,79 @@ import { DomainSelectCard } from "@/components/domain-select-card"
 import { DomainIcon } from "@/components/domain-icon"
 import { DOMAINS } from "@/lib/domains"
 
+const POLL_INTERVAL_MS = 8000
+
 interface DomainSelectionPageProps {
   role: "mentor" | "student"
   eyebrow: string
   heading: string
   description: string
-  multiSelect?: boolean
-  defaultName?: string
+  capacity?: number
 }
 
-export function DomainSelectionPage({
-  role,
-  eyebrow,
-  heading,
-  description,
-  multiSelect = true,
-  defaultName = "",
-}: DomainSelectionPageProps) {
-  const [name, setName] = useState(defaultName)
-  const [selected, setSelected] = useState<string[]>([])
-  const [submitted, setSubmitted] = useState(false)
+export function DomainSelectionPage({ role, eyebrow, heading, description, capacity }: DomainSelectionPageProps) {
+  const [selected, setSelected] = useState<string | null>(null)
+  const [counts, setCounts] = useState<Record<string, number>>({})
+  const [stateLoaded, setStateLoaded] = useState(false)
   const [activeDomainId, setActiveDomainId] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState("")
 
   const activeDomain = DOMAINS.find((d) => d.id === activeDomainId) ?? null
 
-  const toggleDomain = (id: string) => {
-    setSelected((prev) => {
-      if (prev.includes(id)) return prev.filter((d) => d !== id)
-      return multiSelect ? [...prev, id] : [id]
-    })
+  const fetchState = async () => {
+    try {
+      const res = await fetch("/api/domains/state")
+      if (!res.ok) return
+      const data = await res.json()
+      setCounts(data.counts ?? {})
+      setSelected(data.mine ?? null)
+    } catch {
+      // network hiccup — the next poll will retry
+    } finally {
+      setStateLoaded(true)
+    }
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!name || selected.length === 0) return
-    // TODO: wire up to real submission once auth/DB is in place — for now this only updates local state
-    setSubmitted(true)
+  useEffect(() => {
+    fetchState()
+    const interval = setInterval(fetchState, POLL_INTERVAL_MS)
+    return () => clearInterval(interval)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const selectDomain = async (domainId: string) => {
+    setSubmitting(true)
+    setSubmitError("")
+
+    try {
+      const res = await fetch("/api/domains/select", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ domainId }),
+      })
+      const data = await res.json()
+
+      if (!res.ok) {
+        setSubmitError(data.error ?? "Unable to save your selection.")
+        await fetchState()
+        return
+      }
+
+      setSelected(domainId)
+      setActiveDomainId(null)
+      await fetchState()
+    } catch {
+      setSubmitError("Something went wrong. Please try again.")
+    } finally {
+      setSubmitting(false)
+    }
   }
 
-  if (submitted) {
-    const chosenTitles = selected.map((id) => DOMAINS.find((d) => d.id === id)?.title).filter(Boolean)
-
-    return (
-      <div className="flex items-center justify-center px-6 py-24">
-        <div className="text-center max-w-md">
-          <p className="font-serif text-3xl text-primary mb-4">Thank You, {name}</p>
-          <p className="text-muted-foreground leading-relaxed mb-8">
-            Your domain{chosenTitles.length > 1 ? "s have" : " has"} been recorded: {chosenTitles.join(", ")}.
-          </p>
-          <Button
-            variant="outline"
-            onClick={() => setSubmitted(false)}
-            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground uppercase tracking-wider text-sm bg-transparent"
-          >
-            Edit Selection
-          </Button>
-        </div>
-      </div>
-    )
+  const isFull = (domainId: string) => {
+    if (capacity === undefined) return false
+    if (domainId === selected) return false
+    return (counts[domainId] ?? 0) >= capacity
   }
 
   return (
@@ -93,52 +105,34 @@ export function DomainSelectionPage({
 
           <ArtDecoDivider variant="stepped" />
 
-          <form onSubmit={handleSubmit} className="space-y-12">
-            <div className="max-w-md mx-auto">
-              <label className="block text-primary tracking-[0.2em] uppercase text-xs mb-3" htmlFor="name">
-                Your Name
-              </label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Enter your full name"
-                required
-                className="bg-card border-border text-foreground placeholder:text-muted-foreground focus:border-primary focus:ring-primary"
+          <p className="text-center text-primary tracking-[0.2em] uppercase text-xs mb-8">Select Your Domain</p>
+
+          <div className="grid sm:grid-cols-2 gap-6">
+            {DOMAINS.map((domain) => (
+              <DomainSelectCard
+                key={domain.id}
+                title={domain.title}
+                icon={<DomainIcon icon={domain.icon} className="w-10 h-10" />}
+                selected={selected === domain.id}
+                onOpen={() => setActiveDomainId(domain.id)}
+                capacity={capacity !== undefined && stateLoaded ? capacity : undefined}
+                count={counts[domain.id] ?? 0}
+                disabled={isFull(domain.id)}
               />
-            </div>
-
-            <div>
-              <p className="text-center text-primary tracking-[0.2em] uppercase text-xs mb-8">
-                Select Your Domain{multiSelect ? "s" : ""}
-              </p>
-              <div className="grid sm:grid-cols-2 gap-6">
-                {DOMAINS.map((domain) => (
-                  <DomainSelectCard
-                    key={domain.id}
-                    title={domain.title}
-                    icon={<DomainIcon icon={domain.icon} className="w-10 h-10" />}
-                    selected={selected.includes(domain.id)}
-                    onOpen={() => setActiveDomainId(domain.id)}
-                  />
-                ))}
-              </div>
-            </div>
-
-            <div className="text-center">
-              <Button
-                type="submit"
-                disabled={!name || selected.length === 0}
-                className="bg-primary text-primary-foreground hover:bg-primary/90 font-medium tracking-wider uppercase text-sm px-12 h-12 transition-all duration-300 disabled:opacity-40"
-              >
-                Confirm Selection
-              </Button>
-            </div>
-          </form>
+            ))}
+          </div>
         </div>
       </section>
 
-      <Dialog open={activeDomain !== null} onOpenChange={(open) => !open && setActiveDomainId(null)}>
+      <Dialog
+        open={activeDomain !== null}
+        onOpenChange={(open) => {
+          if (!open) {
+            setActiveDomainId(null)
+            setSubmitError("")
+          }
+        }}
+      >
         <DialogContent className="bg-card border-border">
           {activeDomain && (
             <>
@@ -163,22 +157,35 @@ export function DomainSelectionPage({
                 {activeDomain.description}
               </DialogDescription>
 
+              {capacity !== undefined && (
+                <p className={isFull(activeDomain.id) ? "text-destructive text-sm" : "text-muted-foreground text-sm"}>
+                  {counts[activeDomain.id] ?? 0}/{capacity} selected
+                  {isFull(activeDomain.id) ? " — this domain is full." : ""}
+                </p>
+              )}
+
+              {submitError && <p className="text-destructive text-sm">{submitError}</p>}
+
               <DialogFooter>
-                <Button
-                  type="button"
-                  onClick={() => {
-                    toggleDomain(activeDomain.id)
-                    setActiveDomainId(null)
-                  }}
-                  variant={selected.includes(activeDomain.id) ? "outline" : "default"}
-                  className={
-                    selected.includes(activeDomain.id)
-                      ? "border-primary text-primary hover:bg-primary hover:text-primary-foreground uppercase tracking-wider text-sm bg-transparent"
-                      : "bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-sm"
-                  }
-                >
-                  {selected.includes(activeDomain.id) ? "Remove Selection" : "Select This Domain"}
-                </Button>
+                {selected === activeDomain.id ? (
+                  <Button
+                    type="button"
+                    disabled
+                    variant="outline"
+                    className="border-primary text-primary uppercase tracking-wider text-sm bg-transparent opacity-70"
+                  >
+                    Currently Selected
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    disabled={submitting || isFull(activeDomain.id)}
+                    onClick={() => selectDomain(activeDomain.id)}
+                    className="bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-sm disabled:opacity-40"
+                  >
+                    {isFull(activeDomain.id) ? "Domain Full" : submitting ? "Saving..." : "Select This Domain"}
+                  </Button>
+                )}
               </DialogFooter>
             </>
           )}

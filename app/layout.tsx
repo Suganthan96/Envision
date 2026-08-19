@@ -8,8 +8,8 @@ const _inter = Inter({ subsets: ["latin"] })
 const _playfair = Playfair_Display({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Envision | Sign In",
-  description: "Sign in to Envision.",
+  title: "Envision",
+  description: "An exclusive collective for the discerning investor.",
   generator: "v0.app",
   icons: {
     icon: [

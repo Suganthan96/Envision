@@ -6,7 +6,7 @@ const PROTECTED_PREFIXES = ["/member", "/mentor", "/admin", "/change-password"]
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
 
-  if (pathname === "/") {
+  if (pathname === "/login") {
     const token = request.cookies.get(SESSION_COOKIE)?.value
     const session = token ? await verifySessionToken(token) : null
     if (session) {
@@ -26,7 +26,7 @@ export async function proxy(request: NextRequest) {
 
   if (!session) {
     const url = request.nextUrl.clone()
-    url.pathname = "/"
+    url.pathname = "/login"
     return NextResponse.redirect(url)
   }
 
@@ -47,5 +47,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/", "/member/:path*", "/mentor/:path*", "/admin/:path*", "/change-password"],
+  matcher: ["/login", "/member/:path*", "/mentor/:path*", "/admin/:path*", "/change-password"],
 }

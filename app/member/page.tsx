@@ -15,13 +15,18 @@ export default async function MemberPage() {
         <LogoutButton />
       </div>
 
+      <div className="max-w-4xl mx-auto mb-4">
+        <h1 className="font-serif text-3xl md:text-4xl text-foreground">
+          Welcome, <span className="text-gold-gradient">Student {session?.loginId}</span>
+        </h1>
+      </div>
+
       <DomainSelectionPage
         role="student"
         eyebrow="Student Portal"
         heading="Choose Your Domain"
         description="Select the domain you'd like to build your project in for this cycle."
-        multiSelect={false}
-        defaultName={session?.loginId}
+        capacity={6}
       />
     </main>
   )

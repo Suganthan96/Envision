@@ -15,13 +15,17 @@ export default async function MentorPage() {
         <LogoutButton />
       </div>
 
+      <div className="max-w-4xl mx-auto mb-4">
+        <h1 className="font-serif text-3xl md:text-4xl text-foreground">
+          Welcome, <span className="text-gold-gradient">Mentor {session?.loginId}</span>
+        </h1>
+      </div>
+
       <DomainSelectionPage
         role="mentor"
         eyebrow="Mentor Portal"
-        heading="Choose Your Domains"
-        description="Select the domain or domains you'd like to mentor students in for this cycle."
-        multiSelect
-        defaultName={session?.loginId}
+        heading="Choose Your Domain"
+        description="Select the domain you'd like to mentor students in for this cycle."
       />
     </main>
   )

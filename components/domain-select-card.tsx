@@ -9,17 +9,32 @@ interface DomainSelectCardProps {
   icon: ReactNode
   selected: boolean
   onOpen: () => void
+  capacity?: number
+  count?: number
+  disabled?: boolean
 }
 
-export function DomainSelectCard({ title, icon, selected, onOpen }: DomainSelectCardProps) {
+export function DomainSelectCard({
+  title,
+  icon,
+  selected,
+  onOpen,
+  capacity,
+  count = 0,
+  disabled = false,
+}: DomainSelectCardProps) {
+  const full = capacity !== undefined && count >= capacity
+
   return (
     <button
       type="button"
       onClick={onOpen}
+      disabled={disabled}
       aria-pressed={selected}
       className={cn(
         "group relative p-8 w-full text-left bg-card border transition-all duration-500",
         selected ? "border-primary bg-primary/5" : "border-border hover:border-primary",
+        disabled && "opacity-40 cursor-not-allowed hover:border-border",
       )}
     >
       {/* Corner decorations */}
@@ -38,7 +53,18 @@ export function DomainSelectCard({ title, icon, selected, onOpen }: DomainSelect
         <div className="w-16 h-16 flex items-center justify-center text-primary mb-6 group-hover:scale-110 transition-transform duration-500">
           {icon}
         </div>
-        <h3 className="font-serif text-xl text-foreground text-balance">{title}</h3>
+        <h3 className="font-serif text-xl text-foreground text-balance mb-3">{title}</h3>
+
+        {capacity !== undefined && (
+          <span
+            className={cn(
+              "text-[10px] tracking-wider uppercase border px-2 py-0.5",
+              full ? "text-destructive border-destructive/50" : "text-primary border-primary/40",
+            )}
+          >
+            {full ? "Not Available" : "Available"} · {count}/{capacity}
+          </span>
+        )}
       </div>
 
       {/* Bottom accent line */}
