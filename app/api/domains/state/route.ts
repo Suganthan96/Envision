@@ -11,8 +11,8 @@ export async function GET() {
   const supabase = getSupabaseServerClient()
 
   const [countsResult, mineResult] = await Promise.all([
-    supabase.rpc("get_domain_counts"),
-    supabase.rpc("get_my_domain_selection", { p_user_id: session.userId, p_role: session.role }),
+    supabase.rpc("get_domain_counts", { p_role: session.role }),
+    supabase.rpc("get_my_domain_selections", { p_user_id: session.userId, p_role: session.role }),
   ])
 
   if (countsResult.error) {
@@ -24,7 +24,7 @@ export async function GET() {
     counts[row.domain_id] = row.selected_count
   }
 
-  const mine = ((mineResult.data ?? [])[0] as { domain_id: string } | undefined)?.domain_id ?? null
+  const mine = ((mineResult.data ?? []) as { domain_id: string }[]).map((row) => row.domain_id)
 
   return NextResponse.json({ counts, mine })
 }

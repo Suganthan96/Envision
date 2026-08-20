@@ -24,8 +24,10 @@ export default async function MentorPage() {
       <DomainSelectionPage
         role="mentor"
         eyebrow="Mentor Portal"
-        heading="Choose Your Domain"
-        description="Select the domain you'd like to mentor students in for this cycle."
+        heading="Choose Your Domains"
+        description="Select up to 2 domains you'd like to mentor students in for this cycle."
+        capacity={6}
+        maxSelections={2}
       />
     </main>
   )

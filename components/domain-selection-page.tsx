@@ -24,10 +24,17 @@ interface DomainSelectionPageProps {
   heading: string
   description: string
   capacity?: number
+  maxSelections?: number
 }
 
-export function DomainSelectionPage({ role, eyebrow, heading, description, capacity }: DomainSelectionPageProps) {
-  const [selected, setSelected] = useState<string | null>(null)
+export function DomainSelectionPage({
+  eyebrow,
+  heading,
+  description,
+  capacity,
+  maxSelections = 1,
+}: DomainSelectionPageProps) {
+  const [selected, setSelected] = useState<string[]>([])
   const [counts, setCounts] = useState<Record<string, number>>({})
   const [stateLoaded, setStateLoaded] = useState(false)
   const [activeDomainId, setActiveDomainId] = useState<string | null>(null)
@@ -42,7 +49,7 @@ export function DomainSelectionPage({ role, eyebrow, heading, description, capac
       if (!res.ok) return
       const data = await res.json()
       setCounts(data.counts ?? {})
-      setSelected(data.mine ?? null)
+      setSelected(Array.isArray(data.mine) ? data.mine : [])
     } catch {
       // network hiccup — the next poll will retry
     } finally {
@@ -75,7 +82,7 @@ export function DomainSelectionPage({ role, eyebrow, heading, description, capac
         return
       }
 
-      setSelected(domainId)
+      setSelected((prev) => (prev.includes(domainId) ? prev : [...prev, domainId]))
       setActiveDomainId(null)
       await fetchState()
     } catch {
@@ -85,11 +92,17 @@ export function DomainSelectionPage({ role, eyebrow, heading, description, capac
     }
   }
 
+  const isMine = (domainId: string) => selected.includes(domainId)
+
   const isFull = (domainId: string) => {
     if (capacity === undefined) return false
-    if (domainId === selected) return false
+    if (isMine(domainId)) return false
     return (counts[domainId] ?? 0) >= capacity
   }
+
+  const atMax = stateLoaded && selected.length >= maxSelections
+
+  const isLockedOut = (domainId: string) => atMax && !isMine(domainId)
 
   return (
     <div className="bg-background">
@@ -105,7 +118,22 @@ export function DomainSelectionPage({ role, eyebrow, heading, description, capac
 
           <ArtDecoDivider variant="stepped" />
 
-          <p className="text-center text-primary tracking-[0.2em] uppercase text-xs mb-8">Select Your Domain</p>
+          <p className="text-center text-primary tracking-[0.2em] uppercase text-xs mb-2">
+            {atMax
+              ? maxSelections > 1
+                ? "Your Domains Are Locked In"
+                : "Your Domain Is Locked In"
+              : maxSelections > 1
+                ? `Select Your Domains (${selected.length}/${maxSelections})`
+                : "Select Your Domain"}
+          </p>
+          {atMax ? (
+            <p className="text-center text-muted-foreground text-sm mb-8">
+              {maxSelections > 1 ? "Once chosen, your domains cannot be changed." : "Once chosen, your domain cannot be changed."}
+            </p>
+          ) : (
+            <div className="mb-8" />
+          )}
 
           <div className="grid sm:grid-cols-2 gap-6">
             {DOMAINS.map((domain) => (
@@ -113,11 +141,11 @@ export function DomainSelectionPage({ role, eyebrow, heading, description, capac
                 key={domain.id}
                 title={domain.title}
                 icon={<DomainIcon icon={domain.icon} className="w-10 h-10" />}
-                selected={selected === domain.id}
+                selected={isMine(domain.id)}
                 onOpen={() => setActiveDomainId(domain.id)}
                 capacity={capacity !== undefined && stateLoaded ? capacity : undefined}
                 count={counts[domain.id] ?? 0}
-                disabled={isFull(domain.id)}
+                disabled={isFull(domain.id) || isLockedOut(domain.id)}
               />
             ))}
           </div>
@@ -167,7 +195,7 @@ export function DomainSelectionPage({ role, eyebrow, heading, description, capac
               {submitError && <p className="text-destructive text-sm">{submitError}</p>}
 
               <DialogFooter>
-                {selected === activeDomain.id ? (
+                {isMine(activeDomain.id) ? (
                   <Button
                     type="button"
                     disabled
@@ -179,11 +207,17 @@ export function DomainSelectionPage({ role, eyebrow, heading, description, capac
                 ) : (
                   <Button
                     type="button"
-                    disabled={submitting || isFull(activeDomain.id)}
+                    disabled={submitting || isFull(activeDomain.id) || isLockedOut(activeDomain.id)}
                     onClick={() => selectDomain(activeDomain.id)}
                     className="bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-sm disabled:opacity-40"
                   >
-                    {isFull(activeDomain.id) ? "Domain Full" : submitting ? "Saving..." : "Select This Domain"}
+                    {isLockedOut(activeDomain.id)
+                      ? "Selection Locked"
+                      : isFull(activeDomain.id)
+                        ? "Domain Full"
+                        : submitting
+                          ? "Saving..."
+                          : "Select This Domain"}
                   </Button>
                 )}
               </DialogFooter>
