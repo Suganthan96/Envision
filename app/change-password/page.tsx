@@ -31,7 +31,13 @@ export default async function ChangePasswordPage() {
 
             <ChangePasswordForm
               forced={session?.mustChangePassword ?? true}
-              requireName={session?.role === "mentor"}
+              requireName={session?.role === "mentor" || session?.role === "member"}
+              nameLabel={session?.role === "member" ? "Team Name" : "Full Name"}
+              nameHelperText={
+                session?.role === "member"
+                  ? "You can rename your team later from your dashboard."
+                  : "You will need to enter this exact name every time you sign in."
+              }
             />
           </div>
         </div>

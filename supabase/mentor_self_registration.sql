@@ -34,7 +34,7 @@ create or replace function public.login(
   p_password text,
   p_name text default null
 )
-returns table (user_id uuid, role text, must_change_password boolean)
+returns table (user_id uuid, role text, must_change_password boolean, name text)
 language plpgsql
 security definer
 set search_path = public
@@ -49,7 +49,7 @@ begin
     and u.password_hash = extensions.crypt(p_password, u.password_hash);
 
   if found then
-    return query select matched.id, matched.role, matched.must_change_password;
+    return query select matched.id, matched.role, matched.must_change_password, matched.name;
     return;
   end if;
 
@@ -66,7 +66,7 @@ begin
     )
     returning id into new_id;
 
-    return query select new_id, 'mentor'::text, true;
+    return query select new_id, 'mentor'::text, true, nullif(trim(p_name), '');
     return;
   end if;
 

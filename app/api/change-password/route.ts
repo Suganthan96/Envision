@@ -31,6 +31,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Your full name is required." }, { status: 400 })
   }
 
+  if (session.role === "member" && !name) {
+    return NextResponse.json({ error: "Your team name is required." }, { status: 400 })
+  }
+
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase.rpc("change_password", {
     p_user_id: session.userId,
@@ -43,7 +47,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Current password is incorrect." }, { status: 400 })
   }
 
-  const newToken = await createSessionToken({ ...session, mustChangePassword: false })
+  const newToken = await createSessionToken({
+    ...session,
+    mustChangePassword: false,
+    name: name || session.name,
+  })
 
   const response = NextResponse.json({ redirect: roleHome(session.role) })
   response.cookies.set(SESSION_COOKIE, newToken, {

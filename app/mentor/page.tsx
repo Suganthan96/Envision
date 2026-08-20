@@ -4,6 +4,7 @@ import { DomainSelectionPage } from "@/components/domain-selection-page"
 
 export default async function MentorPage() {
   const session = await getSession()
+  const displayName = session?.name?.trim() || session?.loginId
 
   return (
     <main className="min-h-screen bg-background px-6 pt-12">
@@ -17,7 +18,7 @@ export default async function MentorPage() {
 
       <div className="max-w-4xl mx-auto mb-4">
         <h1 className="font-serif text-3xl md:text-4xl text-foreground">
-          Welcome, <span className="text-gold-gradient">Mentor {session?.loginId}</span>
+          Welcome, <span className="text-gold-gradient">{displayName}</span>
         </h1>
       </div>
 

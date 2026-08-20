@@ -32,13 +32,14 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid login ID or password." }, { status: 401 })
   }
 
-  const row = data[0] as { user_id: string; role: Role; must_change_password: boolean }
+  const row = data[0] as { user_id: string; role: Role; must_change_password: boolean; name: string | null }
 
   const token = await createSessionToken({
     userId: row.user_id,
     loginId,
     role: row.role,
     mustChangePassword: row.must_change_password,
+    name: row.name,
   })
 
   const response = NextResponse.json({

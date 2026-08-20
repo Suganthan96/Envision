@@ -8,7 +8,17 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export function ChangePasswordForm({ forced, requireName = false }: { forced: boolean; requireName?: boolean }) {
+export function ChangePasswordForm({
+  forced,
+  requireName = false,
+  nameLabel = "Full Name",
+  nameHelperText = "You will need to enter this exact name every time you sign in.",
+}: {
+  forced: boolean
+  requireName?: boolean
+  nameLabel?: string
+  nameHelperText?: string
+}) {
   const router = useRouter()
   const [name, setName] = useState("")
   const [oldPassword, setOldPassword] = useState("")
@@ -60,19 +70,19 @@ export function ChangePasswordForm({ forced, requireName = false }: { forced: bo
       {requireName && (
         <div className="flex flex-col gap-2">
           <Label htmlFor="name" className="text-primary tracking-[0.15em] uppercase text-xs">
-            Full Name
+            {nameLabel}
           </Label>
           <Input
             id="name"
             type="text"
             autoComplete="name"
-            placeholder="Enter your full name"
+            placeholder={`Enter your ${nameLabel.toLowerCase()}`}
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
             className="bg-card border-border text-foreground focus:border-primary focus:ring-primary h-11"
           />
-          <p className="text-muted-foreground text-xs">You will need to enter this exact name every time you sign in.</p>
+          <p className="text-muted-foreground text-xs">{nameHelperText}</p>
         </div>
       )}
 
