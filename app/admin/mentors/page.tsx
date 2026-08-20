@@ -1,25 +1,25 @@
 import Link from "next/link"
 import { LogoutButton } from "@/components/logout-button"
-import { DomainSelectionsTable, type SelectionRow } from "@/components/domain-selections-table"
+import { MentorSelectionsView, type MentorRow } from "@/components/mentor-selections-view"
 import { getSession } from "@/lib/get-session"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 
 export default async function AdminMentorsPage() {
   const session = await getSession()
 
-  let rows: SelectionRow[] = []
+  let mentors: MentorRow[] = []
   if (session) {
     const supabase = getSupabaseServerClient()
     const { data } = await supabase.rpc("admin_list_domain_selections", { p_admin_user_id: session.userId })
 
-    const grouped = new Map<string, string[]>()
-    for (const row of (data ?? []) as { login_id: string; role: string; domain_id: string }[]) {
+    const grouped = new Map<string, { name: string | null; domainIds: string[] }>()
+    for (const row of (data ?? []) as { login_id: string; name: string | null; role: string; domain_id: string }[]) {
       if (row.role !== "mentor") continue
-      const existing = grouped.get(row.login_id) ?? []
-      existing.push(row.domain_id)
+      const existing = grouped.get(row.login_id) ?? { name: row.name, domainIds: [] }
+      existing.domainIds.push(row.domain_id)
       grouped.set(row.login_id, existing)
     }
-    rows = Array.from(grouped.entries()).map(([loginId, domainIds]) => ({ loginId, domainIds }))
+    mentors = Array.from(grouped.entries()).map(([loginId, { name, domainIds }]) => ({ loginId, name, domainIds }))
   }
 
   return (
@@ -56,7 +56,7 @@ export default async function AdminMentorsPage() {
           Every mentor and the domain(s) they have chosen to guide this cycle.
         </p>
 
-        <DomainSelectionsTable rows={rows} emptyLabel="No mentors have selected a domain yet." />
+        <MentorSelectionsView mentors={mentors} />
       </div>
     </main>
   )
