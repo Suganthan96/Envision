@@ -1,25 +1,25 @@
 import Link from "next/link"
 import { LogoutButton } from "@/components/logout-button"
-import { DomainSelectionsTable, type SelectionRow } from "@/components/domain-selections-table"
+import { RoleSelectionsView, type RoleRow } from "@/components/role-selections-view"
 import { getSession } from "@/lib/get-session"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 
 export default async function AdminStudentsPage() {
   const session = await getSession()
 
-  let rows: SelectionRow[] = []
+  let students: RoleRow[] = []
   if (session) {
     const supabase = getSupabaseServerClient()
     const { data } = await supabase.rpc("admin_list_domain_selections", { p_admin_user_id: session.userId })
 
-    const grouped = new Map<string, string[]>()
-    for (const row of (data ?? []) as { login_id: string; role: string; domain_id: string }[]) {
+    const grouped = new Map<string, { name: string | null; domainIds: string[] }>()
+    for (const row of (data ?? []) as { login_id: string; name: string | null; role: string; domain_id: string }[]) {
       if (row.role !== "member") continue
-      const existing = grouped.get(row.login_id) ?? []
-      existing.push(row.domain_id)
+      const existing = grouped.get(row.login_id) ?? { name: row.name, domainIds: [] }
+      existing.domainIds.push(row.domain_id)
       grouped.set(row.login_id, existing)
     }
-    rows = Array.from(grouped.entries()).map(([loginId, domainIds]) => ({ loginId, domainIds }))
+    students = Array.from(grouped.entries()).map(([loginId, { name, domainIds }]) => ({ loginId, name, domainIds }))
   }
 
   return (
@@ -56,7 +56,13 @@ export default async function AdminStudentsPage() {
           Every student and the domain they have chosen to build their project in this cycle.
         </p>
 
-        <DomainSelectionsTable rows={rows} emptyLabel="No students have selected a domain yet." />
+        <RoleSelectionsView
+          people={students}
+          capacityPerDomain={6}
+          personLabel="Student"
+          personLabelPlural="students"
+          emptyLabel="No students have selected a domain yet."
+        />
       </div>
     </main>
   )

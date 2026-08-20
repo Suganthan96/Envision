@@ -1,13 +1,13 @@
 import Link from "next/link"
 import { LogoutButton } from "@/components/logout-button"
-import { MentorSelectionsView, type MentorRow } from "@/components/mentor-selections-view"
+import { RoleSelectionsView, type RoleRow } from "@/components/role-selections-view"
 import { getSession } from "@/lib/get-session"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 
 export default async function AdminMentorsPage() {
   const session = await getSession()
 
-  let mentors: MentorRow[] = []
+  let mentors: RoleRow[] = []
   if (session) {
     const supabase = getSupabaseServerClient()
     const { data } = await supabase.rpc("admin_list_domain_selections", { p_admin_user_id: session.userId })
@@ -56,7 +56,13 @@ export default async function AdminMentorsPage() {
           Every mentor and the domain(s) they have chosen to guide this cycle.
         </p>
 
-        <MentorSelectionsView mentors={mentors} />
+        <RoleSelectionsView
+          people={mentors}
+          capacityPerDomain={6}
+          personLabel="Mentor"
+          personLabelPlural="mentors"
+          emptyLabel="No mentors have selected a domain yet."
+        />
       </div>
     </main>
   )

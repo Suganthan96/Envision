@@ -8,20 +8,18 @@ import { DomainIcon } from "@/components/domain-icon"
 import { DOMAINS } from "@/lib/domains"
 import { cn } from "@/lib/utils"
 
-export interface MentorRow {
+export interface RoleRow {
   loginId: string
   name: string | null
   domainIds: string[]
 }
 
-const MENTOR_CAPACITY_PER_DOMAIN = 6
-
 function domainTitle(domainId: string) {
   return DOMAINS.find((d) => d.id === domainId)?.title ?? domainId
 }
 
-function MentorCard({ mentor }: { mentor: MentorRow }) {
-  const displayName = mentor.name?.trim() || mentor.loginId
+function PersonCard({ person }: { person: RoleRow }) {
+  const displayName = person.name?.trim() || person.loginId
 
   return (
     <div className="group relative p-6 bg-card border border-border hover:border-primary transition-colors duration-500">
@@ -31,13 +29,13 @@ function MentorCard({ mentor }: { mentor: MentorRow }) {
       <div className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-primary" />
 
       <h3 className="font-serif text-lg text-foreground mb-1 text-balance">{displayName}</h3>
-      {mentor.name?.trim() && (
-        <p className="text-muted-foreground text-xs font-mono mb-4">{mentor.loginId}</p>
+      {person.name?.trim() && (
+        <p className="text-muted-foreground text-xs font-mono mb-4">{person.loginId}</p>
       )}
-      {!mentor.name?.trim() && <div className="mb-4" />}
+      {!person.name?.trim() && <div className="mb-4" />}
 
       <div className="flex flex-col gap-1.5">
-        {mentor.domainIds.map((domainId) => (
+        {person.domainIds.map((domainId) => (
           <span
             key={domainId}
             className="text-muted-foreground text-sm border-l-2 border-primary/40 pl-2"
@@ -50,17 +48,17 @@ function MentorCard({ mentor }: { mentor: MentorRow }) {
   )
 }
 
-function MentorCardsView({ mentors }: { mentors: MentorRow[] }) {
+function PersonCardsView({ people, personLabelPlural }: { people: RoleRow[]; personLabelPlural: string }) {
   const [query, setQuery] = useState("")
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return mentors
-    return mentors.filter((m) => {
-      const name = (m.name ?? "").toLowerCase()
-      return name.includes(q) || m.loginId.toLowerCase().includes(q)
+    if (!q) return people
+    return people.filter((p) => {
+      const name = (p.name ?? "").toLowerCase()
+      return name.includes(q) || p.loginId.toLowerCase().includes(q)
     })
-  }, [mentors, query])
+  }, [people, query])
 
   return (
     <div>
@@ -76,12 +74,12 @@ function MentorCardsView({ mentors }: { mentors: MentorRow[] }) {
 
       {filtered.length === 0 ? (
         <div className="border border-border p-8 text-center">
-          <p className="text-muted-foreground">No mentors match your search.</p>
+          <p className="text-muted-foreground">No {personLabelPlural} match your search.</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filtered.map((mentor) => (
-            <MentorCard key={mentor.loginId} mentor={mentor} />
+          {filtered.map((person) => (
+            <PersonCard key={person.loginId} person={person} />
           ))}
         </div>
       )}
@@ -93,14 +91,16 @@ function ThemeCard({
   title,
   icon,
   count,
-  mentorNames,
+  capacity,
+  names,
 }: {
   title: string
   icon: (typeof DOMAINS)[number]["icon"]
   count: number
-  mentorNames: string[]
+  capacity: number
+  names: string[]
 }) {
-  const full = count >= MENTOR_CAPACITY_PER_DOMAIN
+  const full = count >= capacity
 
   return (
     <div className="group relative p-6 bg-card border border-border">
@@ -116,7 +116,7 @@ function ThemeCard({
         <h3 className="font-serif text-lg text-foreground text-balance">{title}</h3>
       </div>
 
-      <SegmentedHealthBar filled={Math.min(count, MENTOR_CAPACITY_PER_DOMAIN)} total={MENTOR_CAPACITY_PER_DOMAIN} />
+      <SegmentedHealthBar filled={Math.min(count, capacity)} total={capacity} />
 
       <p
         className={cn(
@@ -124,12 +124,12 @@ function ThemeCard({
           full ? "text-destructive" : "text-muted-foreground",
         )}
       >
-        {full ? "Full" : `${MENTOR_CAPACITY_PER_DOMAIN - count} slot${MENTOR_CAPACITY_PER_DOMAIN - count === 1 ? "" : "s"} remaining`}
+        {full ? "Full" : `${capacity - count} slot${capacity - count === 1 ? "" : "s"} remaining`}
       </p>
 
-      {mentorNames.length > 0 && (
+      {names.length > 0 && (
         <div className="mt-4 pt-4 border-t border-border flex flex-wrap gap-1.5">
-          {mentorNames.map((name) => (
+          {names.map((name) => (
             <span key={name} className="text-xs text-muted-foreground border border-border px-2 py-0.5">
               {name}
             </span>
@@ -140,47 +140,66 @@ function ThemeCard({
   )
 }
 
-function ThemeWiseView({ mentors }: { mentors: MentorRow[] }) {
+function ThemeWiseView({ people, capacityPerDomain }: { people: RoleRow[]; capacityPerDomain: number }) {
   const byDomain = useMemo(() => {
     const map = new Map<string, string[]>()
-    for (const mentor of mentors) {
-      const displayName = mentor.name?.trim() || mentor.loginId
-      for (const domainId of mentor.domainIds) {
+    for (const person of people) {
+      const displayName = person.name?.trim() || person.loginId
+      for (const domainId of person.domainIds) {
         const existing = map.get(domainId) ?? []
         existing.push(displayName)
         map.set(domainId, existing)
       }
     }
     return map
-  }, [mentors])
+  }, [people])
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
       {DOMAINS.map((domain) => {
         const names = byDomain.get(domain.id) ?? []
         return (
-          <ThemeCard key={domain.id} title={domain.title} icon={domain.icon} count={names.length} mentorNames={names} />
+          <ThemeCard
+            key={domain.id}
+            title={domain.title}
+            icon={domain.icon}
+            count={names.length}
+            capacity={capacityPerDomain}
+            names={names}
+          />
         )
       })}
     </div>
   )
 }
 
-export function MentorSelectionsView({ mentors }: { mentors: MentorRow[] }) {
-  const [view, setView] = useState<"mentor" | "theme">("mentor")
+export function RoleSelectionsView({
+  people,
+  capacityPerDomain,
+  personLabel,
+  personLabelPlural,
+  emptyLabel,
+}: {
+  people: RoleRow[]
+  capacityPerDomain: number
+  personLabel: string
+  personLabelPlural: string
+  emptyLabel: string
+}) {
+  const [view, setView] = useState<"person" | "theme">("person")
 
   return (
     <div>
       <div className="flex items-center gap-1 mb-8 border border-border w-fit">
         <button
           type="button"
-          onClick={() => setView("mentor")}
+          onClick={() => setView("person")}
           className={cn(
             "px-4 py-2 text-xs uppercase tracking-wider transition-colors",
-            view === "mentor" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-primary",
+            view === "person" ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-primary",
           )}
         >
-          By Mentor
+          By {personLabel}
         </button>
         <button
           type="button"
@@ -194,14 +213,14 @@ export function MentorSelectionsView({ mentors }: { mentors: MentorRow[] }) {
         </button>
       </div>
 
-      {mentors.length === 0 ? (
+      {people.length === 0 ? (
         <div className="border border-border p-8 text-center">
-          <p className="text-muted-foreground">No mentors have selected a domain yet.</p>
+          <p className="text-muted-foreground">{emptyLabel}</p>
         </div>
-      ) : view === "mentor" ? (
-        <MentorCardsView mentors={mentors} />
+      ) : view === "person" ? (
+        <PersonCardsView people={people} personLabelPlural={personLabelPlural} />
       ) : (
-        <ThemeWiseView mentors={mentors} />
+        <ThemeWiseView people={people} capacityPerDomain={capacityPerDomain} />
       )}
     </div>
   )
