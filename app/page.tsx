@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { ArtDecoSunburst } from "@/components/art-deco-sunburst"
+import { WebThreads } from "@/components/web-threads"
 import { ArtDecoDivider } from "@/components/art-deco-divider"
 import { ServiceCard } from "@/components/service-card"
 import { Button } from "@/components/ui/button"
@@ -9,7 +9,7 @@ export default function Home() {
     <main className="min-h-screen bg-background">
       {/* Hero Section */}
       <section className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
-        <ArtDecoSunburst />
+        <WebThreads />
 
         <div className="relative z-10 text-center max-w-4xl mx-auto">
           {/* Decorative top element */}

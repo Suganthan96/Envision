@@ -1,5 +1,5 @@
 import type { Metadata } from "next"
-import { ArtDecoSunburst } from "@/components/art-deco-sunburst"
+import { WebThreads } from "@/components/web-threads"
 import { LoginForm } from "@/components/login-form"
 
 export const metadata: Metadata = {
@@ -11,7 +11,7 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-background">
       <section className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
-        <ArtDecoSunburst />
+        <WebThreads />
 
         <div className="relative z-10 text-center max-w-md mx-auto w-full">
           {/* Decorative top element */}

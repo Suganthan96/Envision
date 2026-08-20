@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog"
 import { ArtDecoDivider } from "@/components/art-deco-divider"
-import { ArtDecoSunburst } from "@/components/art-deco-sunburst"
+import { WebThreads } from "@/components/web-threads"
 import { DomainSelectCard } from "@/components/domain-select-card"
 import { DomainIcon } from "@/components/domain-icon"
 import { DOMAINS } from "@/lib/domains"
@@ -107,7 +107,7 @@ export function DomainSelectionPage({
   return (
     <div className="bg-background">
       <section className="relative py-24 px-6 overflow-hidden">
-        <ArtDecoSunburst className="opacity-50" />
+        <WebThreads className="opacity-50" />
 
         <div className="relative z-10 max-w-5xl mx-auto">
           <div className="text-center mb-4">
