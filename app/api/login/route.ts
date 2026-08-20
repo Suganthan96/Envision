@@ -1,21 +1,21 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { createSessionToken, roleHome, SESSION_COOKIE, type Role } from "@/lib/session"
-import { isRateLimited } from "@/lib/rate-limit"
+import { isAccountRateLimited, isIpRateLimited } from "@/lib/rate-limit"
 import { MENTOR_ID_ERROR, isValidMentorId, looksLikeMentorId } from "@/lib/mentor-login-id"
 
 export async function POST(request: NextRequest) {
-  const ip = request.headers.get("x-forwarded-for") ?? "unknown"
-  if (isRateLimited(ip)) {
-    return NextResponse.json({ error: "Too many attempts. Try again in a minute." }, { status: 429 })
-  }
-
   const body = await request.json().catch(() => null)
   const loginId = typeof body?.loginId === "string" ? body.loginId.trim() : ""
   const password = typeof body?.password === "string" ? body.password : ""
 
   if (!loginId || !password) {
     return NextResponse.json({ error: "Login ID and password are required." }, { status: 400 })
+  }
+
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ?? "unknown"
+  if (isAccountRateLimited(loginId) || isIpRateLimited(ip)) {
+    return NextResponse.json({ error: "Too many attempts. Try again in a minute." }, { status: 429 })
   }
 
   if (looksLikeMentorId(loginId) && !isValidMentorId(loginId)) {
