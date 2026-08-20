@@ -7,6 +7,7 @@ import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { MENTOR_ID_ERROR, isValidMentorId, looksLikeMentorId } from "@/lib/mentor-login-id"
 
 export function LoginForm() {
   const router = useRouter()
@@ -18,6 +19,12 @@ export function LoginForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setError("")
+
+    if (looksLikeMentorId(loginId) && !isValidMentorId(loginId)) {
+      setError(MENTOR_ID_ERROR)
+      return
+    }
+
     setLoading(true)
 
     try {

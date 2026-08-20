@@ -8,8 +8,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
-export function ChangePasswordForm({ forced }: { forced: boolean }) {
+export function ChangePasswordForm({ forced, requireName = false }: { forced: boolean; requireName?: boolean }) {
   const router = useRouter()
+  const [name, setName] = useState("")
   const [oldPassword, setOldPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -30,7 +31,7 @@ export function ChangePasswordForm({ forced }: { forced: boolean }) {
       const res = await fetch("/api/change-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ oldPassword, newPassword }),
+        body: JSON.stringify({ oldPassword, newPassword, name }),
       })
       const data = await res.json()
 
@@ -54,6 +55,25 @@ export function ChangePasswordForm({ forced }: { forced: boolean }) {
         <p className="text-muted-foreground text-sm text-center leading-relaxed">
           This is your first sign-in. You must set a new password before continuing.
         </p>
+      )}
+
+      {requireName && (
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="name" className="text-primary tracking-[0.15em] uppercase text-xs">
+            Full Name
+          </Label>
+          <Input
+            id="name"
+            type="text"
+            autoComplete="name"
+            placeholder="Enter your full name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            required
+            className="bg-card border-border text-foreground focus:border-primary focus:ring-primary h-11"
+          />
+          <p className="text-muted-foreground text-xs">You will need to enter this exact name every time you sign in.</p>
+        </div>
       )}
 
       <div className="flex flex-col gap-2">

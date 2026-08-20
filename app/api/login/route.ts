@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { createSessionToken, roleHome, SESSION_COOKIE, type Role } from "@/lib/session"
 import { isRateLimited } from "@/lib/rate-limit"
+import { MENTOR_ID_ERROR, isValidMentorId, looksLikeMentorId } from "@/lib/mentor-login-id"
 
 export async function POST(request: NextRequest) {
   const ip = request.headers.get("x-forwarded-for") ?? "unknown"
@@ -15,6 +16,10 @@ export async function POST(request: NextRequest) {
 
   if (!loginId || !password) {
     return NextResponse.json({ error: "Login ID and password are required." }, { status: 400 })
+  }
+
+  if (looksLikeMentorId(loginId) && !isValidMentorId(loginId)) {
+    return NextResponse.json({ error: MENTOR_ID_ERROR }, { status: 400 })
   }
 
   const supabase = getSupabaseServerClient()

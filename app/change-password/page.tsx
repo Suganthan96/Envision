@@ -29,7 +29,10 @@ export default async function ChangePasswordPage() {
             <div className="absolute -bottom-2 -left-2 w-6 h-6 border-b-2 border-l-2 border-primary" />
             <div className="absolute -bottom-2 -right-2 w-6 h-6 border-b-2 border-r-2 border-primary" />
 
-            <ChangePasswordForm forced={session?.mustChangePassword ?? true} />
+            <ChangePasswordForm
+              forced={session?.mustChangePassword ?? true}
+              requireName={session?.role === "mentor"}
+            />
           </div>
         </div>
       </section>

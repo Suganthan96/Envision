@@ -1,17 +1,25 @@
 import Link from "next/link"
 import { LogoutButton } from "@/components/logout-button"
-import { AdminUserTable, type AppUserRow } from "@/components/admin-user-table"
+import { DomainSelectionsTable, type SelectionRow } from "@/components/domain-selections-table"
 import { getSession } from "@/lib/get-session"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 
-export default async function AdminPage() {
+export default async function AdminMentorsPage() {
   const session = await getSession()
 
-  let users: AppUserRow[] = []
+  let rows: SelectionRow[] = []
   if (session) {
     const supabase = getSupabaseServerClient()
-    const { data } = await supabase.rpc("admin_list_users", { p_admin_user_id: session.userId })
-    users = (data as AppUserRow[] | null) ?? []
+    const { data } = await supabase.rpc("admin_list_domain_selections", { p_admin_user_id: session.userId })
+
+    const grouped = new Map<string, string[]>()
+    for (const row of (data ?? []) as { login_id: string; role: string; domain_id: string }[]) {
+      if (row.role !== "mentor") continue
+      const existing = grouped.get(row.login_id) ?? []
+      existing.push(row.domain_id)
+      grouped.set(row.login_id, existing)
+    }
+    rows = Array.from(grouped.entries()).map(([loginId, domainIds]) => ({ loginId, domainIds }))
   }
 
   return (
@@ -26,15 +34,12 @@ export default async function AdminPage() {
         </div>
 
         <div className="flex items-center gap-6 mb-8">
-          <span className="text-primary text-sm uppercase tracking-wider border-b border-primary pb-1">
+          <Link href="/admin" className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider">
             User Management
-          </span>
-          <Link
-            href="/admin/mentors"
-            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
-          >
-            Mentor Selections
           </Link>
+          <span className="text-primary text-sm uppercase tracking-wider border-b border-primary pb-1">
+            Mentor Selections
+          </span>
           <Link
             href="/admin/students"
             className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
@@ -45,14 +50,13 @@ export default async function AdminPage() {
 
         <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Admin Portal</p>
         <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-4">
-          Welcome, <span className="text-gold-gradient">Administrator</span>
+          Mentor <span className="text-gold-gradient">Domain Selections</span>
         </h1>
         <p className="text-muted-foreground text-lg mb-12">
-          Reset a forgotten password below. The account will be required to set a new password at their next
-          sign-in.
+          Every mentor and the domain(s) they have chosen to guide this cycle.
         </p>
 
-        <AdminUserTable users={users} />
+        <DomainSelectionsTable rows={rows} emptyLabel="No mentors have selected a domain yet." />
       </div>
     </main>
   )
