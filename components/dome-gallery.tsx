@@ -55,7 +55,17 @@ const getDataNumber = (el: HTMLElement, name: string, fallback: number) => {
   return Number.isFinite(n) ? n : fallback
 }
 
+function shuffle<T>(arr: T[]): T[] {
+  const result = arr.slice()
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[result[i], result[j]] = [result[j], result[i]]
+  }
+  return result
+}
+
 function buildItems(pool: ImageItem[], seg: number): ItemDef[] {
+  pool = shuffle(pool)
   const xCols = Array.from({ length: seg }, (_, i) => -37 + i * 2)
   const evenYs = [-4, -2, 0, 2, 4]
   const oddYs = [-3, -1, 1, 3, 5]
