@@ -11,7 +11,8 @@ const _playfair = Playfair_Display({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "Envision",
-  description: "An exclusive collective for the discerning investor.",
+  description:
+    "An interdepartmental prototype contest by the Institution's Innovation Council, LICET.",
 }
 
 export default function RootLayout({

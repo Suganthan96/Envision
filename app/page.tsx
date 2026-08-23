@@ -1,8 +1,10 @@
 import Link from "next/link"
 import { ArtDecoDivider } from "@/components/art-deco-divider"
 import { ServiceCard } from "@/components/service-card"
+import { PhotoShowcase } from "@/components/photo-showcase"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { SHOWCASE_PHOTOS } from "@/lib/showcase-photos"
 
 export default function Home() {
   return (
@@ -26,9 +28,13 @@ export default function Home() {
             <span className="text-gold-gradient">Envision</span>
           </h1>
 
+          <p className="text-primary tracking-[0.2em] uppercase text-xs mb-4">
+            Institution&apos;s Innovation Council &middot; LICET
+          </p>
+
           <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto leading-relaxed mb-12">
-            An exclusive collective for the discerning investor, curating extraordinary opportunities in alternative
-            assets.
+            An interdepartmental prototype contest where young engineers turn ideas into proof of concept —
+            through teamwork, problem solving, and hands-on implementation.
           </p>
 
           <div className="mb-12">
@@ -72,20 +78,20 @@ export default function Home() {
 
           <div className="grid md:grid-cols-2 gap-16 items-center">
             <div>
-              <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Our Philosophy</p>
+              <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Our Objective</p>
               <h2 className="font-serif text-4xl md:text-5xl text-foreground mb-6 leading-tight text-balance">
-                Where Vision Meets Opportunity
+                Where Ideas Become Prototypes
               </h2>
             </div>
             <div className="space-y-6">
               <p className="text-muted-foreground leading-relaxed text-lg">
-                In a world of ordinary investments, we seek the extraordinary. Envision unites a select circle of
-                visionary investors who understand that true wealth is built through access to opportunities unseen by
-                the common market.
+                Envision is an interdepartmental project by the Institution&apos;s Innovation Council of LICET,
+                designed to inculcate teamwork, a problem-solving approach, proof of concept, implementation,
+                collaborative thinking, communication skills, and continuous learning among young engineers.
               </p>
               <p className="text-muted-foreground leading-relaxed text-lg">
-                From museum-quality fine art to vintage automobiles of distinction, from rare collectibles to emerging
-                alternative assets—we curate, we verify, we present only the exceptional.
+                Interdepartmental teams of six members, each from a different class, come together to take a single
+                idea from ideation all the way through to a working prototype.
               </p>
             </div>
           </div>
@@ -96,44 +102,57 @@ export default function Home() {
       <section className="py-24 px-6 bg-card/50">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-16">
-            <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Our Offerings</p>
-            <h2 className="font-serif text-4xl md:text-5xl text-foreground text-balance">Curated Excellence</h2>
+            <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Program Pillars</p>
+            <h2 className="font-serif text-4xl md:text-5xl text-foreground text-balance">Learn By Building</h2>
           </div>
 
           <div className="grid md:grid-cols-3 gap-8">
             <ServiceCard
-              title="Fine Art"
-              description="Access to museum-quality works from established masters and visionary contemporaries, vetted by world-class curators."
+              title="Team Collaboration"
+              description="Interdepartmental teams of six, each member from a different class, learning to think, plan, and build together."
               icon={
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-12 h-12">
-                  <rect x="3" y="3" width="18" height="18" rx="2" />
-                  <circle cx="8.5" cy="8.5" r="1.5" />
-                  <path d="M21 15l-5-5L5 21" />
+                  <circle cx="8" cy="8" r="3" />
+                  <circle cx="17" cy="9" r="2.5" />
+                  <path d="M2.5 20c0-3.6 2.9-6.5 5.5-6.5s5.5 2.9 5.5 6.5" />
+                  <path d="M14.5 14c2.3.2 4.5 2.4 4.5 5.5" />
                 </svg>
               }
             />
             <ServiceCard
-              title="Rare Collectibles"
-              description="From vintage timepieces to historic memorabilia, each piece authenticated and provenance-verified to the highest standards."
+              title="Problem Solving & Ideation"
+              description="From identifying real problems worth solving to shaping raw ideas into clear, actionable solutions."
               icon={
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-12 h-12">
-                  <circle cx="12" cy="12" r="9" />
-                  <path d="M12 6v6l4 2" />
+                  <path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.4 1 2.5h6c0-1.1.4-1.9 1-2.5A6 6 0 0 0 12 3Z" />
                 </svg>
               }
             />
             <ServiceCard
-              title="Classic Automobiles"
-              description="Exceptional motorcars of historical significance, each representing the pinnacle of automotive artistry and engineering."
+              title="Proof of Concept"
+              description="Turning ideas into working prototypes — implementation, iteration, and hands-on execution."
               icon={
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" className="w-12 h-12">
-                  <path d="M5 17h14M6 9l2-4h8l2 4M4 14h16v3H4z" />
-                  <circle cx="7" cy="17" r="2" />
-                  <circle cx="17" cy="17" r="2" />
+                  <path d="M9 3h6M10 3v5.5L5 18a1.8 1.8 0 0 0 1.6 2.6h10.8A1.8 1.8 0 0 0 19 18l-5-9.5V3" />
+                  <path d="M7.5 15h9" />
                 </svg>
               }
             />
           </div>
+        </div>
+      </section>
+
+      {/* Showcase Section */}
+      <section className="py-24 px-6">
+        <div className="max-w-6xl mx-auto">
+          <ArtDecoDivider variant="chevron" />
+
+          <div className="text-center mb-16">
+            <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Showcase</p>
+            <h2 className="font-serif text-4xl md:text-5xl text-foreground text-balance">Moments From Envision</h2>
+          </div>
+
+          <PhotoShowcase photos={SHOWCASE_PHOTOS} />
         </div>
       </section>
 
@@ -150,12 +169,11 @@ export default function Home() {
 
             <blockquote className="relative z-10">
               <p className="font-serif text-2xl md:text-3xl text-foreground leading-relaxed italic mb-8">
-                Membership in Envision has transformed how I approach alternative investments. The caliber of
-                opportunities and the discretion of their service is simply unmatched.
+                This will be a new learning experience for all of you. All the best. Let your light shine.
               </p>
               <footer className="text-muted-foreground">
-                <span className="text-primary">—</span> A Distinguished Member,{" "}
-                <span className="text-primary">Geneva</span>
+                <span className="text-primary">—</span> Institution&apos;s Innovation Council,{" "}
+                <span className="text-primary">LICET</span>
               </footer>
             </blockquote>
           </div>
@@ -173,7 +191,8 @@ export default function Home() {
             </div>
 
             <p className="text-muted-foreground text-sm text-center">
-              &copy; {new Date().getFullYear()} Envision. All rights reserved. Membership by invitation only.
+              &copy; {new Date().getFullYear()} Envision. An initiative by the Institution&apos;s Innovation Council,
+              LICET.
             </p>
 
             <div className="flex items-center gap-1">
