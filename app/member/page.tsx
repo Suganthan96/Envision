@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { LogoutButton } from "@/components/logout-button"
 import { EditTeamName } from "@/components/edit-team-name"
 import { WebThreads } from "@/components/web-threads"
@@ -18,6 +19,12 @@ export default async function MemberPage() {
           <span className="font-serif text-xl text-foreground">Envision</span>
         </div>
         <LogoutButton />
+      </div>
+
+      <div className="relative z-10 max-w-4xl mx-auto mb-6">
+        <Link href="/member/timeline" className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider">
+          View Program Timeline →
+        </Link>
       </div>
 
       <div className="relative z-10 max-w-4xl mx-auto mb-4 flex items-center gap-3">
