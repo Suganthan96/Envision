@@ -1,6 +1,5 @@
 import Link from "next/link"
 import { LogoutButton } from "@/components/logout-button"
-import { WebThreads } from "@/components/web-threads"
 import { AdminUserTable, type AppUserRow } from "@/components/admin-user-table"
 import { getSession } from "@/lib/get-session"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
@@ -17,8 +16,6 @@ export default async function AdminPage() {
 
   return (
     <main className="min-h-screen bg-background px-6 py-12">
-      <WebThreads fixed />
-
       <div className="relative z-10 max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-16">
           <div className="flex items-center gap-4">

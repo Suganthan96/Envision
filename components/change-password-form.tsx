@@ -6,6 +6,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { PasswordInput } from "@/components/ui/password-input"
 import { Label } from "@/components/ui/label"
 
 export function ChangePasswordForm({
@@ -90,9 +91,8 @@ export function ChangePasswordForm({
         <Label htmlFor="oldPassword" className="text-primary tracking-[0.15em] uppercase text-xs">
           Current Password
         </Label>
-        <Input
+        <PasswordInput
           id="oldPassword"
-          type="password"
           autoComplete="current-password"
           value={oldPassword}
           onChange={(e) => setOldPassword(e.target.value)}
@@ -105,9 +105,8 @@ export function ChangePasswordForm({
         <Label htmlFor="newPassword" className="text-primary tracking-[0.15em] uppercase text-xs">
           New Password
         </Label>
-        <Input
+        <PasswordInput
           id="newPassword"
-          type="password"
           autoComplete="new-password"
           value={newPassword}
           onChange={(e) => setNewPassword(e.target.value)}
@@ -121,9 +120,8 @@ export function ChangePasswordForm({
         <Label htmlFor="confirmPassword" className="text-primary tracking-[0.15em] uppercase text-xs">
           Confirm New Password
         </Label>
-        <Input
+        <PasswordInput
           id="confirmPassword"
-          type="password"
           autoComplete="new-password"
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}

@@ -1,5 +1,4 @@
 import { LogoutButton } from "@/components/logout-button"
-import { WebThreads } from "@/components/web-threads"
 import { getSession } from "@/lib/get-session"
 import { DomainSelectionPage } from "@/components/domain-selection-page"
 
@@ -9,8 +8,6 @@ export default async function MentorPage() {
 
   return (
     <main className="min-h-screen bg-background px-6 pt-12">
-      <WebThreads fixed />
-
       <div className="relative z-10 max-w-4xl mx-auto flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
           <div className="w-8 h-px bg-primary" />

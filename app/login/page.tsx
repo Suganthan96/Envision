@@ -1,5 +1,4 @@
 import type { Metadata } from "next"
-import { WebThreads } from "@/components/web-threads"
 import { LoginForm } from "@/components/login-form"
 
 export const metadata: Metadata = {
@@ -11,8 +10,6 @@ export default function LoginPage() {
   return (
     <main className="min-h-screen bg-background">
       <section className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
-        <WebThreads />
-
         <div className="relative z-10 text-center max-w-md mx-auto w-full">
           {/* Decorative top element */}
           <div className="flex justify-center mb-8">

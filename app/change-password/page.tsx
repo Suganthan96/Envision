@@ -1,4 +1,3 @@
-import { WebThreads } from "@/components/web-threads"
 import { ChangePasswordForm } from "@/components/change-password-form"
 import { getSession } from "@/lib/get-session"
 
@@ -8,8 +7,6 @@ export default async function ChangePasswordPage() {
   return (
     <main className="min-h-screen bg-background">
       <section className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
-        <WebThreads />
-
         <div className="relative z-10 text-center max-w-md mx-auto w-full">
           <div className="flex justify-center mb-8">
             <div className="flex items-center gap-4">

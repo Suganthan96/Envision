@@ -6,6 +6,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
+import { PasswordInput } from "@/components/ui/password-input"
 import { Label } from "@/components/ui/label"
 import { MENTOR_ID_ERROR, isValidMentorId, looksLikeMentorId } from "@/lib/mentor-login-id"
 
@@ -71,9 +72,8 @@ export function LoginForm() {
         <Label htmlFor="password" className="text-primary tracking-[0.15em] uppercase text-xs">
           Password
         </Label>
-        <Input
+        <PasswordInput
           id="password"
-          type="password"
           autoComplete="current-password"
           placeholder="Enter your password"
           value={password}
