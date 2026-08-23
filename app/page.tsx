@@ -2,10 +2,12 @@ import Link from "next/link"
 import { ArtDecoDivider } from "@/components/art-deco-divider"
 import { ServiceCard } from "@/components/service-card"
 import { Button } from "@/components/ui/button"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export default function Home() {
   return (
     <main className="min-h-screen bg-background">
+      <ThemeToggle />
       {/* Hero Section */}
       <section className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
         <div className="relative z-10 text-center max-w-4xl mx-auto">

@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { LogoutButton } from "@/components/logout-button"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { RoleSelectionsView, type RoleRow } from "@/components/role-selections-view"
 import { DomainSelectionToggle } from "@/components/domain-selection-toggle"
 import { PendingSelections, type PendingPerson } from "@/components/pending-selections"
@@ -42,7 +43,10 @@ export default async function AdminStudentsPage() {
             <div className="w-8 h-px bg-primary" />
             <span className="font-serif text-xl text-foreground">Envision</span>
           </div>
-          <LogoutButton />
+          <div className="flex items-center gap-3">
+            <ThemeToggle variant="inline" />
+            <LogoutButton />
+          </div>
         </div>
 
         <div className="flex items-center gap-6 mb-8">

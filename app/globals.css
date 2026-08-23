@@ -4,43 +4,48 @@
 @custom-variant dark (&:is(.dark *));
 
 /* Art Deco color palette: onyx black, burnished gold, champagne cream, deep teal */
+/* Light mode: cream white background with deepened gold/teal for contrast */
 :root {
-  --background: oklch(0.08 0 0);
-  --foreground: oklch(0.95 0.02 90);
-  --card: oklch(0.14 0 0);
-  --card-foreground: oklch(0.95 0.02 90);
-  --popover: oklch(0.14 0 0);
-  --popover-foreground: oklch(0.95 0.02 90);
-  --primary: oklch(0.72 0.12 85);
-  --primary-foreground: oklch(0.08 0 0);
-  --secondary: oklch(0.35 0.06 200);
-  --secondary-foreground: oklch(0.95 0.02 90);
-  --muted: oklch(0.2 0 0);
-  --muted-foreground: oklch(0.65 0.02 90);
-  --accent: oklch(0.35 0.06 200);
-  --accent-foreground: oklch(0.95 0.02 90);
-  --destructive: oklch(0.577 0.245 27.325);
-  --destructive-foreground: oklch(0.577 0.245 27.325);
-  --border: oklch(0.25 0.02 85);
-  --input: oklch(0.2 0 0);
-  --ring: oklch(0.72 0.12 85);
-  --chart-1: oklch(0.72 0.12 85);
-  --chart-2: oklch(0.35 0.06 200);
+  --background: oklch(0.97 0.014 85);
+  --foreground: oklch(0.2 0.02 85);
+  --card: oklch(0.99 0.01 85);
+  --card-foreground: oklch(0.2 0.02 85);
+  --popover: oklch(0.99 0.01 85);
+  --popover-foreground: oklch(0.2 0.02 85);
+  --primary: oklch(0.52 0.13 85);
+  --primary-foreground: oklch(0.99 0.01 90);
+  --secondary: oklch(0.42 0.07 200);
+  --secondary-foreground: oklch(0.99 0.01 90);
+  --muted: oklch(0.93 0.015 85);
+  --muted-foreground: oklch(0.45 0.02 85);
+  --accent: oklch(0.88 0.04 200);
+  --accent-foreground: oklch(0.2 0.02 85);
+  --destructive: oklch(0.55 0.22 27.325);
+  --destructive-foreground: oklch(0.99 0.01 90);
+  --border: oklch(0.85 0.02 85);
+  --input: oklch(0.92 0.015 85);
+  --ring: oklch(0.52 0.13 85);
+  --chart-1: oklch(0.52 0.13 85);
+  --chart-2: oklch(0.42 0.07 200);
   --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
+  --chart-4: oklch(0.65 0.15 84.429);
+  --chart-5: oklch(0.6 0.17 70.08);
   --radius: 0rem;
-  --sidebar: oklch(0.1 0 0);
-  --sidebar-foreground: oklch(0.95 0.02 90);
-  --sidebar-primary: oklch(0.72 0.12 85);
-  --sidebar-primary-foreground: oklch(0.08 0 0);
-  --sidebar-accent: oklch(0.2 0 0);
-  --sidebar-accent-foreground: oklch(0.95 0.02 90);
-  --sidebar-border: oklch(0.25 0.02 85);
-  --sidebar-ring: oklch(0.72 0.12 85);
+  --sidebar: oklch(0.95 0.015 85);
+  --sidebar-foreground: oklch(0.2 0.02 85);
+  --sidebar-primary: oklch(0.52 0.13 85);
+  --sidebar-primary-foreground: oklch(0.99 0.01 90);
+  --sidebar-accent: oklch(0.9 0.02 85);
+  --sidebar-accent-foreground: oklch(0.2 0.02 85);
+  --sidebar-border: oklch(0.85 0.02 85);
+  --sidebar-ring: oklch(0.52 0.13 85);
+  /* Deepened gold gradient stops for readability against the cream background */
+  --gold-gradient-1: oklch(0.42 0.13 85);
+  --gold-gradient-2: oklch(0.52 0.14 88);
+  --gold-gradient-3: oklch(0.42 0.13 85);
 }
 
-/* Dark mode uses same palette (dark-first design) */
+/* Dark mode: onyx black with the original burnished gold palette */
 .dark {
   --background: oklch(0.08 0 0);
   --foreground: oklch(0.95 0.02 90);
@@ -74,6 +79,9 @@
   --sidebar-accent-foreground: oklch(0.95 0.02 90);
   --sidebar-border: oklch(0.25 0.02 85);
   --sidebar-ring: oklch(0.72 0.12 85);
+  --gold-gradient-1: oklch(0.72 0.12 85);
+  --gold-gradient-2: oklch(0.85 0.1 90);
+  --gold-gradient-3: oklch(0.72 0.12 85);
 }
 
 @theme inline {
@@ -128,9 +136,10 @@
   }
 }
 
-/* Art Deco gold gradient text utility */
+/* Art Deco gold gradient text utility — deepened in light mode for
+   readability against the cream background, brightened back in dark mode */
 .text-gold-gradient {
-  background: linear-gradient(135deg, oklch(0.72 0.12 85), oklch(0.85 0.1 90), oklch(0.72 0.12 85));
+  background: linear-gradient(135deg, var(--gold-gradient-1), var(--gold-gradient-2), var(--gold-gradient-3));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;

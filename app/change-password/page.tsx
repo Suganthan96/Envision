@@ -1,4 +1,5 @@
 import { ChangePasswordForm } from "@/components/change-password-form"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { getSession } from "@/lib/get-session"
 
 export default async function ChangePasswordPage() {
@@ -6,6 +7,7 @@ export default async function ChangePasswordPage() {
 
   return (
     <main className="min-h-screen bg-background">
+      <ThemeToggle />
       <section className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
         <div className="relative z-10 text-center max-w-md mx-auto w-full">
           <div className="flex justify-center mb-8">

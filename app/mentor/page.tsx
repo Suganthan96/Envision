@@ -1,4 +1,5 @@
 import { LogoutButton } from "@/components/logout-button"
+import { ThemeToggle } from "@/components/theme-toggle"
 import { ArtDecoDivider } from "@/components/art-deco-divider"
 import { TimelineView } from "@/components/timeline-view"
 import { getSession } from "@/lib/get-session"
@@ -18,7 +19,10 @@ export default async function MentorPage() {
           <div className="w-8 h-px bg-primary" />
           <span className="font-serif text-xl text-foreground">Envision</span>
         </div>
-        <LogoutButton />
+        <div className="flex items-center gap-3">
+          <ThemeToggle variant="inline" />
+          <LogoutButton />
+        </div>
       </div>
 
       <div className="relative z-10 max-w-4xl mx-auto mb-4">

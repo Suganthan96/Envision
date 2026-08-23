@@ -1,5 +1,6 @@
 import type { Metadata } from "next"
 import { LoginForm } from "@/components/login-form"
+import { ThemeToggle } from "@/components/theme-toggle"
 
 export const metadata: Metadata = {
   title: "Envision | Sign In",
@@ -9,6 +10,7 @@ export const metadata: Metadata = {
 export default function LoginPage() {
   return (
     <main className="min-h-screen bg-background">
+      <ThemeToggle />
       <section className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
         <div className="relative z-10 text-center max-w-md mx-auto w-full">
           {/* Decorative top element */}
