@@ -53,7 +53,7 @@ export function DomainSelectionToggle({
   }
 
   return (
-    <div className="flex items-center gap-4 p-4 border border-border bg-card/40">
+    <div className="flex items-center gap-4 p-4 border border-border bg-card/40 flex-1 sm:max-w-sm">
       <Switch checked={enabled} onCheckedChange={toggle} disabled={pending} />
       <div>
         <p className="text-foreground text-sm font-medium">{title}</p>

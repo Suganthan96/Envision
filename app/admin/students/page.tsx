@@ -86,7 +86,7 @@ export default async function AdminStudentsPage() {
           Every student and the domain they have chosen to build their project in this cycle.
         </p>
 
-        <div className="mb-12 max-w-md flex flex-col gap-4">
+        <div className="mb-12 flex flex-col sm:flex-row gap-4">
           <DomainSelectionToggle
             role="member"
             field="view"

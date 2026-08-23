@@ -86,7 +86,7 @@ export default async function AdminMentorsPage() {
           Every mentor and the domain(s) they have chosen to guide this cycle.
         </p>
 
-        <div className="mb-12 max-w-md flex flex-col gap-4">
+        <div className="mb-12 flex flex-col sm:flex-row gap-4">
           <DomainSelectionToggle
             role="mentor"
             field="view"
