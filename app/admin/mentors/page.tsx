@@ -20,18 +20,32 @@ export default async function AdminMentorsPage() {
       supabase.rpc("admin_list_pending_domain_selections", { p_admin_user_id: session.userId, p_role: "mentor" }),
     ])
 
-    const grouped = new Map<string, { name: string | null; domainIds: string[] }>()
-    for (const row of (data ?? []) as { login_id: string; name: string | null; role: string; domain_id: string }[]) {
+    const grouped = new Map<string, { name: string | null; phone: string | null; domainIds: string[] }>()
+    for (const row of (data ?? []) as {
+      login_id: string
+      name: string | null
+      phone: string | null
+      role: string
+      domain_id: string
+    }[]) {
       if (row.role !== "mentor") continue
-      const existing = grouped.get(row.login_id) ?? { name: row.name, domainIds: [] }
+      const existing = grouped.get(row.login_id) ?? { name: row.name, phone: row.phone, domainIds: [] }
       existing.domainIds.push(row.domain_id)
       grouped.set(row.login_id, existing)
     }
-    mentors = Array.from(grouped.entries()).map(([loginId, { name, domainIds }]) => ({ loginId, name, domainIds }))
-    pending = ((pendingData ?? []) as { login_id: string; name: string | null }[]).map((row) => ({
-      loginId: row.login_id,
-      name: row.name,
+    mentors = Array.from(grouped.entries()).map(([loginId, { name, phone, domainIds }]) => ({
+      loginId,
+      name,
+      phone,
+      domainIds,
     }))
+    pending = ((pendingData ?? []) as { login_id: string; name: string | null; phone: string | null }[]).map(
+      (row) => ({
+        loginId: row.login_id,
+        name: row.name,
+        phone: row.phone,
+      }),
+    )
   }
   const { mentorDomainSelectionOpen } = await getAppSettings()
 

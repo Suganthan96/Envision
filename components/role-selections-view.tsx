@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils"
 export interface RoleRow {
   loginId: string
   name: string | null
+  phone: string | null
   domainIds: string[]
 }
 
@@ -30,9 +31,12 @@ function PersonCard({ person }: { person: RoleRow }) {
 
       <h3 className="font-serif text-lg text-foreground mb-1 text-balance">{displayName}</h3>
       {person.name?.trim() && (
-        <p className="text-muted-foreground text-xs font-mono mb-4">{person.loginId}</p>
+        <p className="text-muted-foreground text-xs font-mono">{person.loginId}</p>
       )}
-      {!person.name?.trim() && <div className="mb-4" />}
+      {person.phone?.trim() && (
+        <p className="text-muted-foreground text-xs font-mono mb-4">{person.phone}</p>
+      )}
+      {!person.phone?.trim() && <div className="mb-4" />}
 
       <div className="flex flex-col gap-1.5">
         {person.domainIds.map((domainId) => (

@@ -14,14 +14,21 @@ export function ChangePasswordForm({
   requireName = false,
   nameLabel = "Full Name",
   nameHelperText = "You will need to enter this exact name every time you sign in.",
+  requirePhone = false,
+  phoneLabel = "Phone Number",
+  phoneHelperText = "We'll use this to reach you about the program.",
 }: {
   forced: boolean
   requireName?: boolean
   nameLabel?: string
   nameHelperText?: string
+  requirePhone?: boolean
+  phoneLabel?: string
+  phoneHelperText?: string
 }) {
   const router = useRouter()
   const [name, setName] = useState("")
+  const [phone, setPhone] = useState("")
   const [oldPassword, setOldPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -42,7 +49,7 @@ export function ChangePasswordForm({
       const res = await fetch("/api/change-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ oldPassword, newPassword, name }),
+        body: JSON.stringify({ oldPassword, newPassword, name, phone }),
       })
       const data = await res.json()
 
@@ -84,6 +91,25 @@ export function ChangePasswordForm({
             className="bg-card border-border text-foreground focus:border-primary focus:ring-primary h-11"
           />
           <p className="text-muted-foreground text-xs">{nameHelperText}</p>
+        </div>
+      )}
+
+      {requirePhone && (
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="phone" className="text-primary tracking-[0.15em] uppercase text-xs">
+            {phoneLabel}
+          </Label>
+          <Input
+            id="phone"
+            type="tel"
+            autoComplete="tel"
+            placeholder="Enter your phone number"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            required
+            className="bg-card border-border text-foreground focus:border-primary focus:ring-primary h-11"
+          />
+          <p className="text-muted-foreground text-xs">{phoneHelperText}</p>
         </div>
       )}
 

@@ -18,6 +18,8 @@ export type AppUserRow = {
   login_id: string
   role: "member" | "mentor" | "admin"
   must_change_password: boolean
+  name: string | null
+  phone: string | null
 }
 
 const DEFAULT_PASSWORD = "licet@123"
@@ -33,7 +35,11 @@ export function AdminUserTable({ users }: { users: AppUserRow[] }) {
     const q = query.trim().toLowerCase()
     if (!q) return users
     return users.filter(
-      (u) => u.login_id.toLowerCase().includes(q) || u.role.toLowerCase().includes(q),
+      (u) =>
+        u.login_id.toLowerCase().includes(q) ||
+        u.role.toLowerCase().includes(q) ||
+        (u.name ?? "").toLowerCase().includes(q) ||
+        (u.phone ?? "").toLowerCase().includes(q),
     )
   }, [users, query])
 
@@ -86,6 +92,8 @@ export function AdminUserTable({ users }: { users: AppUserRow[] }) {
             <TableHeader>
               <TableRow className="border-border">
                 <TableHead className="text-primary tracking-[0.1em] uppercase text-xs">Login ID</TableHead>
+                <TableHead className="text-primary tracking-[0.1em] uppercase text-xs">Name</TableHead>
+                <TableHead className="text-primary tracking-[0.1em] uppercase text-xs">Phone</TableHead>
                 <TableHead className="text-primary tracking-[0.1em] uppercase text-xs">Role</TableHead>
                 <TableHead className="text-primary tracking-[0.1em] uppercase text-xs">Status</TableHead>
                 <TableHead className="text-primary tracking-[0.1em] uppercase text-xs">Reset Password</TableHead>
@@ -95,6 +103,8 @@ export function AdminUserTable({ users }: { users: AppUserRow[] }) {
               {filteredUsers.map((u) => (
                 <TableRow key={u.login_id} className="border-border align-top">
                   <TableCell className="text-foreground font-mono">{u.login_id}</TableCell>
+                  <TableCell className="text-muted-foreground">{u.name ?? "—"}</TableCell>
+                  <TableCell className="text-muted-foreground font-mono">{u.phone ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground capitalize">{u.role}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {u.must_change_password ? "Awaiting first sign-in" : "Active"}
