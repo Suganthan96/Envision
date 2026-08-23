@@ -154,6 +154,8 @@ export interface WebThreadsProps {
   mouseInteraction?: boolean
   mouseStrength?: number
   className?: string
+  /** Anchor to the viewport instead of the nearest positioned ancestor — for pages that scroll past one screen. */
+  fixed?: boolean
 }
 
 // Envision's Art Deco palette: burnished gold threading into champagne
@@ -182,6 +184,7 @@ export function WebThreads({
   mouseInteraction = true,
   mouseStrength = 0.25,
   className = "",
+  fixed = false,
 }: WebThreadsProps) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mouseRef = useRef({ enabled: mouseInteraction, strength: mouseStrength })
@@ -415,7 +418,11 @@ export function WebThreads({
   return (
     <div
       ref={containerRef}
-      className={cn("absolute inset-0 overflow-hidden pointer-events-none", className)}
+      className={cn(
+        fixed ? "fixed" : "absolute",
+        "inset-0 overflow-hidden pointer-events-none",
+        className,
+      )}
     />
   )
 }

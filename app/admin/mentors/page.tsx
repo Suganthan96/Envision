@@ -1,5 +1,6 @@
 import Link from "next/link"
 import { LogoutButton } from "@/components/logout-button"
+import { WebThreads } from "@/components/web-threads"
 import { RoleSelectionsView, type RoleRow } from "@/components/role-selections-view"
 import { getSession } from "@/lib/get-session"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
@@ -24,7 +25,9 @@ export default async function AdminMentorsPage() {
 
   return (
     <main className="min-h-screen bg-background px-6 py-12">
-      <div className="max-w-5xl mx-auto">
+      <WebThreads fixed />
+
+      <div className="relative z-10 max-w-5xl mx-auto">
         <div className="flex items-center justify-between mb-16">
           <div className="flex items-center gap-4">
             <div className="w-8 h-px bg-primary" />
