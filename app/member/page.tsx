@@ -12,7 +12,7 @@ import { TIMELINE_PHASES } from "@/lib/timeline"
 export default async function MemberPage() {
   const session = await getSession()
   const teamName = session?.name?.trim() || session?.loginId
-  const { studentDomainSelectionOpen: domainSelectionOpen } = await getAppSettings()
+  const { studentDomainSelectionOpen: domainSelectionOpen, studentCanSelect } = await getAppSettings()
 
   return (
     <main className="min-h-screen bg-background px-6 pt-12 pb-24">
@@ -51,6 +51,7 @@ export default async function MemberPage() {
             description="Select the domain you'd like to build your project in for this cycle."
             capacity={6}
             maxSelections={1}
+            canSelect={studentCanSelect}
           />
         </div>
       ) : (

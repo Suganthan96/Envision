@@ -24,6 +24,7 @@ interface DomainSelectionPageProps {
   description: string
   capacity?: number
   maxSelections?: number
+  canSelect?: boolean
 }
 
 export function DomainSelectionPage({
@@ -32,6 +33,7 @@ export function DomainSelectionPage({
   description,
   capacity,
   maxSelections = 1,
+  canSelect = true,
 }: DomainSelectionPageProps) {
   const [selected, setSelected] = useState<string[]>([])
   const [counts, setCounts] = useState<Record<string, number>>({})
@@ -120,13 +122,19 @@ export function DomainSelectionPage({
               ? maxSelections > 1
                 ? "Your Domains Are Locked In"
                 : "Your Domain Is Locked In"
-              : maxSelections > 1
-                ? `Select Your Domains (${selected.length}/${maxSelections})`
-                : "Select Your Domain"}
+              : !canSelect
+                ? "Preview Only"
+                : maxSelections > 1
+                  ? `Select Your Domains (${selected.length}/${maxSelections})`
+                  : "Select Your Domain"}
           </p>
           {atMax ? (
             <p className="text-center text-muted-foreground text-sm mb-8">
               {maxSelections > 1 ? "Once chosen, your domains cannot be changed." : "Once chosen, your domain cannot be changed."}
+            </p>
+          ) : !canSelect ? (
+            <p className="text-center text-muted-foreground text-sm mb-8">
+              You can browse the domains below, but selection isn&apos;t open yet.
             </p>
           ) : (
             <div className="mb-8" />
@@ -204,11 +212,13 @@ export function DomainSelectionPage({
                 ) : (
                   <Button
                     type="button"
-                    disabled={submitting || isFull(activeDomain.id) || isLockedOut(activeDomain.id)}
+                    disabled={!canSelect || submitting || isFull(activeDomain.id) || isLockedOut(activeDomain.id)}
                     onClick={() => selectDomain(activeDomain.id)}
                     className="bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-sm disabled:opacity-40"
                   >
-                    {isLockedOut(activeDomain.id)
+                    {!canSelect
+                      ? "Selection Not Open Yet"
+                      : isLockedOut(activeDomain.id)
                       ? "Selection Locked"
                       : isFull(activeDomain.id)
                         ? "Domain Full"

@@ -47,7 +47,7 @@ export default async function AdminMentorsPage() {
       }),
     )
   }
-  const { mentorDomainSelectionOpen } = await getAppSettings()
+  const { mentorDomainSelectionOpen, mentorCanSelect } = await getAppSettings()
 
   return (
     <main className="min-h-screen bg-background px-6 py-12">
@@ -86,8 +86,23 @@ export default async function AdminMentorsPage() {
           Every mentor and the domain(s) they have chosen to guide this cycle.
         </p>
 
-        <div className="mb-12 max-w-md">
-          <DomainSelectionToggle role="mentor" title="Mentor Domain Selection" initialOpen={mentorDomainSelectionOpen} />
+        <div className="mb-12 max-w-md flex flex-col gap-4">
+          <DomainSelectionToggle
+            role="mentor"
+            field="view"
+            title="Mentor Domain Visibility"
+            initialEnabled={mentorDomainSelectionOpen}
+            activeDescription="Mentors can currently see the domain selection screen."
+            inactiveDescription="Mentors currently see the program timeline instead."
+          />
+          <DomainSelectionToggle
+            role="mentor"
+            field="select"
+            title="Mentor Domain Selection"
+            initialEnabled={mentorCanSelect}
+            activeDescription="Mentors can currently choose their domains."
+            inactiveDescription="Mentors can view the domains but cannot select one yet."
+          />
         </div>
 
         <PendingSelections people={pending} personLabel="Mentor" />

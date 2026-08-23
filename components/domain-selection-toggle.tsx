@@ -6,20 +6,26 @@ import { Switch } from "@/components/ui/switch"
 
 export function DomainSelectionToggle({
   role,
+  field,
   title,
-  initialOpen,
+  initialEnabled,
+  activeDescription,
+  inactiveDescription,
 }: {
   role: "mentor" | "member"
+  field: "view" | "select"
   title: string
-  initialOpen: boolean
+  initialEnabled: boolean
+  activeDescription: string
+  inactiveDescription: string
 }) {
   const router = useRouter()
-  const [open, setOpen] = useState(initialOpen)
+  const [enabled, setEnabled] = useState(initialEnabled)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState("")
 
   const toggle = async (next: boolean) => {
-    setOpen(next)
+    setEnabled(next)
     setPending(true)
     setError("")
 
@@ -27,19 +33,19 @@ export function DomainSelectionToggle({
       const res = await fetch("/api/admin/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role, domainSelectionOpen: next }),
+        body: JSON.stringify({ role, field, enabled: next }),
       })
       const data = await res.json()
 
       if (!res.ok) {
-        setOpen(!next)
+        setEnabled(!next)
         setError(data.error ?? "Unable to update setting.")
         return
       }
 
       router.refresh()
     } catch {
-      setOpen(!next)
+      setEnabled(!next)
       setError("Something went wrong. Please try again.")
     } finally {
       setPending(false)
@@ -48,14 +54,10 @@ export function DomainSelectionToggle({
 
   return (
     <div className="flex items-center gap-4 p-4 border border-border bg-card/40">
-      <Switch checked={open} onCheckedChange={toggle} disabled={pending} />
+      <Switch checked={enabled} onCheckedChange={toggle} disabled={pending} />
       <div>
         <p className="text-foreground text-sm font-medium">{title}</p>
-        <p className="text-muted-foreground text-xs">
-          {open
-            ? `${role === "mentor" ? "Mentors" : "Students"} can currently choose their domains.`
-            : `${role === "mentor" ? "Mentors" : "Students"} currently see the program timeline instead.`}
-        </p>
+        <p className="text-muted-foreground text-xs">{enabled ? activeDescription : inactiveDescription}</p>
         {error && <p className="text-destructive text-xs mt-1">{error}</p>}
       </div>
     </div>

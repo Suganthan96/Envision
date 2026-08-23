@@ -3,6 +3,8 @@ import { getSupabaseServerClient } from "@/lib/supabase-server"
 type AppSettings = {
   studentDomainSelectionOpen: boolean
   mentorDomainSelectionOpen: boolean
+  studentCanSelect: boolean
+  mentorCanSelect: boolean
 }
 
 export async function getAppSettings(): Promise<AppSettings> {
@@ -12,5 +14,7 @@ export async function getAppSettings(): Promise<AppSettings> {
   return {
     studentDomainSelectionOpen: Boolean(row?.student_domain_selection_open),
     mentorDomainSelectionOpen: Boolean(row?.mentor_domain_selection_open),
+    studentCanSelect: Boolean(row?.student_can_select),
+    mentorCanSelect: Boolean(row?.mentor_can_select),
   }
 }

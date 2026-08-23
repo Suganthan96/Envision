@@ -47,7 +47,7 @@ export default async function AdminStudentsPage() {
       }),
     )
   }
-  const { studentDomainSelectionOpen } = await getAppSettings()
+  const { studentDomainSelectionOpen, studentCanSelect } = await getAppSettings()
 
   return (
     <main className="min-h-screen bg-background px-6 py-12">
@@ -86,8 +86,23 @@ export default async function AdminStudentsPage() {
           Every student and the domain they have chosen to build their project in this cycle.
         </p>
 
-        <div className="mb-12 max-w-md">
-          <DomainSelectionToggle role="member" title="Student Domain Selection" initialOpen={studentDomainSelectionOpen} />
+        <div className="mb-12 max-w-md flex flex-col gap-4">
+          <DomainSelectionToggle
+            role="member"
+            field="view"
+            title="Student Domain Visibility"
+            initialEnabled={studentDomainSelectionOpen}
+            activeDescription="Students can currently see the domain selection screen."
+            inactiveDescription="Students currently see the program timeline instead."
+          />
+          <DomainSelectionToggle
+            role="member"
+            field="select"
+            title="Student Domain Selection"
+            initialEnabled={studentCanSelect}
+            activeDescription="Students can currently choose their domain."
+            inactiveDescription="Students can view the domains but cannot select one yet."
+          />
         </div>
 
         <PendingSelections people={pending} personLabel="Student" />

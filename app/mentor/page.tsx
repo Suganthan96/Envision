@@ -10,7 +10,7 @@ import { TIMELINE_PHASES } from "@/lib/timeline"
 export default async function MentorPage() {
   const session = await getSession()
   const displayName = session?.name?.trim() || session?.loginId
-  const { mentorDomainSelectionOpen: domainSelectionOpen } = await getAppSettings()
+  const { mentorDomainSelectionOpen: domainSelectionOpen, mentorCanSelect } = await getAppSettings()
 
   return (
     <main className="min-h-screen bg-background px-6 pt-12 pb-24">
@@ -40,6 +40,7 @@ export default async function MentorPage() {
             description="Select up to 2 domains you'd like to mentor students in for this cycle."
             capacity={7}
             maxSelections={2}
+            canSelect={mentorCanSelect}
           />
         </div>
       ) : (
