@@ -1,14 +1,14 @@
 import Link from "next/link"
 import { ArtDecoDivider } from "@/components/art-deco-divider"
 import { ServiceCard } from "@/components/service-card"
-import { PhotoShowcase } from "@/components/photo-showcase"
+import DomeGallery from "@/components/dome-gallery"
 import { Button } from "@/components/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { SHOWCASE_PHOTOS } from "@/lib/showcase-photos"
 
 export default function Home() {
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-background overflow-x-hidden">
       <ThemeToggle />
       {/* Hero Section */}
       <section className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
@@ -143,16 +143,28 @@ export default function Home() {
       </section>
 
       {/* Showcase Section */}
-      <section className="py-24 px-6">
-        <div className="max-w-6xl mx-auto">
+      <section className="py-24">
+        <div className="max-w-6xl mx-auto px-6">
           <ArtDecoDivider variant="chevron" />
 
           <div className="text-center mb-16">
             <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Showcase</p>
             <h2 className="font-serif text-4xl md:text-5xl text-foreground text-balance">Moments From Envision</h2>
+            <p className="text-muted-foreground text-sm mt-4">Drag to explore</p>
           </div>
+        </div>
 
-          <PhotoShowcase photos={SHOWCASE_PHOTOS} />
+        <div className="relative w-screen left-1/2 -translate-x-1/2 h-screen overflow-hidden">
+          <DomeGallery
+              images={SHOWCASE_PHOTOS.map((photo) => ({ src: photo.src, alt: photo.alt }))}
+              fit={0.8}
+              minRadius={600}
+              maxVerticalRotationDeg={0}
+              segments={34}
+              dragDampening={2}
+              overlayBlurColor="#08080a"
+              grayscale
+            />
         </div>
       </section>
 
