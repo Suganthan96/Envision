@@ -1,16 +1,23 @@
 import Link from "next/link"
 import { LogoutButton } from "@/components/logout-button"
 import { RoleSelectionsView, type RoleRow } from "@/components/role-selections-view"
+import { DomainSelectionToggle } from "@/components/domain-selection-toggle"
+import { PendingSelections, type PendingPerson } from "@/components/pending-selections"
 import { getSession } from "@/lib/get-session"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
+import { getAppSettings } from "@/lib/app-settings"
 
 export default async function AdminStudentsPage() {
   const session = await getSession()
 
   let students: RoleRow[] = []
+  let pending: PendingPerson[] = []
   if (session) {
     const supabase = getSupabaseServerClient()
-    const { data } = await supabase.rpc("admin_list_domain_selections", { p_admin_user_id: session.userId })
+    const [{ data }, { data: pendingData }] = await Promise.all([
+      supabase.rpc("admin_list_domain_selections", { p_admin_user_id: session.userId }),
+      supabase.rpc("admin_list_pending_domain_selections", { p_admin_user_id: session.userId, p_role: "member" }),
+    ])
 
     const grouped = new Map<string, { name: string | null; domainIds: string[] }>()
     for (const row of (data ?? []) as { login_id: string; name: string | null; role: string; domain_id: string }[]) {
@@ -20,7 +27,12 @@ export default async function AdminStudentsPage() {
       grouped.set(row.login_id, existing)
     }
     students = Array.from(grouped.entries()).map(([loginId, { name, domainIds }]) => ({ loginId, name, domainIds }))
+    pending = ((pendingData ?? []) as { login_id: string; name: string | null }[]).map((row) => ({
+      loginId: row.login_id,
+      name: row.name,
+    }))
   }
+  const { studentDomainSelectionOpen } = await getAppSettings()
 
   return (
     <main className="min-h-screen bg-background px-6 py-12">
@@ -52,9 +64,15 @@ export default async function AdminStudentsPage() {
         <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-4">
           Student <span className="text-gold-gradient">Domain Selections</span>
         </h1>
-        <p className="text-muted-foreground text-lg mb-12">
+        <p className="text-muted-foreground text-lg mb-8">
           Every student and the domain they have chosen to build their project in this cycle.
         </p>
+
+        <div className="mb-12 max-w-md">
+          <DomainSelectionToggle role="member" title="Student Domain Selection" initialOpen={studentDomainSelectionOpen} />
+        </div>
+
+        <PendingSelections people={pending} personLabel="Student" />
 
         <RoleSelectionsView
           people={students}

@@ -1,13 +1,18 @@
 import { LogoutButton } from "@/components/logout-button"
+import { ArtDecoDivider } from "@/components/art-deco-divider"
+import { TimelineView } from "@/components/timeline-view"
 import { getSession } from "@/lib/get-session"
+import { getAppSettings } from "@/lib/app-settings"
 import { DomainSelectionPage } from "@/components/domain-selection-page"
+import { TIMELINE_PHASES } from "@/lib/timeline"
 
 export default async function MentorPage() {
   const session = await getSession()
   const displayName = session?.name?.trim() || session?.loginId
+  const { mentorDomainSelectionOpen: domainSelectionOpen } = await getAppSettings()
 
   return (
-    <main className="min-h-screen bg-background px-6 pt-12">
+    <main className="min-h-screen bg-background px-6 pt-12 pb-24">
       <div className="relative z-10 max-w-4xl mx-auto flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
           <div className="w-8 h-px bg-primary" />
@@ -22,16 +27,29 @@ export default async function MentorPage() {
         </h1>
       </div>
 
-      <div className="relative z-10">
-        <DomainSelectionPage
-          role="mentor"
-          eyebrow="Mentor Portal"
-          heading="Choose Your Domains"
-          description="Select up to 2 domains you'd like to mentor students in for this cycle."
-          capacity={7}
-          maxSelections={2}
-        />
-      </div>
+      {domainSelectionOpen ? (
+        <div className="relative z-10">
+          <DomainSelectionPage
+            role="mentor"
+            eyebrow="Mentor Portal"
+            heading="Choose Your Domains"
+            description="Select up to 2 domains you'd like to mentor students in for this cycle."
+            capacity={7}
+            maxSelections={2}
+          />
+        </div>
+      ) : (
+        <div className="relative z-10 max-w-4xl mx-auto">
+          <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">EnVision 2026</p>
+          <p className="text-muted-foreground text-lg mb-4">
+            Domain selection isn&apos;t open yet. Here&apos;s the full session plan for the program, phase by phase.
+          </p>
+
+          <ArtDecoDivider variant="stepped" />
+
+          <TimelineView phases={TIMELINE_PHASES} />
+        </div>
+      )}
     </main>
   )
 }
