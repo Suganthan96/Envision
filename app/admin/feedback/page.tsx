@@ -1,19 +1,24 @@
 import Link from "next/link"
 import { LogoutButton } from "@/components/logout-button"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { AdminUserTable, type AppUserRow } from "@/components/admin-user-table"
-import { getSession } from "@/lib/get-session"
-import { getSupabaseServerClient } from "@/lib/supabase-server"
+import { FeedbackLinkEditor, type FeedbackLinkRow } from "@/components/feedback-link-editor"
+import { TIMELINE_PHASES } from "@/lib/timeline"
+import { getFeedbackLinks } from "@/lib/feedback-links"
 
-export default async function AdminPage() {
-  const session = await getSession()
+export const dynamic = "force-dynamic"
 
-  let users: AppUserRow[] = []
-  if (session) {
-    const supabase = getSupabaseServerClient()
-    const { data } = await supabase.rpc("admin_list_users", { p_admin_user_id: session.userId })
-    users = (data as AppUserRow[] | null) ?? []
-  }
+export default async function AdminFeedbackPage() {
+  const links = await getFeedbackLinks()
+
+  const sessionDays = (TIMELINE_PHASES.find((phase) => phase.id === "phase-1")?.entries ?? []).filter(
+    (entry) => entry.hasFeedbackForm,
+  )
+  const rows: FeedbackLinkRow[] = sessionDays.map((entry) => ({
+    entryId: entry.id,
+    label: entry.label,
+    title: entry.title,
+    url: links[entry.id] ?? "",
+  }))
 
   return (
     <main className="min-h-screen bg-background px-6 py-12">
@@ -29,10 +34,10 @@ export default async function AdminPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-6 mb-8">
-          <span className="text-primary text-sm uppercase tracking-wider border-b border-primary pb-1">
+        <div className="flex items-center gap-6 mb-8 flex-wrap">
+          <Link href="/admin" className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider">
             User Management
-          </span>
+          </Link>
           <Link
             href="/admin/mentors"
             className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
@@ -45,24 +50,20 @@ export default async function AdminPage() {
           >
             Student Selections
           </Link>
-          <Link
-            href="/admin/feedback"
-            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
-          >
+          <span className="text-primary text-sm uppercase tracking-wider border-b border-primary pb-1">
             Feedback Links
-          </Link>
+          </span>
         </div>
 
         <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Admin Portal</p>
         <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-4">
-          Welcome, <span className="text-gold-gradient">Administrator</span>
+          Session <span className="text-gold-gradient">Feedback Links</span>
         </h1>
         <p className="text-muted-foreground text-lg mb-12">
-          Reset a forgotten password below. The account will be required to set a new password at their next
-          sign-in.
+          Add or edit the Google Form link for each session day. Leave a field blank and save to remove a link.
         </p>
 
-        <AdminUserTable users={users} />
+        <FeedbackLinkEditor rows={rows} />
       </div>
     </main>
   )

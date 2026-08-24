@@ -41,7 +41,7 @@ export default function Home() {
             <Link href="/login">
               <Button
                 variant="outline"
-                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground uppercase tracking-wider text-sm px-10 h-12 bg-transparent"
+                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground dark:hover:bg-primary dark:hover:text-primary-foreground dark:bg-transparent dark:border-primary uppercase tracking-wider text-sm px-10 h-12 bg-transparent"
               >
                 Login
               </Button>

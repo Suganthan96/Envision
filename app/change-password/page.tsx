@@ -37,6 +37,9 @@ export default async function ChangePasswordPage() {
                   ? "You can rename your team later from your dashboard."
                   : "You will need to enter this exact name every time you sign in."
               }
+              requireTeamLeadName={session?.role === "member"}
+              teamLeadNameLabel="Team Leader Name"
+              teamLeadNameHelperText="The name of the person leading your team."
               requirePhone={session?.role === "member"}
               phoneLabel="Team Lead Phone Number"
               phoneHelperText="We'll use this to reach your team lead about the program."

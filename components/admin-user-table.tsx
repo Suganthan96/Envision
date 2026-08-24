@@ -200,7 +200,7 @@ export function AdminUserTable({ users }: { users: AppUserRow[] }) {
             <Button
               variant="outline"
               onClick={() => setDeleteTarget(Array.from(selected))}
-              className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground text-xs uppercase tracking-wider h-10"
+              className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground dark:hover:bg-destructive dark:hover:text-destructive-foreground dark:bg-transparent dark:border-destructive text-xs uppercase tracking-wider h-10"
             >
               <Trash2 className="w-4 h-4 mr-1.5" />
               Delete Selected ({selected.size})
@@ -294,7 +294,7 @@ export function AdminUserTable({ users }: { users: AppUserRow[] }) {
                         size="sm"
                         variant="outline"
                         onClick={() => setDeleteTarget([u.login_id])}
-                        className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground h-8 w-8 p-0"
+                        className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground dark:hover:bg-destructive dark:hover:text-destructive-foreground dark:bg-transparent dark:border-destructive h-8 w-8 p-0"
                         aria-label={`Delete ${u.login_id}`}
                       >
                         <Trash2 className="w-4 h-4" />

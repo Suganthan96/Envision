@@ -17,6 +17,9 @@ export function ChangePasswordForm({
   requirePhone = false,
   phoneLabel = "Phone Number",
   phoneHelperText = "We'll use this to reach you about the program.",
+  requireTeamLeadName = false,
+  teamLeadNameLabel = "Team Leader Name",
+  teamLeadNameHelperText = "The name of your team's leader.",
 }: {
   forced: boolean
   requireName?: boolean
@@ -25,10 +28,14 @@ export function ChangePasswordForm({
   requirePhone?: boolean
   phoneLabel?: string
   phoneHelperText?: string
+  requireTeamLeadName?: boolean
+  teamLeadNameLabel?: string
+  teamLeadNameHelperText?: string
 }) {
   const router = useRouter()
   const [name, setName] = useState("")
   const [phone, setPhone] = useState("")
+  const [teamLeadName, setTeamLeadName] = useState("")
   const [oldPassword, setOldPassword] = useState("")
   const [newPassword, setNewPassword] = useState("")
   const [confirmPassword, setConfirmPassword] = useState("")
@@ -49,7 +56,7 @@ export function ChangePasswordForm({
       const res = await fetch("/api/change-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ oldPassword, newPassword, name, phone }),
+        body: JSON.stringify({ oldPassword, newPassword, name, phone, teamLeadName }),
       })
       const data = await res.json()
 
@@ -91,6 +98,25 @@ export function ChangePasswordForm({
             className="bg-card border-border text-foreground focus:border-primary focus:ring-primary h-11"
           />
           <p className="text-muted-foreground text-xs">{nameHelperText}</p>
+        </div>
+      )}
+
+      {requireTeamLeadName && (
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="teamLeadName" className="text-primary tracking-[0.15em] uppercase text-xs">
+            {teamLeadNameLabel}
+          </Label>
+          <Input
+            id="teamLeadName"
+            type="text"
+            autoComplete="name"
+            placeholder="Enter your team leader's name"
+            value={teamLeadName}
+            onChange={(e) => setTeamLeadName(e.target.value)}
+            required
+            className="bg-card border-border text-foreground focus:border-primary focus:ring-primary h-11"
+          />
+          <p className="text-muted-foreground text-xs">{teamLeadNameHelperText}</p>
         </div>
       )}
 

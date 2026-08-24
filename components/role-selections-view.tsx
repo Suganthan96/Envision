@@ -12,6 +12,7 @@ export interface RoleRow {
   loginId: string
   name: string | null
   phone: string | null
+  teamLeadName: string | null
   domainIds: string[]
 }
 
@@ -32,6 +33,9 @@ function PersonCard({ person }: { person: RoleRow }) {
       <h3 className="font-serif text-lg text-foreground mb-1 text-balance">{displayName}</h3>
       {person.name?.trim() && (
         <p className="text-muted-foreground text-xs font-mono">{person.loginId}</p>
+      )}
+      {person.teamLeadName?.trim() && (
+        <p className="text-muted-foreground text-xs mt-1">Led by {person.teamLeadName}</p>
       )}
       {person.phone?.trim() && (
         <p className="text-muted-foreground text-xs font-mono mb-4">{person.phone}</p>

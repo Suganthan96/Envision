@@ -4,8 +4,13 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { ArtDecoDivider } from "@/components/art-deco-divider"
 import { TimelineView } from "@/components/timeline-view"
 import { TIMELINE_PHASES } from "@/lib/timeline"
+import { getFeedbackLinks } from "@/lib/feedback-links"
 
-export default function MemberTimelinePage() {
+export const dynamic = "force-dynamic"
+
+export default async function MemberTimelinePage() {
+  const feedbackLinks = await getFeedbackLinks()
+
   return (
     <main className="min-h-screen bg-background px-6 py-12">
       <div className="max-w-4xl mx-auto flex items-center justify-between mb-8">
@@ -34,8 +39,10 @@ export default function MemberTimelinePage() {
         <p className="text-muted-foreground text-lg mb-4">Full session plan for the program, phase by phase.</p>
 
         <ArtDecoDivider variant="stepped" />
+      </div>
 
-        <TimelineView phases={TIMELINE_PHASES} />
+      <div className="max-w-6xl mx-auto">
+        <TimelineView phases={TIMELINE_PHASES} feedbackLinks={feedbackLinks} />
       </div>
     </main>
   )

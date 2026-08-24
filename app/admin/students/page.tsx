@@ -20,23 +20,29 @@ export default async function AdminStudentsPage() {
       supabase.rpc("admin_list_pending_domain_selections", { p_admin_user_id: session.userId, p_role: "member" }),
     ])
 
-    const grouped = new Map<string, { name: string | null; phone: string | null; domainIds: string[] }>()
+    const grouped = new Map<
+      string,
+      { name: string | null; phone: string | null; teamLeadName: string | null; domainIds: string[] }
+    >()
     for (const row of (data ?? []) as {
       login_id: string
       name: string | null
       phone: string | null
+      team_lead_name: string | null
       role: string
       domain_id: string
     }[]) {
       if (row.role !== "member") continue
-      const existing = grouped.get(row.login_id) ?? { name: row.name, phone: row.phone, domainIds: [] }
+      const existing =
+        grouped.get(row.login_id) ?? { name: row.name, phone: row.phone, teamLeadName: row.team_lead_name, domainIds: [] }
       existing.domainIds.push(row.domain_id)
       grouped.set(row.login_id, existing)
     }
-    students = Array.from(grouped.entries()).map(([loginId, { name, phone, domainIds }]) => ({
+    students = Array.from(grouped.entries()).map(([loginId, { name, phone, teamLeadName, domainIds }]) => ({
       loginId,
       name,
       phone,
+      teamLeadName,
       domainIds,
     }))
     pending = ((pendingData ?? []) as { login_id: string; name: string | null; phone: string | null }[]).map(
@@ -76,6 +82,12 @@ export default async function AdminStudentsPage() {
           <span className="text-primary text-sm uppercase tracking-wider border-b border-primary pb-1">
             Student Selections
           </span>
+          <Link
+            href="/admin/feedback"
+            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
+          >
+            Feedback Links
+          </Link>
         </div>
 
         <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Admin Portal</p>

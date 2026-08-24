@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
   const newPassword = typeof body?.newPassword === "string" ? body.newPassword : ""
   const name = typeof body?.name === "string" ? body.name.trim() : ""
   const phone = typeof body?.phone === "string" ? body.phone.trim() : ""
+  const teamLeadName = typeof body?.teamLeadName === "string" ? body.teamLeadName.trim() : ""
 
   if (!oldPassword || !newPassword) {
     return NextResponse.json({ error: "Both current and new password are required." }, { status: 400 })
@@ -40,6 +41,10 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "A phone number for the team lead is required." }, { status: 400 })
   }
 
+  if (session.role === "member" && !teamLeadName) {
+    return NextResponse.json({ error: "The team lead's name is required." }, { status: 400 })
+  }
+
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase.rpc("change_password", {
     p_user_id: session.userId,
@@ -47,6 +52,7 @@ export async function POST(request: NextRequest) {
     p_new_password: newPassword,
     p_name: name || null,
     p_phone: phone || null,
+    p_team_lead_name: teamLeadName || null,
   })
 
   if (error || data !== true) {

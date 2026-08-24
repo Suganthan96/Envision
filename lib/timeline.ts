@@ -5,6 +5,7 @@ export interface TimelineEntry {
   title: string
   resource: string
   venue?: string
+  hasFeedbackForm?: boolean
 }
 
 export interface TimelinePhase {
@@ -33,6 +34,7 @@ export const TIMELINE_PHASES: TimelinePhase[] = [
         title: "Awareness Session: Entrepreneurship and Innovation as Career Opportunities",
         resource: "External Expert (2 Nos) — eCirkle",
         venue: "G01 — 40 Teams & Student Mentors · C30 — 23 Teams & Student Mentors",
+        hasFeedbackForm: true,
       },
       {
         id: "day-3",
@@ -41,6 +43,7 @@ export const TIMELINE_PHASES: TimelinePhase[] = [
         title: "Session on Problem Solving and Ideation",
         resource: "External Expert (2 Nos) — Ms. Sujaya Rao (Startup Mentor), Ms. Agnes Roshini (EDII)",
         venue: "G01 — 40 Teams & Student Mentors · C30 — 23 Teams & Student Mentors",
+        hasFeedbackForm: true,
       },
       {
         id: "day-4",
@@ -65,6 +68,7 @@ export const TIMELINE_PHASES: TimelinePhase[] = [
         title: "Session on Achieving Problem-Solution Fit",
         resource: "External Expert (2 Nos) — Mr. Pathy Lakshminarayanan (PALS), Ms. Subashini Ganesan (TCS)",
         venue: "G01 — 40 Teams & Student Mentors · C30 — 23 Teams & Student Mentors",
+        hasFeedbackForm: true,
       },
       {
         id: "day-7",
