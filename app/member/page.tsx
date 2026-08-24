@@ -3,18 +3,15 @@ import { LogoutButton } from "@/components/logout-button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { EditTeamName } from "@/components/edit-team-name"
 import { ArtDecoDivider } from "@/components/art-deco-divider"
-import { TimelineView } from "@/components/timeline-view"
+import { Button } from "@/components/ui/button"
 import { getSession } from "@/lib/get-session"
 import { getAppSettings } from "@/lib/app-settings"
 import { DomainSelectionPage } from "@/components/domain-selection-page"
-import { TIMELINE_PHASES } from "@/lib/timeline"
-import { getFeedbackLinks } from "@/lib/feedback-links"
 
 export default async function MemberPage() {
   const session = await getSession()
   const teamName = session?.name?.trim() || session?.loginId
   const { studentDomainSelectionOpen: domainSelectionOpen, studentCanSelect } = await getAppSettings()
-  const feedbackLinks = domainSelectionOpen ? {} : await getFeedbackLinks()
 
   return (
     <main className="min-h-screen bg-background px-6 pt-12 pb-24">
@@ -59,13 +56,21 @@ export default async function MemberPage() {
       ) : (
         <div className="relative z-10 max-w-4xl mx-auto">
           <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">EnVision 2026</p>
-          <p className="text-muted-foreground text-lg mb-4">
-            Domain selection isn&apos;t open yet. Here&apos;s the full session plan for the program, phase by phase.
+          <p className="text-muted-foreground text-lg mb-8">
+            Domain selection isn&apos;t open yet. In the meantime, take a look at the full session plan for the
+            program.
           </p>
 
           <ArtDecoDivider variant="stepped" />
 
-          <TimelineView phases={TIMELINE_PHASES} feedbackLinks={feedbackLinks} />
+          <Link href="/member/timeline">
+            <Button
+              variant="outline"
+              className="border-primary text-primary hover:bg-primary hover:text-primary-foreground dark:hover:bg-primary dark:hover:text-primary-foreground dark:bg-transparent dark:border-primary uppercase tracking-wider text-sm bg-transparent"
+            >
+              View Program Timeline →
+            </Button>
+          </Link>
         </div>
       )}
     </main>
