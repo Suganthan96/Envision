@@ -4,7 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Switch } from "@/components/ui/switch"
 
-export function DomainSelectionToggle({
+export function AdminSettingToggle({
   role,
   field,
   title,
@@ -12,8 +12,9 @@ export function DomainSelectionToggle({
   activeDescription,
   inactiveDescription,
 }: {
-  role: "mentor" | "member"
-  field: "view" | "select"
+  // Omitted for global settings that aren't scoped to a role.
+  role?: "mentor" | "member"
+  field: "view" | "select" | "teamNameEdit"
   title: string
   initialEnabled: boolean
   activeDescription: string
@@ -33,7 +34,7 @@ export function DomainSelectionToggle({
       const res = await fetch("/api/admin/settings", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ role, field, enabled: next }),
+        body: JSON.stringify(role ? { role, field, enabled: next } : { field, enabled: next }),
       })
       const data = await res.json()
 

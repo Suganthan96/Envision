@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { createSessionToken, verifySessionToken, SESSION_COOKIE } from "@/lib/session"
+import { getAppSettings } from "@/lib/app-settings"
 
 export async function POST(request: NextRequest) {
   const token = request.cookies.get(SESSION_COOKIE)?.value
@@ -12,6 +13,13 @@ export async function POST(request: NextRequest) {
 
   if (session.role !== "member") {
     return NextResponse.json({ error: "Only students have a team name." }, { status: 403 })
+  }
+
+  // Hiding the button isn't enough on its own -- enforce the admin
+  // setting here too so the endpoint can't be called directly.
+  const { teamNameEditOpen } = await getAppSettings()
+  if (!teamNameEditOpen) {
+    return NextResponse.json({ error: "Team name editing is currently closed." }, { status: 403 })
   }
 
   const body = await request.json().catch(() => null)

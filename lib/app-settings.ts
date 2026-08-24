@@ -5,6 +5,7 @@ type AppSettings = {
   mentorDomainSelectionOpen: boolean
   studentCanSelect: boolean
   mentorCanSelect: boolean
+  teamNameEditOpen: boolean
 }
 
 export async function getAppSettings(): Promise<AppSettings> {
@@ -16,5 +17,8 @@ export async function getAppSettings(): Promise<AppSettings> {
     mentorDomainSelectionOpen: Boolean(row?.mentor_domain_selection_open),
     studentCanSelect: Boolean(row?.student_can_select),
     mentorCanSelect: Boolean(row?.mentor_can_select),
+    // Defaults to true when the row is missing so editing isn't silently
+    // locked out if the settings row can't be read.
+    teamNameEditOpen: row?.team_name_edit_open ?? true,
   }
 }

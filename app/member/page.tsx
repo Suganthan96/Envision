@@ -11,7 +11,11 @@ import { DomainSelectionPage } from "@/components/domain-selection-page"
 export default async function MemberPage() {
   const session = await getSession()
   const teamName = session?.name?.trim() || session?.loginId
-  const { studentDomainSelectionOpen: domainSelectionOpen, studentCanSelect } = await getAppSettings()
+  const {
+    studentDomainSelectionOpen: domainSelectionOpen,
+    studentCanSelect,
+    teamNameEditOpen,
+  } = await getAppSettings()
 
   return (
     <main className="min-h-screen bg-background px-6 pt-12 pb-24">
@@ -38,7 +42,7 @@ export default async function MemberPage() {
         <h1 className="font-serif text-3xl md:text-4xl text-foreground">
           Welcome, <span className="text-gold-gradient">{teamName}</span>
         </h1>
-        <EditTeamName currentTeamName={session?.name ?? null} />
+        {teamNameEditOpen && <EditTeamName currentTeamName={session?.name ?? null} />}
       </div>
 
       {domainSelectionOpen ? (

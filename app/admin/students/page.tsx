@@ -2,7 +2,7 @@ import Link from "next/link"
 import { LogoutButton } from "@/components/logout-button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { RoleSelectionsView, type RoleRow } from "@/components/role-selections-view"
-import { DomainSelectionToggle } from "@/components/domain-selection-toggle"
+import { AdminSettingToggle } from "@/components/admin-setting-toggle"
 import { PendingSelections, type PendingPerson } from "@/components/pending-selections"
 import { getSession } from "@/lib/get-session"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
@@ -53,7 +53,7 @@ export default async function AdminStudentsPage() {
       }),
     )
   }
-  const { studentDomainSelectionOpen, studentCanSelect } = await getAppSettings()
+  const { studentDomainSelectionOpen, studentCanSelect, teamNameEditOpen } = await getAppSettings()
 
   return (
     <main className="min-h-screen bg-background px-6 py-12">
@@ -98,8 +98,8 @@ export default async function AdminStudentsPage() {
           Every student and the domain they have chosen to build their project in this cycle.
         </p>
 
-        <div className="mb-12 flex flex-col sm:flex-row gap-4">
-          <DomainSelectionToggle
+        <div className="mb-12 flex flex-col sm:flex-row sm:flex-wrap gap-4">
+          <AdminSettingToggle
             role="member"
             field="view"
             title="Student Domain Visibility"
@@ -107,13 +107,20 @@ export default async function AdminStudentsPage() {
             activeDescription="Students can currently see the domain selection screen."
             inactiveDescription="Students currently see the program timeline instead."
           />
-          <DomainSelectionToggle
+          <AdminSettingToggle
             role="member"
             field="select"
             title="Student Domain Selection"
             initialEnabled={studentCanSelect}
             activeDescription="Students can currently choose their domain."
             inactiveDescription="Students can view the domains but cannot select one yet."
+          />
+          <AdminSettingToggle
+            field="teamNameEdit"
+            title="Team Name Editing"
+            initialEnabled={teamNameEditOpen}
+            activeDescription="Students can rename their team from their dashboard."
+            inactiveDescription="Team names are locked and cannot be changed."
           />
         </div>
 
