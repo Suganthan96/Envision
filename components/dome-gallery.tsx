@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useRef, useCallback } from "react"
+import { useEffect, useMemo, useRef, useCallback, useState } from "react"
 import { useGesture } from "@use-gesture/react"
 
 type ImageItem = string | { src: string; alt?: string }
@@ -64,8 +64,8 @@ function shuffle<T>(arr: T[]): T[] {
   return result
 }
 
-function buildItems(pool: ImageItem[], seg: number): ItemDef[] {
-  pool = shuffle(pool)
+function buildItems(pool: ImageItem[], seg: number, randomize: boolean): ItemDef[] {
+  pool = randomize ? shuffle(pool) : pool.slice()
   const xCols = Array.from({ length: seg }, (_, i) => -37 + i * 2)
   const evenYs = [-4, -2, 0, 2, 4]
   const oddYs = [-3, -1, 1, 3, 5]
@@ -175,7 +175,12 @@ export default function DomeGallery({
     document.body.classList.remove("dg-scroll-lock")
   }, [])
 
-  const items = useMemo(() => buildItems(images, segments), [images, segments])
+  // Shuffle only after mount so the first client render matches the
+  // server-rendered HTML exactly (Math.random() during the SSR-matching
+  // render pass causes a hydration mismatch otherwise).
+  const [mounted, setMounted] = useState(false)
+  useEffect(() => setMounted(true), [])
+  const items = useMemo(() => buildItems(images, segments, mounted), [images, segments, mounted])
 
   const applyTransform = (xDeg: number, yDeg: number) => {
     const el = sphereRef.current
