@@ -41,7 +41,6 @@ export default async function MentorPage() {
             eyebrow="Mentor Portal"
             heading="Choose Your Domains"
             description="Select up to 2 domains you'd like to mentor students in for this cycle."
-            capacity={7}
             maxSelections={2}
             canSelect={mentorCanSelect}
           />

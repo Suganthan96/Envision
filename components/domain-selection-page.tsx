@@ -22,7 +22,6 @@ interface DomainSelectionPageProps {
   eyebrow: string
   heading: string
   description: string
-  capacity?: number
   maxSelections?: number
   canSelect?: boolean
 }
@@ -31,12 +30,12 @@ export function DomainSelectionPage({
   eyebrow,
   heading,
   description,
-  capacity,
   maxSelections = 1,
   canSelect = true,
 }: DomainSelectionPageProps) {
   const [selected, setSelected] = useState<string[]>([])
   const [counts, setCounts] = useState<Record<string, number>>({})
+  const [capacities, setCapacities] = useState<Record<string, number>>({})
   const [stateLoaded, setStateLoaded] = useState(false)
   const [activeDomainId, setActiveDomainId] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
@@ -50,6 +49,7 @@ export function DomainSelectionPage({
       if (!res.ok) return
       const data = await res.json()
       setCounts(data.counts ?? {})
+      setCapacities(data.capacities ?? {})
       setSelected(Array.isArray(data.mine) ? data.mine : [])
     } catch {
       // network hiccup — the next poll will retry
@@ -96,6 +96,7 @@ export function DomainSelectionPage({
   const isMine = (domainId: string) => selected.includes(domainId)
 
   const isFull = (domainId: string) => {
+    const capacity = capacities[domainId]
     if (capacity === undefined) return false
     if (isMine(domainId)) return false
     return (counts[domainId] ?? 0) >= capacity
@@ -148,7 +149,7 @@ export function DomainSelectionPage({
                 icon={<DomainIcon icon={domain.icon} className="w-10 h-10" />}
                 selected={isMine(domain.id)}
                 onOpen={() => setActiveDomainId(domain.id)}
-                capacity={capacity !== undefined && stateLoaded ? capacity : undefined}
+                capacity={stateLoaded ? capacities[domain.id] : undefined}
                 count={counts[domain.id] ?? 0}
                 disabled={isFull(domain.id) || isLockedOut(domain.id)}
               />
@@ -190,9 +191,9 @@ export function DomainSelectionPage({
                 {activeDomain.description}
               </DialogDescription>
 
-              {capacity !== undefined && (
+              {capacities[activeDomain.id] !== undefined && (
                 <p className={isFull(activeDomain.id) ? "text-destructive text-sm" : "text-muted-foreground text-sm"}>
-                  {counts[activeDomain.id] ?? 0}/{capacity} selected
+                  {counts[activeDomain.id] ?? 0}/{capacities[activeDomain.id]} selected
                   {isFull(activeDomain.id) ? " — this domain is full." : ""}
                 </p>
               )}

@@ -4,21 +4,38 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { RoleSelectionsView, type RoleRow } from "@/components/role-selections-view"
 import { AdminSettingToggle } from "@/components/admin-setting-toggle"
 import { PendingSelections, type PendingPerson } from "@/components/pending-selections"
+import { DomainCapacityEditor, type DomainCapacityRow } from "@/components/domain-capacity-editor"
 import { getSession } from "@/lib/get-session"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { getAppSettings } from "@/lib/app-settings"
+import { DOMAINS } from "@/lib/domains"
 
 export default async function AdminStudentsPage() {
   const session = await getSession()
 
   let students: RoleRow[] = []
   let pending: PendingPerson[] = []
+  let capacityRows: DomainCapacityRow[] = []
+  let capacities: Record<string, number> = {}
   if (session) {
     const supabase = getSupabaseServerClient()
-    const [{ data }, { data: pendingData }] = await Promise.all([
+    const [{ data }, { data: pendingData }, { data: capacityData }] = await Promise.all([
       supabase.rpc("admin_list_domain_selections", { p_admin_user_id: session.userId }),
       supabase.rpc("admin_list_pending_domain_selections", { p_admin_user_id: session.userId, p_role: "member" }),
+      supabase.rpc("get_domain_capacities"),
     ])
+
+    const capacityData2 = (capacityData ?? []) as {
+      domain_id: string
+      student_capacity: number
+      mentor_capacity: number
+    }[]
+    capacityRows = DOMAINS.map((d) => ({
+      domainId: d.id,
+      title: d.title,
+      capacity: capacityData2.find((c) => c.domain_id === d.id)?.student_capacity ?? 6,
+    }))
+    capacities = Object.fromEntries(capacityRows.map((r) => [r.domainId, r.capacity]))
 
     const grouped = new Map<
       string,
@@ -130,11 +147,19 @@ export default async function AdminStudentsPage() {
           />
         </div>
 
+        <div className="mb-12">
+          <h2 className="font-serif text-xl text-foreground mb-1">Theme Capacities</h2>
+          <p className="text-muted-foreground text-sm mb-4">
+            How many students can select each theme. Changes apply immediately.
+          </p>
+          <DomainCapacityEditor rows={capacityRows} role="member" />
+        </div>
+
         <PendingSelections people={pending} personLabel="Student" />
 
         <RoleSelectionsView
           people={students}
-          capacityPerDomain={6}
+          capacities={capacities}
           personLabel="Student"
           personLabelPlural="students"
           emptyLabel="No students have selected a domain yet."

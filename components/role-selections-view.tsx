@@ -148,7 +148,7 @@ function ThemeCard({
   )
 }
 
-function ThemeWiseView({ people, capacityPerDomain }: { people: RoleRow[]; capacityPerDomain: number }) {
+function ThemeWiseView({ people, capacities }: { people: RoleRow[]; capacities: Record<string, number> }) {
   const byDomain = useMemo(() => {
     const map = new Map<string, string[]>()
     for (const person of people) {
@@ -172,7 +172,7 @@ function ThemeWiseView({ people, capacityPerDomain }: { people: RoleRow[]; capac
             title={domain.title}
             icon={domain.icon}
             count={names.length}
-            capacity={capacityPerDomain}
+            capacity={capacities[domain.id] ?? 0}
             names={names}
           />
         )
@@ -183,13 +183,13 @@ function ThemeWiseView({ people, capacityPerDomain }: { people: RoleRow[]; capac
 
 export function RoleSelectionsView({
   people,
-  capacityPerDomain,
+  capacities,
   personLabel,
   personLabelPlural,
   emptyLabel,
 }: {
   people: RoleRow[]
-  capacityPerDomain: number
+  capacities: Record<string, number>
   personLabel: string
   personLabelPlural: string
   emptyLabel: string
@@ -228,7 +228,7 @@ export function RoleSelectionsView({
       ) : view === "person" ? (
         <PersonCardsView people={people} personLabelPlural={personLabelPlural} />
       ) : (
-        <ThemeWiseView people={people} capacityPerDomain={capacityPerDomain} />
+        <ThemeWiseView people={people} capacities={capacities} />
       )}
     </div>
   )

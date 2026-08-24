@@ -56,7 +56,6 @@ export default async function MemberPage() {
             eyebrow="Student Portal"
             heading="Choose Your Domain"
             description="Select the domain you'd like to build your project in for this cycle."
-            capacity={6}
             maxSelections={1}
             canSelect={studentCanSelect}
           />

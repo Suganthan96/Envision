@@ -10,9 +10,10 @@ export async function GET() {
 
   const supabase = getSupabaseServerClient()
 
-  const [countsResult, mineResult] = await Promise.all([
+  const [countsResult, mineResult, capacitiesResult] = await Promise.all([
     supabase.rpc("get_domain_counts", { p_role: session.role }),
     supabase.rpc("get_my_domain_selections", { p_user_id: session.userId, p_role: session.role }),
+    supabase.rpc("get_domain_capacities"),
   ])
 
   if (countsResult.error) {
@@ -26,5 +27,14 @@ export async function GET() {
 
   const mine = ((mineResult.data ?? []) as { domain_id: string }[]).map((row) => row.domain_id)
 
-  return NextResponse.json({ counts, mine })
+  const capacities: Record<string, number> = {}
+  for (const row of (capacitiesResult.data ?? []) as {
+    domain_id: string
+    student_capacity: number
+    mentor_capacity: number
+  }[]) {
+    capacities[row.domain_id] = session.role === "mentor" ? row.mentor_capacity : row.student_capacity
+  }
+
+  return NextResponse.json({ counts, mine, capacities })
 }
