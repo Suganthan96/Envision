@@ -163,7 +163,7 @@ export default function Home() {
               segments={34}
               dragDampening={2}
               overlayBlurColor="#08080a"
-              grayscale
+              grayscale={false}
             />
         </div>
       </section>
