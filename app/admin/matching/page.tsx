@@ -1,7 +1,12 @@
 import Link from "next/link"
 import { LogoutButton } from "@/components/logout-button"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { MentorMatchingBoard, type MatchingMentor, type MatchingStudent } from "@/components/mentor-matching-board"
+import {
+  MentorMatchingBoard,
+  type MatchingMentor,
+  type MatchingStudent,
+  type VenueInfo,
+} from "@/components/mentor-matching-board"
 import { getSession } from "@/lib/get-session"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 
@@ -12,12 +17,14 @@ export default async function AdminMatchingPage() {
 
   let mentors: MatchingMentor[] = []
   let students: MatchingStudent[] = []
+  let venues: VenueInfo[] = []
 
   if (session) {
     const supabase = getSupabaseServerClient()
-    const [{ data: mentorData }, { data: studentData }] = await Promise.all([
+    const [{ data: mentorData }, { data: studentData }, { data: venueData }] = await Promise.all([
       supabase.rpc("admin_list_assignable_mentors", { p_admin_user_id: session.userId }),
       supabase.rpc("admin_list_assignable_students", { p_admin_user_id: session.userId }),
+      supabase.rpc("get_venues"),
     ])
 
     mentors = (
@@ -25,6 +32,7 @@ export default async function AdminMatchingPage() {
         mentor_user_id: string
         login_id: string
         name: string | null
+        venue: string | null
         domain_ids: string[]
         assigned_student_ids: string[]
       }[]
@@ -32,6 +40,7 @@ export default async function AdminMatchingPage() {
       mentorUserId: row.mentor_user_id,
       loginId: row.login_id,
       name: row.name,
+      venue: row.venue,
       domainIds: row.domain_ids,
     }))
 
@@ -40,6 +49,10 @@ export default async function AdminMatchingPage() {
         student_user_id: string
         login_id: string
         team_name: string | null
+        team_lead_name: string | null
+        phone: string | null
+        email: string | null
+        venue: string | null
         domain_id: string
         mentor_user_id: string | null
       }[]
@@ -47,8 +60,18 @@ export default async function AdminMatchingPage() {
       studentUserId: row.student_user_id,
       loginId: row.login_id,
       teamName: row.team_name,
+      teamLeadName: row.team_lead_name,
+      phone: row.phone,
+      email: row.email,
+      venue: row.venue,
       domainId: row.domain_id,
       mentorUserId: row.mentor_user_id,
+    }))
+
+    venues = ((venueData ?? []) as { code: string; team_capacity: number; team_count: number }[]).map((row) => ({
+      code: row.code,
+      teamCapacity: row.team_capacity,
+      teamCount: row.team_count,
     }))
   }
 
@@ -98,11 +121,12 @@ export default async function AdminMatchingPage() {
           Mentor <span className="text-gold-gradient">Matching</span>
         </h1>
         <p className="text-muted-foreground text-lg mb-12">
-          Drag a team onto a mentor to assign it. Each mentor takes at most 2 teams; a team's border glows when its
-          domain matches one the mentor picked.
+          Manage venues and their team capacity below, then drag a team onto a mentor to assign it. Each mentor
+          takes at most 2 teams, and a team can only join a mentor in the same venue. Use Download PDF for the
+          final printable list, grouped by venue.
         </p>
 
-        <MentorMatchingBoard initialMentors={mentors} initialStudents={students} />
+        <MentorMatchingBoard initialMentors={mentors} initialStudents={students} initialVenues={venues} />
       </div>
     </main>
   )

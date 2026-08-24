@@ -2,9 +2,10 @@
 
 import type React from "react"
 import { useMemo, useRef, useState } from "react"
-import { X } from "lucide-react"
+import { X, Download, Plus, Trash2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui/button"
 import {
   Select,
   SelectContent,
@@ -15,10 +16,17 @@ import {
 import { DOMAINS } from "@/lib/domains"
 import { cn } from "@/lib/utils"
 
+export interface VenueInfo {
+  code: string
+  teamCapacity: number
+  teamCount: number
+}
+
 export interface MatchingMentor {
   mentorUserId: string
   loginId: string
   name: string | null
+  venue: string | null
   domainIds: string[]
 }
 
@@ -26,6 +34,10 @@ export interface MatchingStudent {
   studentUserId: string
   loginId: string
   teamName: string | null
+  teamLeadName: string | null
+  phone: string | null
+  email: string | null
+  venue: string | null
   domainId: string
   mentorUserId: string | null
 }
@@ -34,16 +46,144 @@ function domainTitle(domainId: string) {
   return DOMAINS.find((d) => d.id === domainId)?.title ?? domainId
 }
 
+function VenuePicker({
+  value,
+  venues,
+  onChange,
+}: {
+  value: string | null
+  venues: VenueInfo[]
+  onChange: (venue: string | null) => void
+}) {
+  return (
+    <Select value={value ?? "none"} onValueChange={(v) => onChange(v === "none" ? null : v)}>
+      <SelectTrigger
+        className="h-6 px-2 text-[10px] uppercase tracking-wider bg-transparent border-border text-muted-foreground w-auto gap-1"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <SelectValue placeholder="No Venue" />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="none">No Venue</SelectItem>
+        {venues.map((v) => (
+          <SelectItem key={v.code} value={v.code}>
+            {v.code}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  )
+}
+
+function VenueManager({
+  venues,
+  onAdd,
+  onRemove,
+  onSetCapacity,
+}: {
+  venues: VenueInfo[]
+  onAdd: (code: string, capacity: number) => void
+  onRemove: (code: string) => void
+  onSetCapacity: (code: string, capacity: number) => void
+}) {
+  const [newCode, setNewCode] = useState("")
+  const [newCapacity, setNewCapacity] = useState("")
+  const [capacityDrafts, setCapacityDrafts] = useState<Record<string, string>>({})
+
+  return (
+    <div className="border border-border bg-card/40 p-4 flex flex-col gap-3">
+      <p className="text-primary text-xs uppercase tracking-wider">Venues</p>
+
+      <div className="flex flex-col gap-2">
+        {venues.length === 0 ? (
+          <p className="text-muted-foreground text-xs">No venues yet — add one below.</p>
+        ) : (
+          venues.map((v) => {
+            const draft = capacityDrafts[v.code] ?? String(v.teamCapacity)
+            const over = v.teamCount > v.teamCapacity
+            return (
+              <div key={v.code} className="flex items-center gap-2 text-sm">
+                <span className="font-mono text-foreground w-16 shrink-0">{v.code}</span>
+                <span className={cn("text-xs shrink-0 w-20", over ? "text-destructive" : "text-muted-foreground")}>
+                  {v.teamCount}/{v.teamCapacity} teams
+                </span>
+                <Input
+                  type="number"
+                  min={0}
+                  value={draft}
+                  onChange={(e) => setCapacityDrafts((d) => ({ ...d, [v.code]: e.target.value }))}
+                  onBlur={() => {
+                    const n = Number(draft)
+                    if (Number.isInteger(n) && n >= 0 && n !== v.teamCapacity) onSetCapacity(v.code, n)
+                  }}
+                  className="bg-card border-border text-foreground h-7 text-xs w-20"
+                />
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => onRemove(v.code)}
+                  className="border-destructive text-destructive hover:bg-destructive hover:text-destructive-foreground h-7 w-7 p-0 shrink-0"
+                  aria-label={`Remove venue ${v.code}`}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            )
+          })
+        )}
+      </div>
+
+      <div className="flex items-center gap-2 pt-2 border-t border-border">
+        <Input
+          value={newCode}
+          onChange={(e) => setNewCode(e.target.value)}
+          placeholder="Code (e.g. F11)"
+          className="bg-card border-border text-foreground h-8 text-sm flex-1"
+        />
+        <Input
+          type="number"
+          min={0}
+          value={newCapacity}
+          onChange={(e) => setNewCapacity(e.target.value)}
+          placeholder="Teams"
+          className="bg-card border-border text-foreground h-8 text-sm w-24"
+        />
+        <Button
+          type="button"
+          size="sm"
+          onClick={() => {
+            const n = Number(newCapacity)
+            if (!newCode.trim() || !Number.isInteger(n) || n < 0) return
+            onAdd(newCode.trim(), n)
+            setNewCode("")
+            setNewCapacity("")
+          }}
+          disabled={!newCode.trim() || newCapacity === ""}
+          className="bg-primary text-primary-foreground hover:bg-primary/90 text-xs uppercase tracking-wider h-8 shrink-0"
+        >
+          <Plus className="w-3.5 h-3.5 mr-1" />
+          Add
+        </Button>
+      </div>
+    </div>
+  )
+}
+
 function TeamCard({
   student,
   compatible,
+  venues,
   onDragStart,
   onRemove,
+  onVenueChange,
 }: {
   student: MatchingStudent
   compatible: boolean | null
+  venues: VenueInfo[]
   onDragStart: (e: React.DragEvent) => void
   onRemove?: () => void
+  onVenueChange: (venue: string | null) => void
 }) {
   const displayName = student.teamName?.trim() || student.loginId
 
@@ -59,8 +199,11 @@ function TeamCard({
       )}
       title={student.loginId}
     >
-      <p className="text-foreground text-sm font-medium truncate">{displayName}</p>
+      <p className="text-foreground text-sm font-medium truncate pr-5">{displayName}</p>
       <p className="text-muted-foreground text-xs truncate">{domainTitle(student.domainId)}</p>
+      <div className="mt-1.5" onPointerDown={(e) => e.stopPropagation()}>
+        <VenuePicker value={student.venue} venues={venues} onChange={onVenueChange} />
+      </div>
       {onRemove && (
         <button
           type="button"
@@ -78,16 +221,22 @@ function TeamCard({
 function MentorCard({
   mentor,
   assignedStudents,
+  venues,
   onDrop,
   onRemove,
+  onVenueChange,
+  onTeamVenueChange,
   dragOver,
   onDragOver,
   onDragLeave,
 }: {
   mentor: MatchingMentor
   assignedStudents: MatchingStudent[]
+  venues: VenueInfo[]
   onDrop: () => void
   onRemove: (studentUserId: string) => void
+  onVenueChange: (venue: string | null) => void
+  onTeamVenueChange: (studentUserId: string, venue: string | null) => void
   dragOver: boolean
   onDragOver: (e: React.DragEvent) => void
   onDragLeave: () => void
@@ -115,7 +264,7 @@ function MentorCard({
       <div>
         <p className="text-foreground font-serif text-lg truncate">{displayName}</p>
         {mentor.name?.trim() && <p className="text-muted-foreground text-xs font-mono">{mentor.loginId}</p>}
-        <div className="flex flex-wrap gap-1 mt-1.5">
+        <div className="flex flex-wrap items-center gap-1 mt-1.5">
           {mentor.domainIds.map((id) => (
             <span
               key={id}
@@ -124,6 +273,9 @@ function MentorCard({
               {domainTitle(id)}
             </span>
           ))}
+        </div>
+        <div className="mt-1.5">
+          <VenuePicker value={mentor.venue} venues={venues} onChange={onVenueChange} />
         </div>
       </div>
 
@@ -136,8 +288,10 @@ function MentorCard({
                 key={student.studentUserId}
                 student={student}
                 compatible={mentor.domainIds.includes(student.domainId)}
+                venues={venues}
                 onDragStart={(e) => e.dataTransfer.setData("text/plain", student.studentUserId)}
                 onRemove={() => onRemove(student.studentUserId)}
+                onVenueChange={(venue) => onTeamVenueChange(student.studentUserId, venue)}
               />
             )
           }
@@ -155,20 +309,113 @@ function MentorCard({
   )
 }
 
+type ExportRow = { mentorId: string; mentorName: string; venue: string; team: MatchingStudent }
+
+function PrintableList({ rows }: { rows: ExportRow[] }) {
+  const groups = useMemo(() => {
+    const map = new Map<string, ExportRow[]>()
+    for (const r of rows) {
+      const list = map.get(r.venue) ?? []
+      list.push(r)
+      map.set(r.venue, list)
+    }
+    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b))
+  }, [rows])
+
+  const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+
+  return (
+    <div className="hidden print:block bg-white text-black">
+      <style>{`
+        @media print {
+          @page { size: A4; margin: 16mm 14mm; }
+          .print-report thead { display: table-header-group; }
+          .print-report tr { break-inside: avoid; }
+          .print-report section { break-inside: avoid-page; }
+        }
+      `}</style>
+
+      <div className="print-report">
+        <header className="text-center mb-8 pb-4 border-b-2 border-black">
+          <p className="text-xs tracking-[0.4em] uppercase text-gray-600 mb-2">Envision</p>
+          <h1 className="text-2xl font-bold">Mentor–Student List</h1>
+          <p className="text-[11px] text-gray-500 mt-2">Generated {today}</p>
+        </header>
+
+        {rows.length === 0 ? (
+          <p className="text-center text-gray-500 text-sm">No mentors have any teams assigned yet.</p>
+        ) : (
+          groups.map(([venue, venueRows]) => {
+            const mentorCounts = new Map<string, number>()
+            for (const r of venueRows) mentorCounts.set(r.mentorId, (mentorCounts.get(r.mentorId) ?? 0) + 1)
+
+            return (
+              <section key={venue} className="mb-8">
+                <h2 className="text-sm font-bold uppercase tracking-wide border-b border-black pb-1.5 mb-3">
+                  Venue: {venue} <span className="font-normal text-gray-500">({venueRows.length} teams)</span>
+                </h2>
+                <table className="w-full border-collapse text-[11px]">
+                  <colgroup>
+                    <col style={{ width: "22%" }} />
+                    <col style={{ width: "20%" }} />
+                    <col style={{ width: "20%" }} />
+                    <col style={{ width: "18%" }} />
+                    <col style={{ width: "20%" }} />
+                  </colgroup>
+                  <thead>
+                    <tr className="bg-gray-100">
+                      <th className="border border-black p-2 text-left">Mentor</th>
+                      <th className="border border-black p-2 text-left">Team Name</th>
+                      <th className="border border-black p-2 text-left">Team Leader</th>
+                      <th className="border border-black p-2 text-left">Phone</th>
+                      <th className="border border-black p-2 text-left">Email</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {venueRows.map((r, i) => {
+                      const isFirst = i === 0 || venueRows[i - 1].mentorId !== r.mentorId
+                      return (
+                        <tr key={r.team.studentUserId}>
+                          {isFirst && (
+                            <td className="border border-black p-2 align-top font-medium" rowSpan={mentorCounts.get(r.mentorId)}>
+                              {r.mentorName}
+                            </td>
+                          )}
+                          <td className="border border-black p-2">{r.team.teamName?.trim() || r.team.loginId}</td>
+                          <td className="border border-black p-2">{r.team.teamLeadName ?? "—"}</td>
+                          <td className="border border-black p-2">{r.team.phone ?? "—"}</td>
+                          <td className="border border-black p-2">{r.team.email ?? "—"}</td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </section>
+            )
+          })
+        )}
+      </div>
+    </div>
+  )
+}
+
 export function MentorMatchingBoard({
   initialMentors,
   initialStudents,
+  initialVenues,
 }: {
   initialMentors: MatchingMentor[]
   initialStudents: MatchingStudent[]
+  initialVenues: VenueInfo[]
 }) {
+  const [mentors, setMentors] = useState<MatchingMentor[]>(initialMentors)
   const [students, setStudents] = useState<MatchingStudent[]>(initialStudents)
+  const [venues, setVenues] = useState<VenueInfo[]>(initialVenues)
   const [query, setQuery] = useState("")
   const [dragOverMentorId, setDragOverMentorId] = useState<string | null>(null)
   const [error, setError] = useState("")
   const [themeFilter, setThemeFilter] = useState("")
-
-  const mentors = initialMentors
+  const [venueFilter, setVenueFilter] = useState("")
 
   const availableThemes = useMemo(() => {
     const ids = new Set<string>()
@@ -178,8 +425,13 @@ export function MentorMatchingBoard({
   }, [mentors, students])
 
   const visibleMentors = useMemo(
-    () => (themeFilter ? mentors.filter((m) => m.domainIds.includes(themeFilter)) : mentors),
-    [mentors, themeFilter],
+    () =>
+      mentors.filter((m) => {
+        if (themeFilter && !m.domainIds.includes(themeFilter)) return false
+        if (venueFilter && m.venue !== venueFilter) return false
+        return true
+      }),
+    [mentors, themeFilter, venueFilter],
   )
 
   const assignedByMentor = useMemo(() => {
@@ -198,11 +450,12 @@ export function MentorMatchingBoard({
     return students.filter((s) => {
       if (s.mentorUserId) return false
       if (themeFilter && s.domainId !== themeFilter) return false
+      if (venueFilter && s.venue !== venueFilter) return false
       if (!q) return true
       const name = (s.teamName ?? "").toLowerCase()
       return name.includes(q) || s.loginId.toLowerCase().includes(q) || domainTitle(s.domainId).toLowerCase().includes(q)
     })
-  }, [students, query, themeFilter])
+  }, [students, query, themeFilter, venueFilter])
 
   const draggedStudentId = useRef<string | null>(null)
 
@@ -236,11 +489,133 @@ export function MentorMatchingBoard({
     }
   }
 
+  const setMentorVenue = async (mentorUserId: string, venue: string | null) => {
+    setError("")
+    const prev = mentors.find((m) => m.mentorUserId === mentorUserId)?.venue ?? null
+    setMentors((list) => list.map((m) => (m.mentorUserId === mentorUserId ? { ...m, venue } : m)))
+
+    try {
+      const res = await fetch("/api/admin/set-venue", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: mentorUserId, venue }),
+      })
+      if (!res.ok) {
+        setMentors((list) => list.map((m) => (m.mentorUserId === mentorUserId ? { ...m, venue: prev } : m)))
+        setError("Unable to set the mentor's venue.")
+      }
+    } catch {
+      setMentors((list) => list.map((m) => (m.mentorUserId === mentorUserId ? { ...m, venue: prev } : m)))
+      setError("Something went wrong. Please try again.")
+    }
+  }
+
+  const setStudentVenue = async (studentUserId: string, venue: string | null) => {
+    setError("")
+    const prevStudent = students.find((s) => s.studentUserId === studentUserId)
+    const prev = prevStudent?.venue ?? null
+    setStudents((list) => list.map((s) => (s.studentUserId === studentUserId ? { ...s, venue } : s)))
+
+    try {
+      const res = await fetch("/api/admin/set-venue", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId: studentUserId, venue }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setStudents((list) => list.map((s) => (s.studentUserId === studentUserId ? { ...s, venue: prev } : s)))
+        setError(data.error ?? "Unable to set the team's venue.")
+        return
+      }
+      setVenues((list) =>
+        list.map((v) => {
+          if (v.code === venue) return { ...v, teamCount: v.teamCount + 1 }
+          if (v.code === prev) return { ...v, teamCount: Math.max(0, v.teamCount - 1) }
+          return v
+        }),
+      )
+    } catch {
+      setStudents((list) => list.map((s) => (s.studentUserId === studentUserId ? { ...s, venue: prev } : s)))
+      setError("Something went wrong. Please try again.")
+    }
+  }
+
+  const addVenue = async (code: string, capacity: number) => {
+    setError("")
+    try {
+      const res = await fetch("/api/admin/venues", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "add", code, teamCapacity: capacity }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error ?? "Unable to add venue.")
+        return
+      }
+      setVenues((list) => [...list, { code: code.toUpperCase(), teamCapacity: capacity, teamCount: 0 }])
+    } catch {
+      setError("Something went wrong. Please try again.")
+    }
+  }
+
+  const removeVenue = async (code: string) => {
+    setError("")
+    const prevVenues = venues
+    setVenues((list) => list.filter((v) => v.code !== code))
+    setMentors((list) => list.map((m) => (m.venue === code ? { ...m, venue: null } : m)))
+    setStudents((list) => list.map((s) => (s.venue === code ? { ...s, venue: null } : s)))
+
+    try {
+      const res = await fetch("/api/admin/venues", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "remove", code }),
+      })
+      if (!res.ok) {
+        setVenues(prevVenues)
+        setError("Unable to remove venue.")
+      }
+    } catch {
+      setVenues(prevVenues)
+      setError("Something went wrong. Please try again.")
+    }
+  }
+
+  const setVenueCapacity = async (code: string, capacity: number) => {
+    setError("")
+    const prev = venues.find((v) => v.code === code)?.teamCapacity ?? 0
+    setVenues((list) => list.map((v) => (v.code === code ? { ...v, teamCapacity: capacity } : v)))
+
+    try {
+      const res = await fetch("/api/admin/venues", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "setCapacity", code, teamCapacity: capacity }),
+      })
+      if (!res.ok) {
+        setVenues((list) => list.map((v) => (v.code === code ? { ...v, teamCapacity: prev } : v)))
+        setError("Unable to update capacity.")
+      }
+    } catch {
+      setVenues((list) => list.map((v) => (v.code === code ? { ...v, teamCapacity: prev } : v)))
+      setError("Something went wrong. Please try again.")
+    }
+  }
+
   const handleDropOnMentor = (mentorUserId: string) => {
     setDragOverMentorId(null)
     const studentUserId = draggedStudentId.current
     draggedStudentId.current = null
     if (!studentUserId) return
+
+    const mentor = mentors.find((m) => m.mentorUserId === mentorUserId)
+    const student = students.find((s) => s.studentUserId === studentUserId)
+    if (mentor?.venue && student?.venue && mentor.venue !== student.venue) {
+      setError(`This team is assigned to ${student.venue}, but this mentor is in ${mentor.venue}.`)
+      return
+    }
 
     const current = assignedByMentor.get(mentorUserId) ?? []
     const alreadyThere = current.some((s) => s.studentUserId === studentUserId)
@@ -251,89 +626,146 @@ export function MentorMatchingBoard({
     assign(studentUserId, mentorUserId)
   }
 
+  const exportRows = useMemo<ExportRow[]>(() => {
+    const rows: ExportRow[] = []
+    for (const m of mentors) {
+      const assigned = assignedByMentor.get(m.mentorUserId) ?? []
+      if (assigned.length === 0) continue
+      for (const team of assigned) {
+        rows.push({
+          mentorId: m.mentorUserId,
+          mentorName: m.name?.trim() || m.loginId,
+          venue: m.venue ?? "Not Assigned",
+          team,
+        })
+      }
+    }
+    rows.sort((a, b) => a.venue.localeCompare(b.venue) || a.mentorName.localeCompare(b.mentorName))
+    return rows
+  }, [mentors, assignedByMentor])
+
   return (
     <div className="flex flex-col gap-6">
-      {error && (
-        <div className="border border-destructive/40 bg-destructive/5 text-destructive text-sm px-4 py-2">
-          {error}
-        </div>
-      )}
+      <div className="print:hidden flex flex-col gap-6">
+        {error && (
+          <div className="border border-destructive/40 bg-destructive/5 text-destructive text-sm px-4 py-2">
+            {error}
+          </div>
+        )}
 
-      <div className="border border-border bg-card/40 p-4 flex flex-col sm:flex-row sm:items-end gap-3">
-        <div className="flex-1 flex flex-col gap-1.5 max-w-sm">
-          <Label className="text-primary tracking-[0.1em] uppercase text-[10px]">Theme</Label>
-          <Select value={themeFilter || "all"} onValueChange={(v) => setThemeFilter(v === "all" ? "" : v)}>
-            <SelectTrigger className="bg-card border-border text-foreground w-full">
-              <SelectValue placeholder="All themes" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Themes</SelectItem>
-              {availableThemes.map((d) => (
-                <SelectItem key={d.id} value={d.id}>
-                  {d.title}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-        <p className="text-muted-foreground text-xs sm:pb-2">
-          Filters both the unassigned teams and the mentors below to a single theme.
-        </p>
-      </div>
+        <VenueManager venues={venues} onAdd={addVenue} onRemove={removeVenue} onSetCapacity={setVenueCapacity} />
 
-      <div className="grid lg:grid-cols-[minmax(0,320px)_1fr] gap-6 items-start">
-        <div className="border border-border bg-card/40 p-4 flex flex-col gap-3 lg:sticky lg:top-4">
-          <p className="text-primary text-xs uppercase tracking-wider">
-            Unassigned Teams <span className="text-muted-foreground">({unassigned.length})</span>
+        <div className="border border-border bg-card/40 p-4 flex flex-col sm:flex-row sm:items-end gap-3 flex-wrap">
+          <div className="flex-1 flex flex-col gap-1.5 max-w-sm min-w-[200px]">
+            <Label className="text-primary tracking-[0.1em] uppercase text-[10px]">Theme</Label>
+            <Select value={themeFilter || "all"} onValueChange={(v) => setThemeFilter(v === "all" ? "" : v)}>
+              <SelectTrigger className="bg-card border-border text-foreground w-full">
+                <SelectValue placeholder="All themes" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Themes</SelectItem>
+                {availableThemes.map((d) => (
+                  <SelectItem key={d.id} value={d.id}>
+                    {d.title}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex-1 flex flex-col gap-1.5 max-w-[200px] min-w-[160px]">
+            <Label className="text-primary tracking-[0.1em] uppercase text-[10px]">Venue</Label>
+            <Select value={venueFilter || "all"} onValueChange={(v) => setVenueFilter(v === "all" ? "" : v)}>
+              <SelectTrigger className="bg-card border-border text-foreground w-full">
+                <SelectValue placeholder="All venues" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Venues</SelectItem>
+                {venues.map((v) => (
+                  <SelectItem key={v.code} value={v.code}>
+                    {v.code}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <p className="text-muted-foreground text-xs sm:pb-2 flex-1 min-w-[200px]">
+            A team can only be dropped on a mentor in the same venue (when both have one set).
           </p>
-          <Input
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search team or domain..."
-            className="bg-card border-border text-foreground h-9 text-sm"
-          />
-          <div className="flex flex-col gap-2 max-h-[70vh] overflow-y-auto">
-            {unassigned.length === 0 ? (
-              <p className="text-muted-foreground text-xs text-center py-6">
-                {query ? "No teams match." : "All teams with a domain are assigned."}
+
+          <Button
+            type="button"
+            onClick={() => window.print()}
+            variant="outline"
+            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground uppercase tracking-wider text-xs h-9 shrink-0"
+          >
+            <Download className="w-4 h-4 mr-1.5" />
+            Download PDF
+          </Button>
+        </div>
+
+        <div className="grid lg:grid-cols-[minmax(0,320px)_1fr] gap-6 items-start">
+          <div className="border border-border bg-card/40 p-4 flex flex-col gap-3 lg:sticky lg:top-4">
+            <p className="text-primary text-xs uppercase tracking-wider">
+              Unassigned Teams <span className="text-muted-foreground">({unassigned.length})</span>
+            </p>
+            <Input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search team or domain..."
+              className="bg-card border-border text-foreground h-9 text-sm"
+            />
+            <div className="flex flex-col gap-2 max-h-[70vh] overflow-y-auto">
+              {unassigned.length === 0 ? (
+                <p className="text-muted-foreground text-xs text-center py-6">
+                  {query ? "No teams match." : "All teams with a domain are assigned."}
+                </p>
+              ) : (
+                unassigned.map((student) => (
+                  <TeamCard
+                    key={student.studentUserId}
+                    student={student}
+                    compatible={null}
+                    venues={venues}
+                    onDragStart={(e) => {
+                      e.dataTransfer.setData("text/plain", student.studentUserId)
+                      draggedStudentId.current = student.studentUserId
+                    }}
+                    onVenueChange={(venue) => setStudentVenue(student.studentUserId, venue)}
+                  />
+                ))
+              )}
+            </div>
+          </div>
+
+          <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {visibleMentors.length === 0 ? (
+              <p className="text-muted-foreground text-sm col-span-full text-center py-8">
+                No mentors match these filters.
               </p>
             ) : (
-              unassigned.map((student) => (
-                <TeamCard
-                  key={student.studentUserId}
-                  student={student}
-                  compatible={null}
-                  onDragStart={(e) => {
-                    e.dataTransfer.setData("text/plain", student.studentUserId)
-                    draggedStudentId.current = student.studentUserId
-                  }}
+              visibleMentors.map((mentor) => (
+                <MentorCard
+                  key={mentor.mentorUserId}
+                  mentor={mentor}
+                  assignedStudents={assignedByMentor.get(mentor.mentorUserId) ?? []}
+                  venues={venues}
+                  dragOver={dragOverMentorId === mentor.mentorUserId}
+                  onDragOver={() => setDragOverMentorId(mentor.mentorUserId)}
+                  onDragLeave={() => setDragOverMentorId((id) => (id === mentor.mentorUserId ? null : id))}
+                  onDrop={() => handleDropOnMentor(mentor.mentorUserId)}
+                  onRemove={(studentUserId) => assign(studentUserId, null)}
+                  onVenueChange={(venue) => setMentorVenue(mentor.mentorUserId, venue)}
+                  onTeamVenueChange={setStudentVenue}
                 />
               ))
             )}
           </div>
         </div>
-
-        <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
-          {visibleMentors.length === 0 ? (
-            <p className="text-muted-foreground text-sm col-span-full text-center py-8">
-              No mentors have picked this theme.
-            </p>
-          ) : (
-            visibleMentors.map((mentor) => (
-              <MentorCard
-                key={mentor.mentorUserId}
-                mentor={mentor}
-                assignedStudents={assignedByMentor.get(mentor.mentorUserId) ?? []}
-                dragOver={dragOverMentorId === mentor.mentorUserId}
-                onDragOver={() => setDragOverMentorId(mentor.mentorUserId)}
-                onDragLeave={() => setDragOverMentorId((id) => (id === mentor.mentorUserId ? null : id))}
-                onDrop={() => handleDropOnMentor(mentor.mentorUserId)}
-                onRemove={(studentUserId) => assign(studentUserId, null)}
-              />
-            ))
-          )}
-        </div>
       </div>
+
+      <PrintableList rows={exportRows} />
     </div>
   )
 }
