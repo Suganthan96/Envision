@@ -311,92 +311,111 @@ function MentorCard({
 
 type ExportRow = { mentorId: string; mentorName: string; venue: string; team: MatchingStudent }
 
-function PrintableList({ rows }: { rows: ExportRow[] }) {
-  const groups = useMemo(() => {
-    const map = new Map<string, ExportRow[]>()
-    for (const r of rows) {
-      const list = map.get(r.venue) ?? []
-      list.push(r)
-      map.set(r.venue, list)
-    }
-    return Array.from(map.entries()).sort(([a], [b]) => a.localeCompare(b))
-  }, [rows])
+async function downloadMentorMatchingPdf(rows: ExportRow[]) {
+  const [{ default: jsPDF }, autoTableModule] = await Promise.all([import("jspdf"), import("jspdf-autotable")])
+  const autoTable = autoTableModule.default
 
+  const doc = new jsPDF({ unit: "pt", format: "a4" })
+  const pageWidth = doc.internal.pageSize.getWidth()
+  const pageHeight = doc.internal.pageSize.getHeight()
+  const marginX = 40
+  let y = 50
+
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(9)
+  doc.setTextColor(120)
+  doc.text("ENVISION", pageWidth / 2, y, { align: "center", charSpace: 2 })
+
+  y += 22
+  doc.setFont("helvetica", "bold")
+  doc.setFontSize(18)
+  doc.setTextColor(20)
+  doc.text("Mentor–Student List", pageWidth / 2, y, { align: "center" })
+
+  y += 16
+  doc.setFont("helvetica", "normal")
+  doc.setFontSize(9)
+  doc.setTextColor(140)
   const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
+  doc.text(`Generated ${today}`, pageWidth / 2, y, { align: "center" })
 
-  return (
-    <div className="hidden print:block bg-white text-black">
-      <style>{`
-        @media print {
-          @page { size: A4; margin: 16mm 14mm; }
-          .print-report thead { display: table-header-group; }
-          .print-report tr { break-inside: avoid; }
-          .print-report section { break-inside: avoid-page; }
-        }
-      `}</style>
+  y += 10
+  doc.setDrawColor(20)
+  doc.setLineWidth(1)
+  doc.line(marginX, y, pageWidth - marginX, y)
+  y += 24
 
-      <div className="print-report">
-        <header className="text-center mb-8 pb-4 border-b-2 border-black">
-          <p className="text-xs tracking-[0.4em] uppercase text-gray-600 mb-2">Envision</p>
-          <h1 className="text-2xl font-bold">Mentor–Student List</h1>
-          <p className="text-[11px] text-gray-500 mt-2">Generated {today}</p>
-        </header>
+  const groups = new Map<string, ExportRow[]>()
+  for (const r of rows) {
+    const list = groups.get(r.venue) ?? []
+    list.push(r)
+    groups.set(r.venue, list)
+  }
+  const sortedGroups = Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b))
 
-        {rows.length === 0 ? (
-          <p className="text-center text-gray-500 text-sm">No mentors have any teams assigned yet.</p>
-        ) : (
-          groups.map(([venue, venueRows]) => {
-            const mentorCounts = new Map<string, number>()
-            for (const r of venueRows) mentorCounts.set(r.mentorId, (mentorCounts.get(r.mentorId) ?? 0) + 1)
+  if (rows.length === 0) {
+    doc.setFontSize(11)
+    doc.setTextColor(120)
+    doc.text("No mentors have any teams assigned yet.", pageWidth / 2, y, { align: "center" })
+  }
 
-            return (
-              <section key={venue} className="mb-8">
-                <h2 className="text-sm font-bold uppercase tracking-wide border-b border-black pb-1.5 mb-3">
-                  Venue: {venue} <span className="font-normal text-gray-500">({venueRows.length} teams)</span>
-                </h2>
-                <table className="w-full border-collapse text-[11px]">
-                  <colgroup>
-                    <col style={{ width: "22%" }} />
-                    <col style={{ width: "20%" }} />
-                    <col style={{ width: "20%" }} />
-                    <col style={{ width: "18%" }} />
-                    <col style={{ width: "20%" }} />
-                  </colgroup>
-                  <thead>
-                    <tr className="bg-gray-100">
-                      <th className="border border-black p-2 text-left">Mentor</th>
-                      <th className="border border-black p-2 text-left">Team Name</th>
-                      <th className="border border-black p-2 text-left">Team Leader</th>
-                      <th className="border border-black p-2 text-left">Phone</th>
-                      <th className="border border-black p-2 text-left">Email</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {venueRows.map((r, i) => {
-                      const isFirst = i === 0 || venueRows[i - 1].mentorId !== r.mentorId
-                      return (
-                        <tr key={r.team.studentUserId}>
-                          {isFirst && (
-                            <td className="border border-black p-2 align-top font-medium" rowSpan={mentorCounts.get(r.mentorId)}>
-                              {r.mentorName}
-                            </td>
-                          )}
-                          <td className="border border-black p-2">{r.team.teamName?.trim() || r.team.loginId}</td>
-                          <td className="border border-black p-2">{r.team.teamLeadName ?? "—"}</td>
-                          <td className="border border-black p-2">{r.team.phone ?? "—"}</td>
-                          <td className="border border-black p-2">{r.team.email ?? "—"}</td>
-                        </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
-              </section>
-            )
-          })
-        )}
-      </div>
-    </div>
-  )
+  for (const [venue, venueRows] of sortedGroups) {
+    const mentorCounts = new Map<string, number>()
+    for (const r of venueRows) mentorCounts.set(r.mentorId, (mentorCounts.get(r.mentorId) ?? 0) + 1)
+
+    if (y > pageHeight - 100) {
+      doc.addPage()
+      y = 50
+    }
+
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(11)
+    doc.setTextColor(20)
+    doc.text(`Venue: ${venue}  (${venueRows.length} teams)`, marginX, y)
+    y += 8
+
+    const body: (string | { content: string; rowSpan: number; styles: Record<string, unknown> })[][] = []
+    venueRows.forEach((r, i) => {
+      const isFirst = i === 0 || venueRows[i - 1].mentorId !== r.mentorId
+      const row: (string | { content: string; rowSpan: number; styles: Record<string, unknown> })[] = []
+      if (isFirst) {
+        row.push({
+          content: r.mentorName,
+          rowSpan: mentorCounts.get(r.mentorId) ?? 1,
+          styles: { valign: "top", fontStyle: "bold" },
+        })
+      }
+      row.push(
+        r.team.teamName?.trim() || r.team.loginId,
+        r.team.teamLeadName ?? "—",
+        r.team.phone ?? "—",
+        r.team.email ?? "—",
+      )
+      body.push(row)
+    })
+
+    autoTable(doc, {
+      startY: y,
+      margin: { left: marginX, right: marginX },
+      head: [["Mentor", "Team Name", "Team Leader", "Phone", "Email"]],
+      body,
+      theme: "grid",
+      styles: { fontSize: 9, cellPadding: 6, lineColor: [20, 20, 20], lineWidth: 0.5, textColor: 20 },
+      headStyles: { fillColor: [235, 235, 235], textColor: 20, fontStyle: "bold" },
+      columnStyles: {
+        0: { cellWidth: 105 },
+        1: { cellWidth: 100 },
+        2: { cellWidth: 100 },
+        3: { cellWidth: 90 },
+        4: { cellWidth: "auto" },
+      },
+    })
+
+    // @ts-expect-error - lastAutoTable is attached by the autoTable plugin
+    y = doc.lastAutoTable.finalY + 30
+  }
+
+  doc.save("envision-mentor-matching.pdf")
 }
 
 export function MentorMatchingBoard({
@@ -416,6 +435,7 @@ export function MentorMatchingBoard({
   const [error, setError] = useState("")
   const [themeFilter, setThemeFilter] = useState("")
   const [venueFilter, setVenueFilter] = useState("")
+  const [downloadingPdf, setDownloadingPdf] = useState(false)
 
   const availableThemes = useMemo(() => {
     const ids = new Set<string>()
@@ -644,14 +664,25 @@ export function MentorMatchingBoard({
     return rows
   }, [mentors, assignedByMentor])
 
+  const handleDownloadPdf = async () => {
+    setError("")
+    setDownloadingPdf(true)
+    try {
+      await downloadMentorMatchingPdf(exportRows)
+    } catch {
+      setError("Unable to generate the PDF. Please try again.")
+    } finally {
+      setDownloadingPdf(false)
+    }
+  }
+
   return (
     <div className="flex flex-col gap-6">
-      <div className="print:hidden flex flex-col gap-6">
-        {error && (
-          <div className="border border-destructive/40 bg-destructive/5 text-destructive text-sm px-4 py-2">
-            {error}
-          </div>
-        )}
+      {error && (
+        <div className="border border-destructive/40 bg-destructive/5 text-destructive text-sm px-4 py-2">
+          {error}
+        </div>
+      )}
 
         <VenueManager venues={venues} onAdd={addVenue} onRemove={removeVenue} onSetCapacity={setVenueCapacity} />
 
@@ -696,12 +727,13 @@ export function MentorMatchingBoard({
 
           <Button
             type="button"
-            onClick={() => window.print()}
+            onClick={handleDownloadPdf}
+            disabled={downloadingPdf}
             variant="outline"
-            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground uppercase tracking-wider text-xs h-9 shrink-0"
+            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground dark:hover:bg-primary dark:hover:text-primary-foreground dark:bg-transparent dark:border-primary uppercase tracking-wider text-xs h-9 bg-transparent shrink-0"
           >
             <Download className="w-4 h-4 mr-1.5" />
-            Download PDF
+            {downloadingPdf ? "Preparing PDF..." : "Download PDF"}
           </Button>
         </div>
 
@@ -764,8 +796,5 @@ export function MentorMatchingBoard({
           </div>
         </div>
       </div>
-
-      <PrintableList rows={exportRows} />
-    </div>
-  )
+    )
 }
