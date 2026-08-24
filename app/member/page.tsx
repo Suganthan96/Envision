@@ -7,7 +7,7 @@ import { TimelineView } from "@/components/timeline-view"
 import { getSession } from "@/lib/get-session"
 import { getAppSettings } from "@/lib/app-settings"
 import { DomainSelectionPage } from "@/components/domain-selection-page"
-import { TIMELINE_PHASES } from "@/lib/timeline"
+import { getTimelinePhases } from "@/lib/timeline"
 import { getFeedbackLinks } from "@/lib/feedback-links"
 
 export default async function MemberPage() {
@@ -15,6 +15,7 @@ export default async function MemberPage() {
   const teamName = session?.name?.trim() || session?.loginId
   const { studentDomainSelectionOpen: domainSelectionOpen, studentCanSelect } = await getAppSettings()
   const feedbackLinks = domainSelectionOpen ? {} : await getFeedbackLinks()
+  const timelinePhases = domainSelectionOpen ? [] : await getTimelinePhases()
 
   return (
     <main className="min-h-screen bg-background px-6 pt-12 pb-24">
@@ -65,7 +66,7 @@ export default async function MemberPage() {
 
           <ArtDecoDivider variant="stepped" />
 
-          <TimelineView phases={TIMELINE_PHASES} feedbackLinks={feedbackLinks} />
+          <TimelineView phases={timelinePhases} feedbackLinks={feedbackLinks} />
         </div>
       )}
     </main>

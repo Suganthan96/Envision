@@ -83,10 +83,10 @@ export default async function AdminMentorsPage() {
             Student Selections
           </Link>
           <Link
-            href="/admin/feedback"
+            href="/admin/timeline"
             className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
           >
-            Feedback Links
+            Timeline
           </Link>
         </div>
 

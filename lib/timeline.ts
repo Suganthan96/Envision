@@ -14,7 +14,11 @@ export interface TimelinePhase {
   entries: TimelineEntry[]
 }
 
-export const TIMELINE_PHASES: TimelinePhase[] = [
+// Fallback used only if the DB row is ever empty (e.g. a fresh database
+// before the admin has entered anything at /admin/timeline). The DB
+// (public.timeline_settings, via get_timeline()/admin_set_timeline()) is
+// the source of truth once seeded — see getTimelinePhases() below.
+export const DEFAULT_TIMELINE_PHASES: TimelinePhase[] = [
   {
     id: "phase-1",
     title: "Phase 1",
@@ -179,3 +183,17 @@ export const TIMELINE_PHASES: TimelinePhase[] = [
     ],
   },
 ]
+
+export async function getTimelinePhases(): Promise<TimelinePhase[]> {
+  // Imported lazily to keep this module safe to import from client
+  // components too (getTimelinePhases itself is only ever called
+  // server-side, but the DEFAULT_TIMELINE_PHASES/types above are shared).
+  const { getSupabaseServerClient } = await import("@/lib/supabase-server")
+  const supabase = getSupabaseServerClient()
+  const { data } = await supabase.rpc("get_timeline")
+
+  if (Array.isArray(data) && data.length > 0) {
+    return data as TimelinePhase[]
+  }
+  return DEFAULT_TIMELINE_PHASES
+}

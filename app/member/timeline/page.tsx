@@ -3,13 +3,13 @@ import { LogoutButton } from "@/components/logout-button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { ArtDecoDivider } from "@/components/art-deco-divider"
 import { TimelineView } from "@/components/timeline-view"
-import { TIMELINE_PHASES } from "@/lib/timeline"
+import { getTimelinePhases } from "@/lib/timeline"
 import { getFeedbackLinks } from "@/lib/feedback-links"
 
 export const dynamic = "force-dynamic"
 
 export default async function MemberTimelinePage() {
-  const feedbackLinks = await getFeedbackLinks()
+  const [feedbackLinks, timelinePhases] = await Promise.all([getFeedbackLinks(), getTimelinePhases()])
 
   return (
     <main className="min-h-screen bg-background px-6 py-12">
@@ -42,7 +42,7 @@ export default async function MemberTimelinePage() {
       </div>
 
       <div className="max-w-6xl mx-auto">
-        <TimelineView phases={TIMELINE_PHASES} feedbackLinks={feedbackLinks} />
+        <TimelineView phases={timelinePhases} feedbackLinks={feedbackLinks} />
       </div>
     </main>
   )

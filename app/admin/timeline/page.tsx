@@ -1,24 +1,14 @@
 import Link from "next/link"
 import { LogoutButton } from "@/components/logout-button"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { FeedbackLinkEditor, type FeedbackLinkRow } from "@/components/feedback-link-editor"
-import { TIMELINE_PHASES } from "@/lib/timeline"
+import { TimelineEditor } from "@/components/timeline-editor"
+import { getTimelinePhases } from "@/lib/timeline"
 import { getFeedbackLinks } from "@/lib/feedback-links"
 
 export const dynamic = "force-dynamic"
 
-export default async function AdminFeedbackPage() {
-  const links = await getFeedbackLinks()
-
-  const sessionDays = (TIMELINE_PHASES.find((phase) => phase.id === "phase-1")?.entries ?? []).filter(
-    (entry) => entry.hasFeedbackForm,
-  )
-  const rows: FeedbackLinkRow[] = sessionDays.map((entry) => ({
-    entryId: entry.id,
-    label: entry.label,
-    title: entry.title,
-    url: links[entry.id] ?? "",
-  }))
+export default async function AdminTimelinePage() {
+  const [phases, feedbackLinks] = await Promise.all([getTimelinePhases(), getFeedbackLinks()])
 
   return (
     <main className="min-h-screen bg-background px-6 py-12">
@@ -51,19 +41,20 @@ export default async function AdminFeedbackPage() {
             Student Selections
           </Link>
           <span className="text-primary text-sm uppercase tracking-wider border-b border-primary pb-1">
-            Feedback Links
+            Timeline
           </span>
         </div>
 
         <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Admin Portal</p>
         <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-4">
-          Session <span className="text-gold-gradient">Feedback Links</span>
+          Program <span className="text-gold-gradient">Timeline</span>
         </h1>
         <p className="text-muted-foreground text-lg mb-12">
-          Add or edit the Google Form link for each session day. Leave a field blank and save to remove a link.
+          Edit every phase and session — labels, dates, titles, resources, venues, and feedback form links. This is
+          what students and mentors see when domain selection is closed.
         </p>
 
-        <FeedbackLinkEditor rows={rows} />
+        <TimelineEditor initialPhases={phases} initialFeedbackLinks={feedbackLinks} />
       </div>
     </main>
   )
