@@ -32,7 +32,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Invalid login ID or password." }, { status: 401 })
   }
 
-  const row = data[0] as { user_id: string; role: Role; must_change_password: boolean; name: string | null }
+  const row = data[0] as {
+    user_id: string
+    role: Role
+    must_change_password: boolean
+    name: string | null
+    email: string | null
+  }
+
+  const needsEmail = row.role === "member" && !row.email
 
   const token = await createSessionToken({
     userId: row.user_id,
@@ -40,11 +48,16 @@ export async function POST(request: NextRequest) {
     role: row.role,
     mustChangePassword: row.must_change_password,
     name: row.name,
+    needsEmail,
   })
 
-  const response = NextResponse.json({
-    redirect: row.must_change_password ? "/change-password" : roleHome(row.role),
-  })
+  const redirect = row.must_change_password
+    ? "/change-password"
+    : needsEmail
+      ? "/member/add-email"
+      : roleHome(row.role)
+
+  const response = NextResponse.json({ redirect })
 
   response.cookies.set(SESSION_COOKIE, token, {
     httpOnly: true,

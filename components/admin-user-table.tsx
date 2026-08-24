@@ -37,6 +37,7 @@ export type AppUserRow = {
   must_change_password: boolean
   name: string | null
   phone: string | null
+  email: string | null
 }
 
 const DEFAULT_PASSWORD = "licet@123"
@@ -66,7 +67,8 @@ export function AdminUserTable({ users }: { users: AppUserRow[] }) {
         u.login_id.toLowerCase().includes(q) ||
         u.role.toLowerCase().includes(q) ||
         (u.name ?? "").toLowerCase().includes(q) ||
-        (u.phone ?? "").toLowerCase().includes(q),
+        (u.phone ?? "").toLowerCase().includes(q) ||
+        (u.email ?? "").toLowerCase().includes(q),
     )
   }, [users, query])
 
@@ -238,6 +240,7 @@ export function AdminUserTable({ users }: { users: AppUserRow[] }) {
                 <TableHead className="text-primary tracking-[0.1em] uppercase text-xs">Login ID</TableHead>
                 <TableHead className="text-primary tracking-[0.1em] uppercase text-xs">Name</TableHead>
                 <TableHead className="text-primary tracking-[0.1em] uppercase text-xs">Phone</TableHead>
+                <TableHead className="text-primary tracking-[0.1em] uppercase text-xs">Email</TableHead>
                 <TableHead className="text-primary tracking-[0.1em] uppercase text-xs">Role</TableHead>
                 <TableHead className="text-primary tracking-[0.1em] uppercase text-xs">Status</TableHead>
                 <TableHead className="text-primary tracking-[0.1em] uppercase text-xs">Reset Password</TableHead>
@@ -259,6 +262,7 @@ export function AdminUserTable({ users }: { users: AppUserRow[] }) {
                   <TableCell className="text-foreground font-mono">{u.login_id}</TableCell>
                   <TableCell className="text-muted-foreground">{u.name ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground font-mono">{u.phone ?? "—"}</TableCell>
+                  <TableCell className="text-muted-foreground font-mono">{u.email ?? "—"}</TableCell>
                   <TableCell className="text-muted-foreground capitalize">{u.role}</TableCell>
                   <TableCell className="text-muted-foreground">
                     {u.must_change_password ? "Awaiting first sign-in" : "Active"}

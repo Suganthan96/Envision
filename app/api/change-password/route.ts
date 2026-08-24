@@ -59,13 +59,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Current password is incorrect." }, { status: 400 })
   }
 
+  const needsEmail = session.role === "member" && session.needsEmail === true
+
   const newToken = await createSessionToken({
     ...session,
     mustChangePassword: false,
     name: name || session.name,
+    needsEmail,
   })
 
-  const response = NextResponse.json({ redirect: roleHome(session.role) })
+  const response = NextResponse.json({ redirect: needsEmail ? "/member/add-email" : roleHome(session.role) })
   response.cookies.set(SESSION_COOKIE, newToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

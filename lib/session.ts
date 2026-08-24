@@ -10,6 +10,7 @@ export type SessionPayload = {
   role: Role
   mustChangePassword: boolean
   name?: string | null
+  needsEmail?: boolean
 }
 
 function getSecretKey() {
@@ -37,6 +38,7 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
       role: payload.role as Role,
       mustChangePassword: payload.mustChangePassword as boolean,
       name: (payload.name as string | null | undefined) ?? null,
+      needsEmail: Boolean(payload.needsEmail),
     }
   } catch {
     return null

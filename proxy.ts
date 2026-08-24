@@ -11,7 +11,11 @@ export async function proxy(request: NextRequest) {
     const session = token ? await verifySessionToken(token) : null
     if (session) {
       const url = request.nextUrl.clone()
-      url.pathname = session.mustChangePassword ? "/change-password" : roleHome(session.role)
+      url.pathname = session.mustChangePassword
+        ? "/change-password"
+        : session.role === "member" && session.needsEmail
+          ? "/member/add-email"
+          : roleHome(session.role)
       return NextResponse.redirect(url)
     }
     return NextResponse.next()
@@ -33,6 +37,13 @@ export async function proxy(request: NextRequest) {
   if (session.mustChangePassword && pathname !== "/change-password") {
     const url = request.nextUrl.clone()
     url.pathname = "/change-password"
+    return NextResponse.redirect(url)
+  }
+
+  const needsEmail = session.role === "member" && session.needsEmail === true
+  if (!session.mustChangePassword && needsEmail && pathname !== "/member/add-email") {
+    const url = request.nextUrl.clone()
+    url.pathname = "/member/add-email"
     return NextResponse.redirect(url)
   }
 

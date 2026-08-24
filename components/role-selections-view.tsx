@@ -12,6 +12,7 @@ export interface RoleRow {
   loginId: string
   name: string | null
   phone: string | null
+  email: string | null
   teamLeadName: string | null
   domainIds: string[]
 }
@@ -37,10 +38,11 @@ function PersonCard({ person }: { person: RoleRow }) {
       {person.teamLeadName?.trim() && (
         <p className="text-muted-foreground text-xs mt-1">Led by {person.teamLeadName}</p>
       )}
-      {person.phone?.trim() && (
-        <p className="text-muted-foreground text-xs font-mono mb-4">{person.phone}</p>
+      {person.phone?.trim() && <p className="text-muted-foreground text-xs font-mono">{person.phone}</p>}
+      {person.email?.trim() && (
+        <p className="text-muted-foreground text-xs font-mono mb-4">{person.email}</p>
       )}
-      {!person.phone?.trim() && <div className="mb-4" />}
+      {!person.email?.trim() && <div className="mb-4" />}
 
       <div className="flex flex-col gap-1.5">
         {person.domainIds.map((domainId) => (

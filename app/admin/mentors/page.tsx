@@ -39,36 +39,40 @@ export default async function AdminMentorsPage() {
 
     const grouped = new Map<
       string,
-      { name: string | null; phone: string | null; teamLeadName: string | null; domainIds: string[] }
+      { name: string | null; phone: string | null; email: string | null; teamLeadName: string | null; domainIds: string[] }
     >()
     for (const row of (data ?? []) as {
       login_id: string
       name: string | null
       phone: string | null
+      email: string | null
       team_lead_name: string | null
       role: string
       domain_id: string
     }[]) {
       if (row.role !== "mentor") continue
       const existing =
-        grouped.get(row.login_id) ?? { name: row.name, phone: row.phone, teamLeadName: row.team_lead_name, domainIds: [] }
+        grouped.get(row.login_id) ??
+        { name: row.name, phone: row.phone, email: row.email, teamLeadName: row.team_lead_name, domainIds: [] }
       existing.domainIds.push(row.domain_id)
       grouped.set(row.login_id, existing)
     }
-    mentors = Array.from(grouped.entries()).map(([loginId, { name, phone, teamLeadName, domainIds }]) => ({
+    mentors = Array.from(grouped.entries()).map(([loginId, { name, phone, email, teamLeadName, domainIds }]) => ({
       loginId,
       name,
       phone,
+      email,
       teamLeadName,
       domainIds,
     }))
-    pending = ((pendingData ?? []) as { login_id: string; name: string | null; phone: string | null }[]).map(
-      (row) => ({
-        loginId: row.login_id,
-        name: row.name,
-        phone: row.phone,
-      }),
-    )
+    pending = (
+      (pendingData ?? []) as { login_id: string; name: string | null; phone: string | null; email: string | null }[]
+    ).map((row) => ({
+      loginId: row.login_id,
+      name: row.name,
+      phone: row.phone,
+      email: row.email,
+    }))
   }
   const { mentorDomainSelectionOpen, mentorCanSelect } = await getAppSettings()
 

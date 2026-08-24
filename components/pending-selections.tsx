@@ -2,6 +2,7 @@ export interface PendingPerson {
   loginId: string
   name: string | null
   phone: string | null
+  email: string | null
 }
 
 export function PendingSelections({
@@ -32,6 +33,7 @@ export function PendingSelections({
             >
               {displayName}
               {person.phone?.trim() && <span className="text-muted-foreground/70"> · {person.phone}</span>}
+              {person.email?.trim() && <span className="text-muted-foreground/70"> · {person.email}</span>}
             </span>
           )
         })}
