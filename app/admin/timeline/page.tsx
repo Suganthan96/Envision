@@ -40,6 +40,12 @@ export default async function AdminTimelinePage() {
           >
             Student Selections
           </Link>
+          <Link
+            href="/admin/matching"
+            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
+          >
+            Mentor Matching
+          </Link>
           <span className="text-primary text-sm uppercase tracking-wider border-b border-primary pb-1">
             Timeline
           </span>
