@@ -13,7 +13,11 @@ import { getFeedbackLinks } from "@/lib/feedback-links"
 export default async function MemberPage() {
   const session = await getSession()
   const teamName = session?.name?.trim() || session?.loginId
-  const { studentDomainSelectionOpen: domainSelectionOpen, studentCanSelect } = await getAppSettings()
+  const {
+    studentDomainSelectionOpen: domainSelectionOpen,
+    studentCanSelect,
+    teamNameEditOpen,
+  } = await getAppSettings()
   const feedbackLinks = domainSelectionOpen ? {} : await getFeedbackLinks()
   const timelinePhases = domainSelectionOpen ? [] : await getTimelinePhases()
 
@@ -42,7 +46,7 @@ export default async function MemberPage() {
         <h1 className="font-serif text-3xl md:text-4xl text-foreground">
           Welcome, <span className="text-gold-gradient">{teamName}</span>
         </h1>
-        <EditTeamName currentTeamName={session?.name ?? null} />
+        {teamNameEditOpen && <EditTeamName currentTeamName={session?.name ?? null} />}
       </div>
 
       {domainSelectionOpen ? (
@@ -60,8 +64,9 @@ export default async function MemberPage() {
       ) : (
         <div className="relative z-10 max-w-4xl mx-auto">
           <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">EnVision 2026</p>
-          <p className="text-muted-foreground text-lg mb-4">
-            Domain selection isn&apos;t open yet. Here&apos;s the full session plan for the program, phase by phase.
+          <p className="text-muted-foreground text-lg mb-8">
+            Domain selection isn&apos;t open yet. In the meantime, take a look at the full session plan for the
+            program.
           </p>
 
           <ArtDecoDivider variant="stepped" />

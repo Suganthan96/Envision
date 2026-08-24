@@ -2,7 +2,7 @@ import Link from "next/link"
 import { LogoutButton } from "@/components/logout-button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { RoleSelectionsView, type RoleRow } from "@/components/role-selections-view"
-import { DomainSelectionToggle } from "@/components/domain-selection-toggle"
+import { AdminSettingToggle } from "@/components/admin-setting-toggle"
 import { PendingSelections, type PendingPerson } from "@/components/pending-selections"
 import { getSession } from "@/lib/get-session"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
@@ -99,7 +99,7 @@ export default async function AdminMentorsPage() {
         </p>
 
         <div className="mb-12 flex flex-col sm:flex-row gap-4">
-          <DomainSelectionToggle
+          <AdminSettingToggle
             role="mentor"
             field="view"
             title="Mentor Domain Visibility"
@@ -107,7 +107,7 @@ export default async function AdminMentorsPage() {
             activeDescription="Mentors can currently see the domain selection screen."
             inactiveDescription="Mentors currently see the program timeline instead."
           />
-          <DomainSelectionToggle
+          <AdminSettingToggle
             role="mentor"
             field="select"
             title="Mentor Domain Selection"

@@ -13,7 +13,7 @@ export default async function MemberTimelinePage() {
 
   return (
     <main className="min-h-screen bg-background px-6 py-12">
-      <div className="max-w-4xl mx-auto flex items-center justify-between mb-8">
+      <div className="relative z-10 max-w-4xl mx-auto flex items-center justify-between mb-8">
         <div className="flex items-center gap-4">
           <div className="w-8 h-px bg-primary" />
           <span className="font-serif text-xl text-foreground">Envision</span>
@@ -24,7 +24,7 @@ export default async function MemberTimelinePage() {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto">
+      <div className="relative z-10 max-w-4xl mx-auto">
         <Link
           href="/member"
           className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider mb-8 inline-block"
@@ -41,7 +41,7 @@ export default async function MemberTimelinePage() {
         <ArtDecoDivider variant="stepped" />
       </div>
 
-      <div className="max-w-6xl mx-auto">
+      <div className="relative z-10 max-w-6xl mx-auto">
         <TimelineView phases={timelinePhases} feedbackLinks={feedbackLinks} />
       </div>
     </main>

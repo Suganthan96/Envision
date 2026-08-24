@@ -11,17 +11,33 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => null)
-  if (body?.role !== "mentor" && body?.role !== "member") {
-    return NextResponse.json({ error: "role must be 'mentor' or 'member'." }, { status: 400 })
-  }
   if (typeof body?.enabled !== "boolean") {
     return NextResponse.json({ error: "enabled must be a boolean." }, { status: 400 })
   }
-  if (body?.field !== "view" && body?.field !== "select") {
-    return NextResponse.json({ error: "field must be 'view' or 'select'." }, { status: 400 })
+  if (body?.field !== "view" && body?.field !== "select" && body?.field !== "teamNameEdit") {
+    return NextResponse.json({ error: "field must be 'view', 'select' or 'teamNameEdit'." }, { status: 400 })
   }
 
   const supabase = getSupabaseServerClient()
+
+  // teamNameEdit is a single global setting, so it takes no role.
+  if (body.field === "teamNameEdit") {
+    const { data, error } = await supabase.rpc("admin_set_team_name_edit_open", {
+      p_admin_user_id: session.userId,
+      p_open: body.enabled,
+    })
+
+    if (error || data !== true) {
+      return NextResponse.json({ error: "Unable to update settings." }, { status: 400 })
+    }
+
+    return NextResponse.json({ ok: true })
+  }
+
+  if (body?.role !== "mentor" && body?.role !== "member") {
+    return NextResponse.json({ error: "role must be 'mentor' or 'member'." }, { status: 400 })
+  }
+
   const rpcName = body.field === "view" ? "admin_set_domain_selection_open" : "admin_set_selection_enabled"
   const paramName = body.field === "view" ? "p_open" : "p_enabled"
 
