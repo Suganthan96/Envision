@@ -13,7 +13,7 @@ import {
 import { ArtDecoDivider } from "@/components/art-deco-divider"
 import { DomainSelectCard } from "@/components/domain-select-card"
 import { DomainIcon } from "@/components/domain-icon"
-import { DOMAINS } from "@/lib/domains"
+import type { Domain } from "@/lib/domains"
 
 const POLL_INTERVAL_MS = 8000
 
@@ -22,6 +22,7 @@ interface DomainSelectionPageProps {
   eyebrow: string
   heading: string
   description: string
+  domains: Domain[]
   maxSelections?: number
   canSelect?: boolean
 }
@@ -30,6 +31,7 @@ export function DomainSelectionPage({
   eyebrow,
   heading,
   description,
+  domains,
   maxSelections = 1,
   canSelect = true,
 }: DomainSelectionPageProps) {
@@ -41,7 +43,7 @@ export function DomainSelectionPage({
   const [submitting, setSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState("")
 
-  const activeDomain = DOMAINS.find((d) => d.id === activeDomainId) ?? null
+  const activeDomain = domains.find((d) => d.id === activeDomainId) ?? null
 
   const fetchState = async () => {
     try {
@@ -142,7 +144,7 @@ export function DomainSelectionPage({
           )}
 
           <div className="grid sm:grid-cols-2 gap-6">
-            {DOMAINS.map((domain) => (
+            {domains.map((domain) => (
               <DomainSelectCard
                 key={domain.id}
                 title={domain.title}

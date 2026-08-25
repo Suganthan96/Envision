@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { DOMAINS } from "@/lib/domains"
+import type { Domain } from "@/lib/domains"
 import { cn } from "@/lib/utils"
 
 export interface VenueInfo {
@@ -42,8 +42,8 @@ export interface MatchingStudent {
   mentorUserId: string | null
 }
 
-function domainTitle(domainId: string) {
-  return DOMAINS.find((d) => d.id === domainId)?.title ?? domainId
+function domainTitle(domains: Domain[], domainId: string) {
+  return domains.find((d) => d.id === domainId)?.title ?? domainId
 }
 
 function VenuePicker({
@@ -174,6 +174,7 @@ function TeamCard({
   student,
   compatible,
   venues,
+  domains,
   onDragStart,
   onRemove,
   onVenueChange,
@@ -181,6 +182,7 @@ function TeamCard({
   student: MatchingStudent
   compatible: boolean | null
   venues: VenueInfo[]
+  domains: Domain[]
   onDragStart: (e: React.DragEvent) => void
   onRemove?: () => void
   onVenueChange: (venue: string | null) => void
@@ -200,7 +202,7 @@ function TeamCard({
       title={student.loginId}
     >
       <p className="text-foreground text-sm font-medium truncate pr-5">{displayName}</p>
-      <p className="text-muted-foreground text-xs truncate">{domainTitle(student.domainId)}</p>
+      <p className="text-muted-foreground text-xs truncate">{domainTitle(domains, student.domainId)}</p>
       <div className="mt-1.5" onPointerDown={(e) => e.stopPropagation()}>
         <VenuePicker value={student.venue} venues={venues} onChange={onVenueChange} />
       </div>
@@ -222,6 +224,7 @@ function MentorCard({
   mentor,
   assignedStudents,
   venues,
+  domains,
   onDrop,
   onRemove,
   onVenueChange,
@@ -233,6 +236,7 @@ function MentorCard({
   mentor: MatchingMentor
   assignedStudents: MatchingStudent[]
   venues: VenueInfo[]
+  domains: Domain[]
   onDrop: () => void
   onRemove: (studentUserId: string) => void
   onVenueChange: (venue: string | null) => void
@@ -270,7 +274,7 @@ function MentorCard({
               key={id}
               className="text-[10px] uppercase tracking-wider text-primary border border-primary/40 px-1.5 py-0.5"
             >
-              {domainTitle(id)}
+              {domainTitle(domains, id)}
             </span>
           ))}
         </div>
@@ -289,6 +293,7 @@ function MentorCard({
                 student={student}
                 compatible={mentor.domainIds.includes(student.domainId)}
                 venues={venues}
+                domains={domains}
                 onDragStart={(e) => e.dataTransfer.setData("text/plain", student.studentUserId)}
                 onRemove={() => onRemove(student.studentUserId)}
                 onVenueChange={(venue) => onTeamVenueChange(student.studentUserId, venue)}
@@ -422,10 +427,12 @@ export function MentorMatchingBoard({
   initialMentors,
   initialStudents,
   initialVenues,
+  domains,
 }: {
   initialMentors: MatchingMentor[]
   initialStudents: MatchingStudent[]
   initialVenues: VenueInfo[]
+  domains: Domain[]
 }) {
   const [mentors, setMentors] = useState<MatchingMentor[]>(initialMentors)
   const [students, setStudents] = useState<MatchingStudent[]>(initialStudents)
@@ -441,8 +448,8 @@ export function MentorMatchingBoard({
     const ids = new Set<string>()
     for (const m of mentors) for (const id of m.domainIds) ids.add(id)
     for (const s of students) ids.add(s.domainId)
-    return DOMAINS.filter((d) => ids.has(d.id))
-  }, [mentors, students])
+    return domains.filter((d) => ids.has(d.id))
+  }, [mentors, students, domains])
 
   const visibleMentors = useMemo(
     () =>
@@ -473,9 +480,13 @@ export function MentorMatchingBoard({
       if (venueFilter && s.venue !== venueFilter) return false
       if (!q) return true
       const name = (s.teamName ?? "").toLowerCase()
-      return name.includes(q) || s.loginId.toLowerCase().includes(q) || domainTitle(s.domainId).toLowerCase().includes(q)
+      return (
+        name.includes(q) ||
+        s.loginId.toLowerCase().includes(q) ||
+        domainTitle(domains, s.domainId).toLowerCase().includes(q)
+      )
     })
-  }, [students, query, themeFilter, venueFilter])
+  }, [students, query, themeFilter, venueFilter, domains])
 
   const draggedStudentId = useRef<string | null>(null)
 
@@ -760,6 +771,7 @@ export function MentorMatchingBoard({
                     student={student}
                     compatible={null}
                     venues={venues}
+                    domains={domains}
                     onDragStart={(e) => {
                       e.dataTransfer.setData("text/plain", student.studentUserId)
                       draggedStudentId.current = student.studentUserId
@@ -783,6 +795,7 @@ export function MentorMatchingBoard({
                   mentor={mentor}
                   assignedStudents={assignedByMentor.get(mentor.mentorUserId) ?? []}
                   venues={venues}
+                  domains={domains}
                   dragOver={dragOverMentorId === mentor.mentorUserId}
                   onDragOver={() => setDragOverMentorId(mentor.mentorUserId)}
                   onDragLeave={() => setDragOverMentorId((id) => (id === mentor.mentorUserId ? null : id))}

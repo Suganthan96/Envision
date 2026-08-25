@@ -16,7 +16,11 @@ export interface Domain {
     | "inclusive"
 }
 
-export const DOMAINS: Domain[] = [
+// Fallback used only if the DB row is ever empty (e.g. a fresh database
+// before the admin has entered anything at /admin/domains). The DB
+// (public.domains, via get_domains()/admin_*_domain()) is the source of
+// truth once seeded — see getDomains() below.
+export const DEFAULT_DOMAINS: Domain[] = [
   {
     id: "water-clean-energy",
     title: "Smart Water & Clean Energy for a Sustainable Future",
@@ -91,3 +95,14 @@ export const DOMAINS: Domain[] = [
     icon: "inclusive",
   },
 ]
+
+export async function getDomains(): Promise<Domain[]> {
+  const { getSupabaseServerClient } = await import("@/lib/supabase-server")
+  const supabase = getSupabaseServerClient()
+  const { data } = await supabase.rpc("get_domains")
+
+  if (Array.isArray(data) && data.length > 0) {
+    return data as Domain[]
+  }
+  return DEFAULT_DOMAINS
+}

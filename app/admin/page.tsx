@@ -57,6 +57,12 @@ export default async function AdminPage() {
           >
             Timeline
           </Link>
+          <Link
+            href="/admin/domains"
+            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
+          >
+            Domains
+          </Link>
         </div>
 
         <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Admin Portal</p>

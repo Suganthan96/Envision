@@ -9,6 +9,7 @@ import { getAppSettings } from "@/lib/app-settings"
 import { DomainSelectionPage } from "@/components/domain-selection-page"
 import { getTimelinePhases } from "@/lib/timeline"
 import { getFeedbackLinks } from "@/lib/feedback-links"
+import { getDomains } from "@/lib/domains"
 
 export default async function MemberPage() {
   const session = await getSession()
@@ -20,6 +21,7 @@ export default async function MemberPage() {
   } = await getAppSettings()
   const feedbackLinks = domainSelectionOpen ? {} : await getFeedbackLinks()
   const timelinePhases = domainSelectionOpen ? [] : await getTimelinePhases()
+  const domains = domainSelectionOpen ? await getDomains() : []
 
   return (
     <main className="min-h-screen bg-background px-6 pt-12 pb-24">
@@ -56,6 +58,7 @@ export default async function MemberPage() {
             eyebrow="Student Portal"
             heading="Choose Your Domain"
             description="Select the domain you'd like to build your project in for this cycle."
+            domains={domains}
             maxSelections={1}
             canSelect={studentCanSelect}
           />

@@ -8,7 +8,7 @@ import { DomainCapacityEditor, type DomainCapacityRow } from "@/components/domai
 import { getSession } from "@/lib/get-session"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { getAppSettings } from "@/lib/app-settings"
-import { DOMAINS } from "@/lib/domains"
+import { getDomains, type Domain } from "@/lib/domains"
 
 export default async function AdminMentorsPage() {
   const session = await getSession()
@@ -17,20 +17,23 @@ export default async function AdminMentorsPage() {
   let pending: PendingPerson[] = []
   let capacityRows: DomainCapacityRow[] = []
   let capacities: Record<string, number> = {}
+  let domains: Domain[] = []
   if (session) {
     const supabase = getSupabaseServerClient()
-    const [{ data }, { data: pendingData }, { data: capacityData }] = await Promise.all([
+    const [{ data }, { data: pendingData }, { data: capacityData }, domainsResult] = await Promise.all([
       supabase.rpc("admin_list_domain_selections", { p_admin_user_id: session.userId }),
       supabase.rpc("admin_list_pending_domain_selections", { p_admin_user_id: session.userId, p_role: "mentor" }),
       supabase.rpc("get_domain_capacities"),
+      getDomains(),
     ])
+    domains = domainsResult
 
     const capacityData2 = (capacityData ?? []) as {
       domain_id: string
       student_capacity: number
       mentor_capacity: number
     }[]
-    capacityRows = DOMAINS.map((d) => ({
+    capacityRows = domains.map((d) => ({
       domainId: d.id,
       title: d.title,
       capacity: capacityData2.find((c) => c.domain_id === d.id)?.mentor_capacity ?? 7,
@@ -115,6 +118,12 @@ export default async function AdminMentorsPage() {
           >
             Timeline
           </Link>
+          <Link
+            href="/admin/domains"
+            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
+          >
+            Domains
+          </Link>
         </div>
 
         <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Admin Portal</p>
@@ -157,6 +166,7 @@ export default async function AdminMentorsPage() {
         <RoleSelectionsView
           people={mentors}
           capacities={capacities}
+          domains={domains}
           personLabel="Mentor"
           personLabelPlural="mentors"
           emptyLabel="No mentors have selected a domain yet."

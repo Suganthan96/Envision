@@ -9,6 +9,7 @@ import {
 } from "@/components/mentor-matching-board"
 import { getSession } from "@/lib/get-session"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
+import { getDomains, type Domain } from "@/lib/domains"
 
 export const dynamic = "force-dynamic"
 
@@ -18,14 +19,17 @@ export default async function AdminMatchingPage() {
   let mentors: MatchingMentor[] = []
   let students: MatchingStudent[] = []
   let venues: VenueInfo[] = []
+  let domains: Domain[] = []
 
   if (session) {
     const supabase = getSupabaseServerClient()
-    const [{ data: mentorData }, { data: studentData }, { data: venueData }] = await Promise.all([
+    const [{ data: mentorData }, { data: studentData }, { data: venueData }, domainsResult] = await Promise.all([
       supabase.rpc("admin_list_assignable_mentors", { p_admin_user_id: session.userId }),
       supabase.rpc("admin_list_assignable_students", { p_admin_user_id: session.userId }),
       supabase.rpc("get_venues"),
+      getDomains(),
     ])
+    domains = domainsResult
 
     mentors = (
       (mentorData ?? []) as {
@@ -114,6 +118,12 @@ export default async function AdminMatchingPage() {
           >
             Timeline
           </Link>
+          <Link
+            href="/admin/domains"
+            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
+          >
+            Domains
+          </Link>
         </div>
 
         <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Admin Portal</p>
@@ -126,7 +136,12 @@ export default async function AdminMatchingPage() {
           final printable list, grouped by venue.
         </p>
 
-        <MentorMatchingBoard initialMentors={mentors} initialStudents={students} initialVenues={venues} />
+        <MentorMatchingBoard
+          initialMentors={mentors}
+          initialStudents={students}
+          initialVenues={venues}
+          domains={domains}
+        />
       </div>
     </main>
   )

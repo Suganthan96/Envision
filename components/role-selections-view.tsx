@@ -5,7 +5,7 @@ import { Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { SegmentedHealthBar } from "@/components/segmented-health-bar"
 import { DomainIcon } from "@/components/domain-icon"
-import { DOMAINS } from "@/lib/domains"
+import type { Domain } from "@/lib/domains"
 import { cn } from "@/lib/utils"
 
 export interface RoleRow {
@@ -17,11 +17,11 @@ export interface RoleRow {
   domainIds: string[]
 }
 
-function domainTitle(domainId: string) {
-  return DOMAINS.find((d) => d.id === domainId)?.title ?? domainId
+function domainTitle(domains: Domain[], domainId: string) {
+  return domains.find((d) => d.id === domainId)?.title ?? domainId
 }
 
-function PersonCard({ person }: { person: RoleRow }) {
+function PersonCard({ person, domains }: { person: RoleRow; domains: Domain[] }) {
   const displayName = person.name?.trim() || person.loginId
 
   return (
@@ -50,7 +50,7 @@ function PersonCard({ person }: { person: RoleRow }) {
             key={domainId}
             className="text-muted-foreground text-sm border-l-2 border-primary/40 pl-2"
           >
-            {domainTitle(domainId)}
+            {domainTitle(domains, domainId)}
           </span>
         ))}
       </div>
@@ -58,7 +58,15 @@ function PersonCard({ person }: { person: RoleRow }) {
   )
 }
 
-function PersonCardsView({ people, personLabelPlural }: { people: RoleRow[]; personLabelPlural: string }) {
+function PersonCardsView({
+  people,
+  personLabelPlural,
+  domains,
+}: {
+  people: RoleRow[]
+  personLabelPlural: string
+  domains: Domain[]
+}) {
   const [query, setQuery] = useState("")
 
   const filtered = useMemo(() => {
@@ -89,7 +97,7 @@ function PersonCardsView({ people, personLabelPlural }: { people: RoleRow[]; per
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((person) => (
-            <PersonCard key={person.loginId} person={person} />
+            <PersonCard key={person.loginId} person={person} domains={domains} />
           ))}
         </div>
       )}
@@ -105,7 +113,7 @@ function ThemeCard({
   names,
 }: {
   title: string
-  icon: (typeof DOMAINS)[number]["icon"]
+  icon: Domain["icon"]
   count: number
   capacity: number
   names: string[]
@@ -150,7 +158,15 @@ function ThemeCard({
   )
 }
 
-function ThemeWiseView({ people, capacities }: { people: RoleRow[]; capacities: Record<string, number> }) {
+function ThemeWiseView({
+  people,
+  capacities,
+  domains,
+}: {
+  people: RoleRow[]
+  capacities: Record<string, number>
+  domains: Domain[]
+}) {
   const byDomain = useMemo(() => {
     const map = new Map<string, string[]>()
     for (const person of people) {
@@ -166,7 +182,7 @@ function ThemeWiseView({ people, capacities }: { people: RoleRow[]; capacities: 
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-      {DOMAINS.map((domain) => {
+      {domains.map((domain) => {
         const names = byDomain.get(domain.id) ?? []
         return (
           <ThemeCard
@@ -186,12 +202,14 @@ function ThemeWiseView({ people, capacities }: { people: RoleRow[]; capacities: 
 export function RoleSelectionsView({
   people,
   capacities,
+  domains,
   personLabel,
   personLabelPlural,
   emptyLabel,
 }: {
   people: RoleRow[]
   capacities: Record<string, number>
+  domains: Domain[]
   personLabel: string
   personLabelPlural: string
   emptyLabel: string
@@ -228,9 +246,9 @@ export function RoleSelectionsView({
           <p className="text-muted-foreground">{emptyLabel}</p>
         </div>
       ) : view === "person" ? (
-        <PersonCardsView people={people} personLabelPlural={personLabelPlural} />
+        <PersonCardsView people={people} personLabelPlural={personLabelPlural} domains={domains} />
       ) : (
-        <ThemeWiseView people={people} capacities={capacities} />
+        <ThemeWiseView people={people} capacities={capacities} domains={domains} />
       )}
     </div>
   )

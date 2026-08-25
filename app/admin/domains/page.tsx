@@ -1,18 +1,17 @@
 import Link from "next/link"
 import { LogoutButton } from "@/components/logout-button"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { TimelineEditor } from "@/components/timeline-editor"
-import { getTimelinePhases } from "@/lib/timeline"
-import { getFeedbackLinks } from "@/lib/feedback-links"
+import { DomainEditor } from "@/components/domain-editor"
+import { getDomains } from "@/lib/domains"
 
 export const dynamic = "force-dynamic"
 
-export default async function AdminTimelinePage() {
-  const [phases, feedbackLinks] = await Promise.all([getTimelinePhases(), getFeedbackLinks()])
+export default async function AdminDomainsPage() {
+  const domains = await getDomains()
 
   return (
     <main className="min-h-screen bg-background px-6 py-12">
-      <div className="relative z-10 max-w-5xl mx-auto">
+      <div className="relative z-10 max-w-4xl mx-auto">
         <div className="flex items-center justify-between mb-16">
           <div className="flex items-center gap-4">
             <div className="w-8 h-px bg-primary" />
@@ -46,27 +45,28 @@ export default async function AdminTimelinePage() {
           >
             Mentor Matching
           </Link>
-          <span className="text-primary text-sm uppercase tracking-wider border-b border-primary pb-1">
-            Timeline
-          </span>
           <Link
-            href="/admin/domains"
+            href="/admin/timeline"
             className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
           >
-            Domains
+            Timeline
           </Link>
+          <span className="text-primary text-sm uppercase tracking-wider border-b border-primary pb-1">
+            Domains
+          </span>
         </div>
 
         <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Admin Portal</p>
         <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-4">
-          Program <span className="text-gold-gradient">Timeline</span>
+          Domain <span className="text-gold-gradient">Themes</span>
         </h1>
         <p className="text-muted-foreground text-lg mb-12">
-          Edit every phase and session — labels, dates, titles, resources, venues, and feedback form links. This is
-          what students and mentors see when domain selection is closed.
+          Add, edit, or delete the themes students and mentors can choose from. A theme with existing selections
+          can&apos;t be deleted. New themes start with a default capacity of 6 students / 7 mentors — adjust that
+          from the Mentor or Student Selections page.
         </p>
 
-        <TimelineEditor initialPhases={phases} initialFeedbackLinks={feedbackLinks} />
+        <DomainEditor initialDomains={domains} />
       </div>
     </main>
   )
