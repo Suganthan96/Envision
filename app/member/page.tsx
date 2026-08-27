@@ -2,7 +2,7 @@ import { LogoutButton } from "@/components/logout-button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { DashboardNavCard } from "@/components/dashboard-nav-card"
 import { getSession } from "@/lib/get-session"
-import { CalendarClock, Users, LayoutGrid, UserCircle } from "lucide-react"
+import { CalendarClock, Users, LayoutGrid, UserCircle, Lightbulb } from "lucide-react"
 
 export default async function MemberPage() {
   const session = await getSession()
@@ -52,6 +52,13 @@ export default async function MemberPage() {
           icon={<UserCircle className="w-9 h-9" />}
           title="My Mentor"
           description="Meet the mentor guiding your team this cycle."
+        />
+        <DashboardNavCard
+          href="/member/project"
+          icon={<Lightbulb className="w-9 h-9" />}
+          title="Project"
+          description="Add your problem statement and solution."
+          className="sm:col-span-2 sm:mx-auto sm:w-[calc(50%-1rem)]"
         />
       </div>
     </main>
