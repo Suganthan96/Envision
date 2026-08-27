@@ -1,19 +1,19 @@
 import Link from "next/link"
 import { LogoutButton } from "@/components/logout-button"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { TeamProfileEditor } from "@/components/team-profile-editor"
+import { MentorTeamCard } from "@/components/mentor-team-card"
 import { getSession } from "@/lib/get-session"
-import { getAppSettings } from "@/lib/app-settings"
-import { getTeamMembers } from "@/lib/team-members"
-import { getTeamLogo } from "@/lib/team-logo"
+import { getMyTeams } from "@/lib/mentor-teams"
+import { getDomains } from "@/lib/domains"
 
 export const dynamic = "force-dynamic"
 
-export default async function MemberTeamPage() {
+export default async function MentorTeamsPage() {
   const session = await getSession()
-  const { teamNameEditOpen } = await getAppSettings()
-  const teamMembers = session ? await getTeamMembers(session.userId) : []
-  const teamLogo = session ? await getTeamLogo(session.userId) : null
+  const [teams, domains] = await Promise.all([
+    session ? getMyTeams(session.userId) : Promise.resolve([]),
+    getDomains(),
+  ])
 
   return (
     <main className="min-h-screen bg-background px-6 py-12">
@@ -30,23 +30,32 @@ export default async function MemberTeamPage() {
 
       <div className="relative z-10 max-w-4xl mx-auto">
         <Link
-          href="/member"
+          href="/mentor"
           className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider mb-8 inline-block"
         >
           ← Back to Portal
         </Link>
 
-        <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Student Portal</p>
+        <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Mentor Portal</p>
         <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-10">
-          Team <span className="text-gold-gradient">Profile</span>
+          My <span className="text-gold-gradient">Teams</span>
         </h1>
 
-        <TeamProfileEditor
-          currentTeamName={session?.name ?? null}
-          teamNameEditOpen={teamNameEditOpen}
-          currentLogoUrl={teamLogo}
-          currentMembers={teamMembers}
-        />
+        {teams.length === 0 ? (
+          <p className="text-muted-foreground text-lg">
+            No teams have been assigned to you yet. Check back once matching is complete.
+          </p>
+        ) : (
+          <div className="grid sm:grid-cols-2 gap-6">
+            {teams.map((team) => (
+              <MentorTeamCard
+                key={team.studentUserId}
+                team={team}
+                domainTitle={domains.find((d) => d.id === team.domainId)?.title ?? null}
+              />
+            ))}
+          </div>
+        )}
       </div>
     </main>
   )

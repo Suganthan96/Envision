@@ -1,8 +1,8 @@
 "use client"
 
-import { useState } from "react"
+import { useRef, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Plus, Trash2 } from "lucide-react"
+import { Camera, Plus, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,9 +14,11 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { DEPARTMENTS } from "@/lib/department"
+import { resizeImageFile } from "@/lib/resize-image"
 import type { TeamMember } from "@/lib/team-members"
 
 const MAX_MEMBERS = 7
+const LOGO_MAX_DIMENSION = 400
 
 type Draft = { name: string; email: string; department: string }
 
@@ -28,13 +30,20 @@ function toDrafts(members: TeamMember[]): Draft[] {
 export function TeamProfileEditor({
   currentTeamName,
   teamNameEditOpen,
+  currentLogoUrl,
   currentMembers,
 }: {
   currentTeamName: string | null
   teamNameEditOpen: boolean
+  currentLogoUrl: string | null
   currentMembers: TeamMember[]
 }) {
   const router = useRouter()
+  const logoInputRef = useRef<HTMLInputElement>(null)
+
+  const [logoUrl, setLogoUrl] = useState(currentLogoUrl)
+  const [logoError, setLogoError] = useState("")
+  const [processingLogo, setProcessingLogo] = useState(false)
 
   const [teamName, setTeamName] = useState(currentTeamName ?? "")
   const [nameSaving, setNameSaving] = useState(false)
@@ -45,6 +54,57 @@ export function TeamProfileEditor({
   const [membersSaving, setMembersSaving] = useState(false)
   const [membersError, setMembersError] = useState("")
   const [membersSaved, setMembersSaved] = useState(false)
+
+  const saveLogo = async (nextLogoUrl: string | null) => {
+    setLogoError("")
+    try {
+      const res = await fetch("/api/team-logo", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ logoUrl: nextLogoUrl ?? "" }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setLogoError(data.error ?? "Unable to save the team logo.")
+        return
+      }
+      router.refresh()
+    } catch {
+      setLogoError("Something went wrong. Please try again.")
+    }
+  }
+
+  const handleLogoFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    e.target.value = ""
+    if (!file) return
+
+    if (!file.type.startsWith("image/")) {
+      setLogoError("Please choose an image file.")
+      return
+    }
+    if (file.size > 8 * 1024 * 1024) {
+      setLogoError("That image is too large. Please choose one under 8MB.")
+      return
+    }
+
+    setLogoError("")
+    setProcessingLogo(true)
+    try {
+      const dataUrl = await resizeImageFile(file, LOGO_MAX_DIMENSION)
+      setLogoUrl(dataUrl)
+      await saveLogo(dataUrl)
+    } catch {
+      setLogoError("Unable to process that image. Please try another.")
+    } finally {
+      setProcessingLogo(false)
+    }
+  }
+
+  const removeLogo = async () => {
+    setLogoUrl(null)
+    await saveLogo(null)
+  }
 
   const saveTeamName = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -129,6 +189,50 @@ export function TeamProfileEditor({
 
   return (
     <div className="flex flex-col gap-12">
+      <section>
+        <h2 className="font-serif text-2xl text-foreground mb-2">Team Logo</h2>
+        <p className="text-muted-foreground text-sm mb-4">A logo or image that represents your team.</p>
+        <div className="flex items-center gap-6">
+          <div className="size-28 border border-border bg-card/40 flex items-center justify-center overflow-hidden shrink-0">
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt="Team logo" className="w-full h-full object-cover" />
+            ) : (
+              <Camera className="w-8 h-8 text-muted-foreground" />
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <input
+              ref={logoInputRef}
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleLogoFileChange}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => logoInputRef.current?.click()}
+              disabled={processingLogo}
+              className="border-primary text-primary hover:bg-primary hover:text-primary-foreground dark:hover:bg-primary dark:hover:text-primary-foreground dark:bg-transparent dark:border-primary uppercase tracking-wider text-xs h-9 bg-transparent"
+            >
+              <Camera className="w-4 h-4 mr-1.5" />
+              {processingLogo ? "Processing..." : "Change Logo"}
+            </Button>
+            {logoUrl && (
+              <button
+                type="button"
+                onClick={removeLogo}
+                className="text-muted-foreground hover:text-destructive text-xs uppercase tracking-wider text-left"
+              >
+                Remove Logo
+              </button>
+            )}
+          </div>
+        </div>
+        {logoError && <p className="text-destructive text-sm mt-2">{logoError}</p>}
+      </section>
+
       <section>
         <h2 className="font-serif text-2xl text-foreground mb-2">Team Name</h2>
         <p className="text-muted-foreground text-sm mb-4">

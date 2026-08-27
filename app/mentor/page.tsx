@@ -2,7 +2,7 @@ import { LogoutButton } from "@/components/logout-button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { DashboardNavCard } from "@/components/dashboard-nav-card"
 import { getSession } from "@/lib/get-session"
-import { CalendarClock, UserCircle, LayoutGrid } from "lucide-react"
+import { CalendarClock, UserCircle, LayoutGrid, Users } from "lucide-react"
 
 export default async function MentorPage() {
   const session = await getSession()
@@ -46,6 +46,12 @@ export default async function MentorPage() {
           icon={<LayoutGrid className="w-9 h-9" />}
           title="Domains"
           description="Browse and choose the domains you'd like to mentor in."
+        />
+        <DashboardNavCard
+          href="/mentor/teams"
+          icon={<Users className="w-9 h-9" />}
+          title="My Teams"
+          description="See the teams assigned to you as mentor."
         />
       </div>
     </main>

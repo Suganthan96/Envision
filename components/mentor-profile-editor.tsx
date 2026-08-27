@@ -7,38 +7,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { resizeImageFile } from "@/lib/resize-image"
 
 const MAX_BIO_LENGTH = 1000
 const AVATAR_MAX_DIMENSION = 480
-
-function resizeImageFile(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader()
-    reader.onerror = () => reject(new Error("Unable to read that file."))
-    reader.onload = () => {
-      const img = new Image()
-      img.onerror = () => reject(new Error("Unable to read that image."))
-      img.onload = () => {
-        const scale = Math.min(1, AVATAR_MAX_DIMENSION / Math.max(img.width, img.height))
-        const width = Math.round(img.width * scale)
-        const height = Math.round(img.height * scale)
-
-        const canvas = document.createElement("canvas")
-        canvas.width = width
-        canvas.height = height
-        const ctx = canvas.getContext("2d")
-        if (!ctx) {
-          reject(new Error("Unable to process that image."))
-          return
-        }
-        ctx.drawImage(img, 0, 0, width, height)
-        resolve(canvas.toDataURL("image/jpeg", 0.85))
-      }
-      img.src = reader.result as string
-    }
-    reader.readAsDataURL(file)
-  })
-}
 
 export function MentorProfileEditor({
   currentAvatarUrl,
@@ -76,7 +48,7 @@ export function MentorProfileEditor({
     setError("")
     setProcessingImage(true)
     try {
-      const dataUrl = await resizeImageFile(file)
+      const dataUrl = await resizeImageFile(file, AVATAR_MAX_DIMENSION)
       setAvatarUrl(dataUrl)
     } catch {
       setError("Unable to process that image. Please try another.")
