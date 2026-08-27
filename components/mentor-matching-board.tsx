@@ -173,21 +173,17 @@ function VenueManager({
 function TeamCard({
   student,
   compatible,
-  venues,
   domains,
   onDragStart,
   onRemove,
-  onVenueChange,
 }: {
   student: MatchingStudent
   compatible: boolean | null
-  venues: VenueInfo[]
   domains: Domain[]
   onDragStart: (e: React.DragEvent) => void
   onRemove?: () => void
-  onVenueChange: (venue: string | null) => void
 }) {
-  const displayName = student.teamName?.trim() || student.loginId
+  const teamName = student.teamName?.trim()
 
   return (
     <div
@@ -201,17 +197,20 @@ function TeamCard({
       )}
       title={student.loginId}
     >
-      <p className="text-foreground text-sm font-medium truncate pr-5">{displayName}</p>
+      <p className="text-foreground text-sm font-medium truncate pr-5">
+        <span className="text-primary font-mono mr-1.5">#{student.loginId}</span>
+        {teamName}
+      </p>
       <p className="text-muted-foreground text-xs truncate">{domainTitle(domains, student.domainId)}</p>
-      <div className="mt-1.5" onPointerDown={(e) => e.stopPropagation()}>
-        <VenuePicker value={student.venue} venues={venues} onChange={onVenueChange} />
-      </div>
+      {student.venue && (
+        <p className="text-muted-foreground text-[10px] uppercase tracking-wider mt-1">Venue: {student.venue}</p>
+      )}
       {onRemove && (
         <button
           type="button"
           onClick={onRemove}
           className="absolute top-1.5 right-1.5 w-5 h-5 flex items-center justify-center text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-          aria-label={`Unassign ${displayName}`}
+          aria-label={`Unassign ${teamName || student.loginId}`}
         >
           <X className="w-3.5 h-3.5" />
         </button>
@@ -228,7 +227,6 @@ function MentorCard({
   onDrop,
   onRemove,
   onVenueChange,
-  onTeamVenueChange,
   dragOver,
   onDragOver,
   onDragLeave,
@@ -240,7 +238,6 @@ function MentorCard({
   onDrop: () => void
   onRemove: (studentUserId: string) => void
   onVenueChange: (venue: string | null) => void
-  onTeamVenueChange: (studentUserId: string, venue: string | null) => void
   dragOver: boolean
   onDragOver: (e: React.DragEvent) => void
   onDragLeave: () => void
@@ -292,11 +289,9 @@ function MentorCard({
                 key={student.studentUserId}
                 student={student}
                 compatible={mentor.domainIds.includes(student.domainId)}
-                venues={venues}
                 domains={domains}
                 onDragStart={(e) => e.dataTransfer.setData("text/plain", student.studentUserId)}
                 onRemove={() => onRemove(student.studentUserId)}
-                onVenueChange={(venue) => onTeamVenueChange(student.studentUserId, venue)}
               />
             )
           }
@@ -322,7 +317,6 @@ async function downloadMentorMatchingPdf(rows: ExportRow[]) {
 
   const doc = new jsPDF({ unit: "pt", format: "a4" })
   const pageWidth = doc.internal.pageSize.getWidth()
-  const pageHeight = doc.internal.pageSize.getHeight()
   const marginX = 40
   let y = 50
 
@@ -342,7 +336,7 @@ async function downloadMentorMatchingPdf(rows: ExportRow[]) {
   doc.setFontSize(9)
   doc.setTextColor(140)
   const today = new Date().toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
-  doc.text(`Generated ${today}`, pageWidth / 2, y, { align: "center" })
+  doc.text(`${today}`, pageWidth / 2, y, { align: "center" })
 
   y += 10
   doc.setDrawColor(20)
@@ -350,75 +344,70 @@ async function downloadMentorMatchingPdf(rows: ExportRow[]) {
   doc.line(marginX, y, pageWidth - marginX, y)
   y += 24
 
-  const groups = new Map<string, ExportRow[]>()
-  for (const r of rows) {
-    const list = groups.get(r.venue) ?? []
-    list.push(r)
-    groups.set(r.venue, list)
-  }
-  const sortedGroups = Array.from(groups.entries()).sort(([a], [b]) => a.localeCompare(b))
-
   if (rows.length === 0) {
     doc.setFontSize(11)
     doc.setTextColor(120)
     doc.text("No mentors have any teams assigned yet.", pageWidth / 2, y, { align: "center" })
+    doc.save("envision-mentor-matching.pdf")
+    return
   }
 
-  for (const [venue, venueRows] of sortedGroups) {
-    const mentorCounts = new Map<string, number>()
-    for (const r of venueRows) mentorCounts.set(r.mentorId, (mentorCounts.get(r.mentorId) ?? 0) + 1)
+  const sortedRows = [...rows].sort(
+    (a, b) => a.venue.localeCompare(b.venue) || a.mentorName.localeCompare(b.mentorName),
+  )
 
-    if (y > pageHeight - 100) {
-      doc.addPage()
-      y = 50
-    }
+  // jspdf-autotable does not repeat rowSpan cell content when a merged group is
+  // split across a page break, which left Venue/Mentor blank on later pages.
+  // So instead of merging cells, repeat the label on every row (bold + a thicker
+  // top border only on the first row of each group) — this stays correct no
+  // matter where a page break lands.
+  type Cell = string | { content: string; styles: Record<string, unknown> }
+  const body: Cell[][] = []
+  const groupTopBorderByRow = new Map<number, number>()
+  sortedRows.forEach((r, i) => {
+    const prev = sortedRows[i - 1]
+    const isFirstOfVenue = i === 0 || prev.venue !== r.venue
+    const isFirstOfMentor = i === 0 || prev.mentorId !== r.mentorId || isFirstOfVenue
 
-    doc.setFont("helvetica", "bold")
-    doc.setFontSize(11)
-    doc.setTextColor(20)
-    doc.text(`Venue: ${venue}  (${venueRows.length} teams)`, marginX, y)
-    y += 8
+    if (isFirstOfVenue) groupTopBorderByRow.set(i, 1.5)
+    else if (isFirstOfMentor) groupTopBorderByRow.set(i, 0.75)
 
-    const body: (string | { content: string; rowSpan: number; styles: Record<string, unknown> })[][] = []
-    venueRows.forEach((r, i) => {
-      const isFirst = i === 0 || venueRows[i - 1].mentorId !== r.mentorId
-      const row: (string | { content: string; rowSpan: number; styles: Record<string, unknown> })[] = []
-      if (isFirst) {
-        row.push({
-          content: r.mentorName,
-          rowSpan: mentorCounts.get(r.mentorId) ?? 1,
-          styles: { valign: "top", fontStyle: "bold" },
-        })
+    body.push([
+      { content: r.venue, styles: { fontStyle: isFirstOfVenue ? "bold" : "normal" } },
+      { content: r.mentorName, styles: { fontStyle: isFirstOfMentor ? "bold" : "normal" } },
+      r.team.loginId,
+      r.team.teamName?.trim() || "—",
+      r.team.teamLeadName ?? "—",
+      r.team.phone ?? "—",
+      r.team.email ?? "—",
+    ])
+  })
+
+  autoTable(doc, {
+    startY: y,
+    margin: { left: marginX, right: marginX },
+    head: [["Venue", "Mentor", "Team #", "Team Name", "Team Leader", "Phone", "Email"]],
+    body,
+    theme: "grid",
+    styles: { fontSize: 9, cellPadding: 6, lineColor: [20, 20, 20], lineWidth: 0.5, textColor: 20 },
+    headStyles: { fillColor: [235, 235, 235], textColor: 20, fontStyle: "bold" },
+    columnStyles: {
+      0: { cellWidth: 70 },
+      1: { cellWidth: 85 },
+      2: { cellWidth: 55 },
+      3: { cellWidth: 90 },
+      4: { cellWidth: 90 },
+      5: { cellWidth: 80 },
+      6: { cellWidth: "auto" },
+    },
+    didParseCell: (data) => {
+      if (data.section !== "body") return
+      const topWidth = groupTopBorderByRow.get(data.row.index)
+      if (topWidth) {
+        data.cell.styles.lineWidth = { top: topWidth, right: 0.5, bottom: 0.5, left: 0.5 }
       }
-      row.push(
-        r.team.teamName?.trim() || r.team.loginId,
-        r.team.teamLeadName ?? "—",
-        r.team.phone ?? "—",
-        r.team.email ?? "—",
-      )
-      body.push(row)
-    })
-
-    autoTable(doc, {
-      startY: y,
-      margin: { left: marginX, right: marginX },
-      head: [["Mentor", "Team Name", "Team Leader", "Phone", "Email"]],
-      body,
-      theme: "grid",
-      styles: { fontSize: 9, cellPadding: 6, lineColor: [20, 20, 20], lineWidth: 0.5, textColor: 20 },
-      headStyles: { fillColor: [235, 235, 235], textColor: 20, fontStyle: "bold" },
-      columnStyles: {
-        0: { cellWidth: 105 },
-        1: { cellWidth: 100 },
-        2: { cellWidth: 100 },
-        3: { cellWidth: 90 },
-        4: { cellWidth: "auto" },
-      },
-    })
-
-    // @ts-expect-error - lastAutoTable is attached by the autoTable plugin
-    y = doc.lastAutoTable.finalY + 30
-  }
+    },
+  })
 
   doc.save("envision-mentor-matching.pdf")
 }
@@ -438,6 +427,7 @@ export function MentorMatchingBoard({
   const [students, setStudents] = useState<MatchingStudent[]>(initialStudents)
   const [venues, setVenues] = useState<VenueInfo[]>(initialVenues)
   const [query, setQuery] = useState("")
+  const [mentorQuery, setMentorQuery] = useState("")
   const [dragOverMentorId, setDragOverMentorId] = useState<string | null>(null)
   const [error, setError] = useState("")
   const [themeFilter, setThemeFilter] = useState("")
@@ -451,15 +441,16 @@ export function MentorMatchingBoard({
     return domains.filter((d) => ids.has(d.id))
   }, [mentors, students, domains])
 
-  const visibleMentors = useMemo(
-    () =>
-      mentors.filter((m) => {
-        if (themeFilter && !m.domainIds.includes(themeFilter)) return false
-        if (venueFilter && m.venue !== venueFilter) return false
-        return true
-      }),
-    [mentors, themeFilter, venueFilter],
-  )
+  const visibleMentors = useMemo(() => {
+    const q = mentorQuery.trim().toLowerCase()
+    return mentors.filter((m) => {
+      if (themeFilter && !m.domainIds.includes(themeFilter)) return false
+      if (venueFilter && m.venue !== venueFilter) return false
+      if (!q) return true
+      const name = (m.name ?? "").toLowerCase()
+      return name.includes(q) || m.loginId.toLowerCase().includes(q)
+    })
+  }, [mentors, themeFilter, venueFilter, mentorQuery])
 
   const assignedByMentor = useMemo(() => {
     const map = new Map<string, MatchingStudent[]>()
@@ -492,10 +483,20 @@ export function MentorMatchingBoard({
 
   const assign = async (studentUserId: string, mentorUserId: string | null) => {
     setError("")
-    const prevMentorId = students.find((s) => s.studentUserId === studentUserId)?.mentorUserId ?? null
+    const prevStudent = students.find((s) => s.studentUserId === studentUserId)
+    const prevMentorId = prevStudent?.mentorUserId ?? null
+    const prevVenue = prevStudent?.venue ?? null
+    const nextVenue = mentorUserId ? mentors.find((m) => m.mentorUserId === mentorUserId)?.venue ?? null : null
 
     setStudents((prev) =>
-      prev.map((s) => (s.studentUserId === studentUserId ? { ...s, mentorUserId } : s)),
+      prev.map((s) => (s.studentUserId === studentUserId ? { ...s, mentorUserId, venue: nextVenue } : s)),
+    )
+    setVenues((list) =>
+      list.map((v) => {
+        if (v.code === nextVenue) return { ...v, teamCount: v.teamCount + 1 }
+        if (v.code === prevVenue) return { ...v, teamCount: Math.max(0, v.teamCount - 1) }
+        return v
+      }),
     )
 
     try {
@@ -508,13 +509,31 @@ export function MentorMatchingBoard({
 
       if (!res.ok) {
         setStudents((prev) =>
-          prev.map((s) => (s.studentUserId === studentUserId ? { ...s, mentorUserId: prevMentorId } : s)),
+          prev.map((s) =>
+            s.studentUserId === studentUserId ? { ...s, mentorUserId: prevMentorId, venue: prevVenue } : s,
+          ),
+        )
+        setVenues((list) =>
+          list.map((v) => {
+            if (v.code === prevVenue) return { ...v, teamCount: v.teamCount + 1 }
+            if (v.code === nextVenue) return { ...v, teamCount: Math.max(0, v.teamCount - 1) }
+            return v
+          }),
         )
         setError(data.error ?? "Unable to update assignment.")
       }
     } catch {
       setStudents((prev) =>
-        prev.map((s) => (s.studentUserId === studentUserId ? { ...s, mentorUserId: prevMentorId } : s)),
+        prev.map((s) =>
+          s.studentUserId === studentUserId ? { ...s, mentorUserId: prevMentorId, venue: prevVenue } : s,
+        ),
+      )
+      setVenues((list) =>
+        list.map((v) => {
+          if (v.code === prevVenue) return { ...v, teamCount: v.teamCount + 1 }
+          if (v.code === nextVenue) return { ...v, teamCount: Math.max(0, v.teamCount - 1) }
+          return v
+        }),
       )
       setError("Something went wrong. Please try again.")
     }
@@ -537,37 +556,6 @@ export function MentorMatchingBoard({
       }
     } catch {
       setMentors((list) => list.map((m) => (m.mentorUserId === mentorUserId ? { ...m, venue: prev } : m)))
-      setError("Something went wrong. Please try again.")
-    }
-  }
-
-  const setStudentVenue = async (studentUserId: string, venue: string | null) => {
-    setError("")
-    const prevStudent = students.find((s) => s.studentUserId === studentUserId)
-    const prev = prevStudent?.venue ?? null
-    setStudents((list) => list.map((s) => (s.studentUserId === studentUserId ? { ...s, venue } : s)))
-
-    try {
-      const res = await fetch("/api/admin/set-venue", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ userId: studentUserId, venue }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        setStudents((list) => list.map((s) => (s.studentUserId === studentUserId ? { ...s, venue: prev } : s)))
-        setError(data.error ?? "Unable to set the team's venue.")
-        return
-      }
-      setVenues((list) =>
-        list.map((v) => {
-          if (v.code === venue) return { ...v, teamCount: v.teamCount + 1 }
-          if (v.code === prev) return { ...v, teamCount: Math.max(0, v.teamCount - 1) }
-          return v
-        }),
-      )
-    } catch {
-      setStudents((list) => list.map((s) => (s.studentUserId === studentUserId ? { ...s, venue: prev } : s)))
       setError("Something went wrong. Please try again.")
     }
   }
@@ -640,13 +628,6 @@ export function MentorMatchingBoard({
     const studentUserId = draggedStudentId.current
     draggedStudentId.current = null
     if (!studentUserId) return
-
-    const mentor = mentors.find((m) => m.mentorUserId === mentorUserId)
-    const student = students.find((s) => s.studentUserId === studentUserId)
-    if (mentor?.venue && student?.venue && mentor.venue !== student.venue) {
-      setError(`This team is assigned to ${student.venue}, but this mentor is in ${mentor.venue}.`)
-      return
-    }
 
     const current = assignedByMentor.get(mentorUserId) ?? []
     const alreadyThere = current.some((s) => s.studentUserId === studentUserId)
@@ -733,7 +714,7 @@ export function MentorMatchingBoard({
           </div>
 
           <p className="text-muted-foreground text-xs sm:pb-2 flex-1 min-w-[200px]">
-            A team can only be dropped on a mentor in the same venue (when both have one set).
+            A team automatically inherits the venue of the mentor it&apos;s dropped on.
           </p>
 
           <Button
@@ -770,42 +751,48 @@ export function MentorMatchingBoard({
                     key={student.studentUserId}
                     student={student}
                     compatible={null}
-                    venues={venues}
                     domains={domains}
                     onDragStart={(e) => {
                       e.dataTransfer.setData("text/plain", student.studentUserId)
                       draggedStudentId.current = student.studentUserId
                     }}
-                    onVenueChange={(venue) => setStudentVenue(student.studentUserId, venue)}
                   />
                 ))
               )}
             </div>
           </div>
 
-          <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {visibleMentors.length === 0 ? (
-              <p className="text-muted-foreground text-sm col-span-full text-center py-8">
-                No mentors match these filters.
-              </p>
-            ) : (
-              visibleMentors.map((mentor) => (
-                <MentorCard
-                  key={mentor.mentorUserId}
-                  mentor={mentor}
-                  assignedStudents={assignedByMentor.get(mentor.mentorUserId) ?? []}
-                  venues={venues}
-                  domains={domains}
-                  dragOver={dragOverMentorId === mentor.mentorUserId}
-                  onDragOver={() => setDragOverMentorId(mentor.mentorUserId)}
-                  onDragLeave={() => setDragOverMentorId((id) => (id === mentor.mentorUserId ? null : id))}
-                  onDrop={() => handleDropOnMentor(mentor.mentorUserId)}
-                  onRemove={(studentUserId) => assign(studentUserId, null)}
-                  onVenueChange={(venue) => setMentorVenue(mentor.mentorUserId, venue)}
-                  onTeamVenueChange={setStudentVenue}
-                />
-              ))
-            )}
+          <div className="flex flex-col gap-4">
+            <Input
+              value={mentorQuery}
+              onChange={(e) => setMentorQuery(e.target.value)}
+              placeholder="Search mentor name or login ID..."
+              className="bg-card border-border text-foreground h-9 text-sm"
+            />
+
+            <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-4">
+              {visibleMentors.length === 0 ? (
+                <p className="text-muted-foreground text-sm col-span-full text-center py-8">
+                  No mentors match these filters.
+                </p>
+              ) : (
+                visibleMentors.map((mentor) => (
+                  <MentorCard
+                    key={mentor.mentorUserId}
+                    mentor={mentor}
+                    assignedStudents={assignedByMentor.get(mentor.mentorUserId) ?? []}
+                    venues={venues}
+                    domains={domains}
+                    dragOver={dragOverMentorId === mentor.mentorUserId}
+                    onDragOver={() => setDragOverMentorId(mentor.mentorUserId)}
+                    onDragLeave={() => setDragOverMentorId((id) => (id === mentor.mentorUserId ? null : id))}
+                    onDrop={() => handleDropOnMentor(mentor.mentorUserId)}
+                    onRemove={(studentUserId) => assign(studentUserId, null)}
+                    onVenueChange={(venue) => setMentorVenue(mentor.mentorUserId, venue)}
+                  />
+                ))
+              )}
+            </div>
           </div>
         </div>
       </div>
