@@ -1,14 +1,19 @@
 import { LogoutButton } from "@/components/logout-button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { AdminNav } from "@/components/admin-nav"
-import { TimelineEditor } from "@/components/timeline-editor"
-import { getTimelinePhases } from "@/lib/timeline"
-import { getFeedbackLinks } from "@/lib/feedback-links"
+import { AdminMentorProfilesView } from "@/components/admin-mentor-profiles-view"
+import { getSession } from "@/lib/get-session"
+import { getMentorProfilesForAdmin, type AdminMentorProfile } from "@/lib/admin-directories"
+import { getDomains } from "@/lib/domains"
 
 export const dynamic = "force-dynamic"
 
-export default async function AdminTimelinePage() {
-  const [phases, feedbackLinks] = await Promise.all([getTimelinePhases(), getFeedbackLinks()])
+export default async function AdminMentorProfilesPage() {
+  const session = await getSession()
+  const [mentors, domains]: [AdminMentorProfile[], Awaited<ReturnType<typeof getDomains>>] = await Promise.all([
+    session ? getMentorProfilesForAdmin(session.userId) : Promise.resolve([]),
+    getDomains(),
+  ])
 
   return (
     <main className="min-h-screen bg-background px-6 py-12">
@@ -24,18 +29,17 @@ export default async function AdminTimelinePage() {
           </div>
         </div>
 
-        <AdminNav active="/admin/timeline" />
+        <AdminNav active="/admin/mentor-profiles" />
 
         <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Admin Portal</p>
         <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-4">
-          Program <span className="text-gold-gradient">Timeline</span>
+          Mentor <span className="text-gold-gradient">Profiles</span>
         </h1>
         <p className="text-muted-foreground text-lg mb-12">
-          Edit every phase and session — labels, dates, titles, resources, venues, and feedback form links. This is
-          what students and mentors see when domain selection is closed.
+          Every mentor&apos;s photo, description, venue, and domains, in one searchable directory.
         </p>
 
-        <TimelineEditor initialPhases={phases} initialFeedbackLinks={feedbackLinks} />
+        <AdminMentorProfilesView mentors={mentors} domains={domains} />
       </div>
     </main>
   )

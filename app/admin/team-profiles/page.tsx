@@ -1,14 +1,19 @@
 import { LogoutButton } from "@/components/logout-button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { AdminNav } from "@/components/admin-nav"
-import { TimelineEditor } from "@/components/timeline-editor"
-import { getTimelinePhases } from "@/lib/timeline"
-import { getFeedbackLinks } from "@/lib/feedback-links"
+import { AdminTeamProfilesView } from "@/components/admin-team-profiles-view"
+import { getSession } from "@/lib/get-session"
+import { getTeamProfilesForAdmin, type AdminTeamProfile } from "@/lib/admin-directories"
+import { getDomains } from "@/lib/domains"
 
 export const dynamic = "force-dynamic"
 
-export default async function AdminTimelinePage() {
-  const [phases, feedbackLinks] = await Promise.all([getTimelinePhases(), getFeedbackLinks()])
+export default async function AdminTeamProfilesPage() {
+  const session = await getSession()
+  const [teams, domains]: [AdminTeamProfile[], Awaited<ReturnType<typeof getDomains>>] = await Promise.all([
+    session ? getTeamProfilesForAdmin(session.userId) : Promise.resolve([]),
+    getDomains(),
+  ])
 
   return (
     <main className="min-h-screen bg-background px-6 py-12">
@@ -24,18 +29,17 @@ export default async function AdminTimelinePage() {
           </div>
         </div>
 
-        <AdminNav active="/admin/timeline" />
+        <AdminNav active="/admin/team-profiles" />
 
         <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Admin Portal</p>
         <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-4">
-          Program <span className="text-gold-gradient">Timeline</span>
+          Team <span className="text-gold-gradient">Profiles</span>
         </h1>
         <p className="text-muted-foreground text-lg mb-12">
-          Edit every phase and session — labels, dates, titles, resources, venues, and feedback form links. This is
-          what students and mentors see when domain selection is closed.
+          Every team&apos;s logo, roster size, domain, and project, in one searchable directory.
         </p>
 
-        <TimelineEditor initialPhases={phases} initialFeedbackLinks={feedbackLinks} />
+        <AdminTeamProfilesView teams={teams} domains={domains} />
       </div>
     </main>
   )

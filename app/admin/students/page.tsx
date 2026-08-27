@@ -1,6 +1,6 @@
-import Link from "next/link"
 import { LogoutButton } from "@/components/logout-button"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { AdminNav } from "@/components/admin-nav"
 import { RoleSelectionsView, type RoleRow } from "@/components/role-selections-view"
 import { AdminSettingToggle } from "@/components/admin-setting-toggle"
 import { PendingSelections, type PendingPerson } from "@/components/pending-selections"
@@ -93,38 +93,7 @@ export default async function AdminStudentsPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-6 mb-8">
-          <Link href="/admin" className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider">
-            User Management
-          </Link>
-          <Link
-            href="/admin/mentors"
-            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
-          >
-            Mentor Selections
-          </Link>
-          <span className="text-primary text-sm uppercase tracking-wider border-b border-primary pb-1">
-            Student Selections
-          </span>
-          <Link
-            href="/admin/matching"
-            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
-          >
-            Mentor Matching
-          </Link>
-          <Link
-            href="/admin/timeline"
-            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
-          >
-            Timeline
-          </Link>
-          <Link
-            href="/admin/domains"
-            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
-          >
-            Domains
-          </Link>
-        </div>
+        <AdminNav active="/admin/students" />
 
         <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Admin Portal</p>
         <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-4">

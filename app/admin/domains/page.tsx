@@ -1,6 +1,6 @@
-import Link from "next/link"
 import { LogoutButton } from "@/components/logout-button"
 import { ThemeToggle } from "@/components/theme-toggle"
+import { AdminNav } from "@/components/admin-nav"
 import { DomainEditor } from "@/components/domain-editor"
 import { getDomains } from "@/lib/domains"
 
@@ -23,38 +23,7 @@ export default async function AdminDomainsPage() {
           </div>
         </div>
 
-        <div className="flex items-center gap-6 mb-8 flex-wrap">
-          <Link href="/admin" className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider">
-            User Management
-          </Link>
-          <Link
-            href="/admin/mentors"
-            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
-          >
-            Mentor Selections
-          </Link>
-          <Link
-            href="/admin/students"
-            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
-          >
-            Student Selections
-          </Link>
-          <Link
-            href="/admin/matching"
-            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
-          >
-            Mentor Matching
-          </Link>
-          <Link
-            href="/admin/timeline"
-            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
-          >
-            Timeline
-          </Link>
-          <span className="text-primary text-sm uppercase tracking-wider border-b border-primary pb-1">
-            Domains
-          </span>
-        </div>
+        <AdminNav active="/admin/domains" />
 
         <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Admin Portal</p>
         <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-4">

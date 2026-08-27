@@ -1,7 +1,25 @@
 import { Users } from "lucide-react"
-import type { MentorTeam } from "@/lib/mentor-teams"
 
-export function MentorTeamCard({ team, domainTitle }: { team: MentorTeam; domainTitle: string | null }) {
+interface TeamCardData {
+  loginId: string
+  teamName: string | null
+  teamLeadName: string | null
+  teamLogoUrl: string | null
+  venue: string | null
+  problemStatement: string | null
+  solutionShort: string | null
+  solutionLong: string | null
+}
+
+export function MentorTeamCard({
+  team,
+  domainTitle,
+  memberCount,
+}: {
+  team: TeamCardData
+  domainTitle: string | null
+  memberCount?: number
+}) {
   const displayName = team.teamName?.trim() || team.loginId
   const hasProject = team.problemStatement || team.solutionShort || team.solutionLong
 
@@ -35,6 +53,11 @@ export function MentorTeamCard({ team, domainTitle }: { team: MentorTeam; domain
         {team.venue && (
           <span className="text-[10px] uppercase tracking-wider text-muted-foreground border border-border px-1.5 py-0.5">
             {team.venue}
+          </span>
+        )}
+        {memberCount !== undefined && (
+          <span className="text-[10px] uppercase tracking-wider text-muted-foreground border border-border px-1.5 py-0.5">
+            {memberCount} {memberCount === 1 ? "Member" : "Members"}
           </span>
         )}
       </div>
