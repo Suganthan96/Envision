@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { BackLink } from "@/components/back-link"
 import type { TeamMember } from "@/lib/team-members"
 
 interface TeamDetailData {
@@ -12,6 +13,13 @@ interface TeamDetailData {
   solutionLong: string | null
 }
 
+interface TeamMentor {
+  mentorUserId: string
+  name: string | null
+  loginId: string
+  avatarUrl: string | null
+}
+
 export function TeamDetailView({
   team,
   domainTitle,
@@ -19,6 +27,8 @@ export function TeamDetailView({
   eyebrow,
   backHref,
   backLabel,
+  mentor,
+  mentorHref,
 }: {
   team: TeamDetailData
   domainTitle: string | null
@@ -26,18 +36,15 @@ export function TeamDetailView({
   eyebrow: string
   backHref: string
   backLabel: string
+  mentor?: TeamMentor | null
+  mentorHref?: (mentorUserId: string) => string
 }) {
   const displayName = team.teamName?.trim() || team.loginId
   const hasProject = team.problemStatement || team.solutionShort || team.solutionLong
 
   return (
     <>
-      <Link
-        href={backHref}
-        className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider mb-8 inline-block"
-      >
-        ← {backLabel}
-      </Link>
+      <BackLink label={backLabel} fallbackHref={backHref} />
 
       <div className="flex flex-col sm:flex-row items-start gap-8 mb-10">
         <div className="size-32 border border-border bg-card flex items-center justify-center overflow-hidden shrink-0">
@@ -71,6 +78,17 @@ export function TeamDetailView({
       </div>
 
       <div className="flex flex-col gap-10">
+        {mentor !== undefined && (
+          <section>
+            <h2 className="font-serif text-2xl text-foreground mb-4">Mentor</h2>
+            {mentor ? (
+              <MentorSummary mentor={mentor} href={mentorHref?.(mentor.mentorUserId)} />
+            ) : (
+              <p className="text-muted-foreground text-sm italic">No mentor has been assigned yet.</p>
+            )}
+          </section>
+        )}
+
         <section>
           <h2 className="font-serif text-2xl text-foreground mb-4">Roster</h2>
           {team.teamLeadName && (
@@ -127,5 +145,34 @@ export function TeamDetailView({
         </section>
       </div>
     </>
+  )
+}
+
+function MentorSummary({ mentor, href }: { mentor: TeamMentor; href?: string }) {
+  const displayName = mentor.name?.trim() || mentor.loginId
+
+  const content = (
+    <div className="flex items-center gap-3 border border-border bg-card/40 p-3 w-fit">
+      <div className="size-10 rounded-full border border-border bg-card flex items-center justify-center overflow-hidden shrink-0">
+        {mentor.avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={mentor.avatarUrl} alt={displayName} className="w-full h-full object-cover" />
+        ) : (
+          <span className="font-serif text-sm text-primary">{displayName.charAt(0).toUpperCase()}</span>
+        )}
+      </div>
+      <div>
+        <p className="text-foreground text-sm font-medium">{displayName}</p>
+        <p className="text-muted-foreground text-xs font-mono">{mentor.loginId}</p>
+      </div>
+    </div>
+  )
+
+  return href ? (
+    <Link href={href} className="hover:opacity-80 transition-opacity">
+      {content}
+    </Link>
+  ) : (
+    content
   )
 }

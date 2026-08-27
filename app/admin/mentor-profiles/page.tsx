@@ -1,15 +1,20 @@
+import { Suspense } from "react"
 import { LogoutButton } from "@/components/logout-button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { AdminNav } from "@/components/admin-nav"
 import { AdminMentorProfilesView } from "@/components/admin-mentor-profiles-view"
 import { getSession } from "@/lib/get-session"
 import { getMentorProfilesForAdmin } from "@/lib/admin-directories"
+import { getDomains } from "@/lib/domains"
 
 export const dynamic = "force-dynamic"
 
 export default async function AdminMentorProfilesPage() {
   const session = await getSession()
-  const mentors = session ? await getMentorProfilesForAdmin(session.userId) : []
+  const [mentors, domains] = await Promise.all([
+    session ? getMentorProfilesForAdmin(session.userId) : Promise.resolve([]),
+    getDomains(),
+  ])
 
   return (
     <main className="min-h-screen bg-background px-6 py-12">
@@ -35,7 +40,9 @@ export default async function AdminMentorProfilesPage() {
           Every mentor, in one searchable directory. Click a card for their full profile.
         </p>
 
-        <AdminMentorProfilesView mentors={mentors} />
+        <Suspense fallback={null}>
+          <AdminMentorProfilesView mentors={mentors} domains={domains} />
+        </Suspense>
       </div>
     </main>
   )

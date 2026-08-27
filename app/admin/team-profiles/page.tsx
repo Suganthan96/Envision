@@ -1,3 +1,4 @@
+import { Suspense } from "react"
 import { LogoutButton } from "@/components/logout-button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { AdminNav } from "@/components/admin-nav"
@@ -39,7 +40,9 @@ export default async function AdminTeamProfilesPage() {
           Every team&apos;s logo, roster size, domain, and project, in one searchable directory.
         </p>
 
-        <AdminTeamProfilesView teams={teams} domains={domains} />
+        <Suspense fallback={null}>
+          <AdminTeamProfilesView teams={teams} domains={domains} />
+        </Suspense>
       </div>
     </main>
   )

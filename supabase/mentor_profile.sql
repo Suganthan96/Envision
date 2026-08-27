@@ -58,13 +58,15 @@ begin
 end;
 $$;
 
+-- mentor_user_id is included so callers (e.g. the admin team-profile detail
+-- page) can link through to that mentor's own profile page.
 create or replace function public.get_my_mentor(p_student_user_id uuid)
-returns table (name text, login_id text, avatar_url text, bio text)
+returns table (mentor_user_id uuid, name text, login_id text, avatar_url text, bio text)
 language sql
 security definer
 set search_path = public
 as $$
-  select a.name, a.login_id, a.avatar_url, a.bio
+  select a.id, a.name, a.login_id, a.avatar_url, a.bio
   from public.mentor_assignments ma
   join public.app_users a on a.id = ma.mentor_user_id
   where ma.student_user_id = p_student_user_id;

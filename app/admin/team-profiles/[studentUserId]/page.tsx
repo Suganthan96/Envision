@@ -5,6 +5,7 @@ import { TeamDetailView } from "@/components/team-detail-view"
 import { getSession } from "@/lib/get-session"
 import { getTeamProfilesForAdmin } from "@/lib/admin-directories"
 import { getTeamMembers } from "@/lib/team-members"
+import { getMyMentor } from "@/lib/mentor-profile"
 import { getDomains } from "@/lib/domains"
 
 export const dynamic = "force-dynamic"
@@ -25,7 +26,7 @@ export default async function AdminTeamProfileDetailPage({
   const team = teams.find((t) => t.studentUserId === studentUserId)
   if (!team) notFound()
 
-  const members = await getTeamMembers(studentUserId)
+  const [members, mentor] = await Promise.all([getTeamMembers(studentUserId), getMyMentor(studentUserId)])
   const domainTitle = team.domainId ? domains.find((d) => d.id === team.domainId)?.title ?? team.domainId : null
 
   return (
@@ -49,6 +50,8 @@ export default async function AdminTeamProfileDetailPage({
           eyebrow="Admin Portal"
           backHref="/admin/team-profiles"
           backLabel="Back to Team Profiles"
+          mentor={mentor}
+          mentorHref={(mentorUserId) => `/admin/mentor-profiles/${mentorUserId}`}
         />
       </div>
     </main>

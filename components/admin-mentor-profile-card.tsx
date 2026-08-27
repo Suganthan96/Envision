@@ -17,12 +17,12 @@ export function AdminMentorProfileCard({
       <div className="absolute bottom-0 left-0 w-6 h-6 border-b-2 border-l-2 border-primary" />
       <div className="absolute bottom-0 right-0 w-6 h-6 border-b-2 border-r-2 border-primary" />
 
-      <div className="size-20 rounded-full border border-border bg-card flex items-center justify-center overflow-hidden shrink-0">
+      <div className="size-32 rounded-full border border-border bg-card flex items-center justify-center overflow-hidden shrink-0">
         {mentor.avatarUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img src={mentor.avatarUrl} alt={displayName} className="w-full h-full object-cover" />
         ) : (
-          <UserCircle className="w-10 h-10 text-muted-foreground" />
+          <UserCircle className="w-16 h-16 text-muted-foreground" />
         )}
       </div>
 
@@ -48,11 +48,11 @@ export function AdminMentorProfileCard({
       </div>
 
       {mentor.bio ? (
-        <p className="w-full text-left text-foreground text-sm leading-relaxed whitespace-pre-wrap pt-4 border-t border-border">
+        <p className="w-full text-center text-foreground text-lg leading-relaxed whitespace-pre-wrap pt-4 border-t border-border">
           {mentor.bio}
         </p>
       ) : (
-        <p className="w-full text-left text-muted-foreground text-xs italic pt-4 border-t border-border">
+        <p className="w-full text-center text-muted-foreground text-sm italic pt-4 border-t border-border">
           This mentor hasn&apos;t added a description yet.
         </p>
       )}

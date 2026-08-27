@@ -6,6 +6,7 @@ export interface MentorProfile {
 }
 
 export interface AssignedMentor {
+  mentorUserId: string
   name: string | null
   loginId: string
   avatarUrl: string | null
@@ -24,5 +25,11 @@ export async function getMyMentor(studentUserId: string): Promise<AssignedMentor
   const { data } = await supabase.rpc("get_my_mentor", { p_student_user_id: studentUserId })
   const row = data?.[0]
   if (!row) return null
-  return { name: row.name, loginId: row.login_id, avatarUrl: row.avatar_url, bio: row.bio }
+  return {
+    mentorUserId: row.mentor_user_id,
+    name: row.name,
+    loginId: row.login_id,
+    avatarUrl: row.avatar_url,
+    bio: row.bio,
+  }
 }
