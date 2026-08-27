@@ -2,7 +2,7 @@ import { LogoutButton } from "@/components/logout-button"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { DashboardNavCard } from "@/components/dashboard-nav-card"
 import { getSession } from "@/lib/get-session"
-import { CalendarClock, Users, LayoutGrid } from "lucide-react"
+import { CalendarClock, Users, LayoutGrid, UserCircle } from "lucide-react"
 
 export default async function MemberPage() {
   const session = await getSession()
@@ -21,14 +21,14 @@ export default async function MemberPage() {
         </div>
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto mb-12">
+      <div className="relative z-10 max-w-3xl mx-auto mb-12">
         <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">EnVision 2026</p>
         <h1 className="font-serif text-3xl md:text-4xl text-foreground">
           Welcome, <span className="text-gold-gradient">{teamName}</span>
         </h1>
       </div>
 
-      <div className="relative z-10 max-w-4xl mx-auto grid sm:grid-cols-3 gap-6">
+      <div className="relative z-10 max-w-3xl mx-auto grid sm:grid-cols-2 gap-8">
         <DashboardNavCard
           href="/member/timeline"
           icon={<CalendarClock className="w-9 h-9" />}
@@ -46,6 +46,12 @@ export default async function MemberPage() {
           icon={<LayoutGrid className="w-9 h-9" />}
           title="Domains"
           description="Browse and choose the domain for your project."
+        />
+        <DashboardNavCard
+          href="/member/mentor"
+          icon={<UserCircle className="w-9 h-9" />}
+          title="My Mentor"
+          description="Meet the mentor guiding your team this cycle."
         />
       </div>
     </main>
