@@ -39,19 +39,19 @@ export default async function MemberMentorPage() {
         </h1>
 
         {mentor ? (
-          <div className="flex flex-col sm:flex-row items-start gap-8 max-w-xl">
-            <Avatar className="size-28 border border-border shrink-0">
+          <div className="flex flex-col sm:flex-row items-start gap-10 max-w-2xl">
+            <Avatar className="size-48 border border-border shrink-0">
               <AvatarImage src={mentor.avatarUrl ?? undefined} alt={mentorName} className="object-cover" />
-              <AvatarFallback className="text-2xl font-serif text-primary bg-card">
+              <AvatarFallback className="text-5xl font-serif text-primary bg-card">
                 {mentorName?.charAt(0).toUpperCase()}
               </AvatarFallback>
             </Avatar>
             <div>
-              <h2 className="font-serif text-2xl text-foreground mb-2">{mentorName}</h2>
+              <h2 className="font-serif text-3xl text-foreground mb-3">{mentorName}</h2>
               {mentor.bio ? (
-                <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">{mentor.bio}</p>
+                <p className="text-muted-foreground text-lg leading-relaxed whitespace-pre-wrap">{mentor.bio}</p>
               ) : (
-                <p className="text-muted-foreground text-sm italic">
+                <p className="text-muted-foreground text-base italic">
                   Your mentor hasn&apos;t added a description yet.
                 </p>
               )}
