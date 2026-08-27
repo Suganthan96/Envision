@@ -3,17 +3,13 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { AdminNav } from "@/components/admin-nav"
 import { AdminMentorProfilesView } from "@/components/admin-mentor-profiles-view"
 import { getSession } from "@/lib/get-session"
-import { getMentorProfilesForAdmin, type AdminMentorProfile } from "@/lib/admin-directories"
-import { getDomains } from "@/lib/domains"
+import { getMentorProfilesForAdmin } from "@/lib/admin-directories"
 
 export const dynamic = "force-dynamic"
 
 export default async function AdminMentorProfilesPage() {
   const session = await getSession()
-  const [mentors, domains]: [AdminMentorProfile[], Awaited<ReturnType<typeof getDomains>>] = await Promise.all([
-    session ? getMentorProfilesForAdmin(session.userId) : Promise.resolve([]),
-    getDomains(),
-  ])
+  const mentors = session ? await getMentorProfilesForAdmin(session.userId) : []
 
   return (
     <main className="min-h-screen bg-background px-6 py-12">
@@ -36,10 +32,10 @@ export default async function AdminMentorProfilesPage() {
           Mentor <span className="text-gold-gradient">Profiles</span>
         </h1>
         <p className="text-muted-foreground text-lg mb-12">
-          Every mentor&apos;s photo, description, venue, and domains, in one searchable directory.
+          Every mentor, in one searchable directory. Click a card for their full profile.
         </p>
 
-        <AdminMentorProfilesView mentors={mentors} domains={domains} />
+        <AdminMentorProfilesView mentors={mentors} />
       </div>
     </main>
   )

@@ -1,7 +1,7 @@
 import Link from "next/link"
 import { LogoutButton } from "@/components/logout-button"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { MentorTeamCard } from "@/components/mentor-team-card"
+import { MentorTeamSummaryCard } from "@/components/mentor-team-summary-card"
 import { getSession } from "@/lib/get-session"
 import { getMyTeams } from "@/lib/mentor-teams"
 import { getDomains } from "@/lib/domains"
@@ -46,12 +46,13 @@ export default async function MentorTeamsPage() {
             No teams have been assigned to you yet. Check back once matching is complete.
           </p>
         ) : (
-          <div className="grid sm:grid-cols-2 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
             {teams.map((team) => (
-              <MentorTeamCard
+              <MentorTeamSummaryCard
                 key={team.studentUserId}
                 team={team}
                 domainTitle={domains.find((d) => d.id === team.domainId)?.title ?? null}
+                href={`/mentor/teams/${team.studentUserId}`}
               />
             ))}
           </div>

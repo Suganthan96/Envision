@@ -2,20 +2,11 @@
 
 import { useMemo, useState } from "react"
 import { Input } from "@/components/ui/input"
-import { AdminMentorProfileCard } from "@/components/admin-mentor-profile-card"
+import { AdminMentorProfileSummaryCard } from "@/components/admin-mentor-profile-summary-card"
 import type { AdminMentorProfile } from "@/lib/admin-directories"
-import type { Domain } from "@/lib/domains"
 
-export function AdminMentorProfilesView({
-  mentors,
-  domains,
-}: {
-  mentors: AdminMentorProfile[]
-  domains: Domain[]
-}) {
+export function AdminMentorProfilesView({ mentors }: { mentors: AdminMentorProfile[] }) {
   const [query, setQuery] = useState("")
-
-  const domainTitle = (id: string) => domains.find((d) => d.id === id)?.title ?? id
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
@@ -42,11 +33,7 @@ export function AdminMentorProfilesView({
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((mentor) => (
-            <AdminMentorProfileCard
-              key={mentor.mentorUserId}
-              mentor={mentor}
-              domainTitles={mentor.domainIds.map(domainTitle)}
-            />
+            <AdminMentorProfileSummaryCard key={mentor.mentorUserId} mentor={mentor} />
           ))}
         </div>
       )}

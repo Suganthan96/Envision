@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { Input } from "@/components/ui/input"
-import { MentorTeamCard } from "@/components/mentor-team-card"
+import { MentorTeamSummaryCard } from "@/components/mentor-team-summary-card"
 import type { AdminTeamProfile } from "@/lib/admin-directories"
 import type { Domain } from "@/lib/domains"
 
@@ -35,11 +35,11 @@ export function AdminTeamProfilesView({ teams, domains }: { teams: AdminTeamProf
       ) : (
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
           {filtered.map((team) => (
-            <MentorTeamCard
+            <MentorTeamSummaryCard
               key={team.studentUserId}
               team={team}
               domainTitle={team.domainId ? domains.find((d) => d.id === team.domainId)?.title ?? team.domainId : null}
-              memberCount={team.memberCount}
+              href={`/admin/team-profiles/${team.studentUserId}`}
             />
           ))}
         </div>
