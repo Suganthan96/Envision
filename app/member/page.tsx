@@ -1,9 +1,7 @@
-import { LogoutButton } from "@/components/logout-button"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { DashboardNavCard } from "@/components/dashboard-nav-card"
 import { getSession } from "@/lib/get-session"
 import { CalendarClock, Users, LayoutGrid, UserCircle, Lightbulb } from "lucide-react"
-import { BrandLink } from "@/components/brand-link"
+import { PortalHeader } from "@/components/portal-header"
 
 export default async function MemberPage() {
   const session = await getSession()
@@ -11,13 +9,7 @@ export default async function MemberPage() {
 
   return (
     <main className="min-h-screen bg-background px-6 pt-12 pb-24">
-      <div className="relative z-10 max-w-4xl mx-auto flex items-center justify-between mb-8">
-        <BrandLink />
-        <div className="flex items-center gap-3">
-          <ThemeToggle variant="inline" />
-          <LogoutButton />
-        </div>
-      </div>
+      <PortalHeader maxWidth="max-w-4xl" />
 
       <div className="relative z-10 max-w-3xl mx-auto mb-12">
         <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">EnVision 2026</p>

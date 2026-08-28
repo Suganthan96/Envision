@@ -1,12 +1,10 @@
 import Link from "next/link"
-import { LogoutButton } from "@/components/logout-button"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { TeamProfileEditor } from "@/components/team-profile-editor"
 import { getSession } from "@/lib/get-session"
 import { getAppSettings } from "@/lib/app-settings"
 import { getTeamMembers } from "@/lib/team-members"
 import { getTeamLogo } from "@/lib/team-logo"
-import { BrandLink } from "@/components/brand-link"
+import { PortalHeader } from "@/components/portal-header"
 
 export const dynamic = "force-dynamic"
 
@@ -23,13 +21,7 @@ export default async function MemberTeamPage() {
 
   return (
     <main className="min-h-screen bg-background px-6 py-12">
-      <div className="relative z-10 max-w-4xl mx-auto flex items-center justify-between mb-8">
-        <BrandLink />
-        <div className="flex items-center gap-3">
-          <ThemeToggle variant="inline" />
-          <LogoutButton />
-        </div>
-      </div>
+      <PortalHeader maxWidth="max-w-4xl" />
 
       <div className="relative z-10 max-w-4xl mx-auto">
         <Link

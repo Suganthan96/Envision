@@ -1,11 +1,9 @@
 import Link from "next/link"
-import { LogoutButton } from "@/components/logout-button"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { ArtDecoDivider } from "@/components/art-deco-divider"
 import { TimelineView } from "@/components/timeline-view"
 import { getTimelinePhases } from "@/lib/timeline"
 import { getFeedbackLinks } from "@/lib/feedback-links"
-import { BrandLink } from "@/components/brand-link"
+import { PortalHeader } from "@/components/portal-header"
 
 export const dynamic = "force-dynamic"
 
@@ -14,13 +12,7 @@ export default async function MentorTimelinePage() {
 
   return (
     <main className="min-h-screen bg-background px-6 py-12">
-      <div className="relative z-10 max-w-4xl mx-auto flex items-center justify-between mb-8">
-        <BrandLink />
-        <div className="flex items-center gap-3">
-          <ThemeToggle variant="inline" />
-          <LogoutButton />
-        </div>
-      </div>
+      <PortalHeader maxWidth="max-w-4xl" />
 
       <div className="relative z-10 max-w-4xl mx-auto">
         <Link
