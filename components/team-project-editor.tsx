@@ -3,10 +3,12 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import type { TeamProject } from "@/lib/team-project"
 
+const MAX_TITLE_LENGTH = 200
 const MAX_PROBLEM_LENGTH = 1000
 const MAX_SHORT_LENGTH = 300
 const MAX_LONG_LENGTH = 4000
@@ -14,6 +16,7 @@ const MAX_LONG_LENGTH = 4000
 export function TeamProjectEditor({ currentProject }: { currentProject: TeamProject }) {
   const router = useRouter()
 
+  const [projectTitle, setProjectTitle] = useState(currentProject.projectTitle ?? "")
   const [problemStatement, setProblemStatement] = useState(currentProject.problemStatement ?? "")
   const [solutionShort, setSolutionShort] = useState(currentProject.solutionShort ?? "")
   const [solutionLong, setSolutionLong] = useState(currentProject.solutionLong ?? "")
@@ -31,6 +34,7 @@ export function TeamProjectEditor({ currentProject }: { currentProject: TeamProj
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          projectTitle: projectTitle.trim(),
           problemStatement: problemStatement.trim(),
           solutionShort: solutionShort.trim(),
           solutionLong: solutionLong.trim(),
@@ -52,6 +56,23 @@ export function TeamProjectEditor({ currentProject }: { currentProject: TeamProj
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-8 max-w-2xl">
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="project-title" className="text-primary tracking-[0.15em] uppercase text-xs">
+          Project Title
+        </Label>
+        <Input
+          id="project-title"
+          value={projectTitle}
+          onChange={(e) => setProjectTitle(e.target.value)}
+          placeholder="What is your project called?"
+          maxLength={MAX_TITLE_LENGTH}
+          className="bg-card border-border text-foreground h-11"
+        />
+        <p className="text-muted-foreground text-xs text-right">
+          {projectTitle.length}/{MAX_TITLE_LENGTH}
+        </p>
+      </div>
+
       <div className="flex flex-col gap-2">
         <Label htmlFor="problem-statement" className="text-primary tracking-[0.15em] uppercase text-xs">
           Problem Statement

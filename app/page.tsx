@@ -142,29 +142,37 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Showcase Section */}
-      <section className="py-24">
+      {/* Showcase Section — top padding only, so the dome ends flush against
+          the next section instead of leaving a band of empty background. */}
+      <section className="pt-24">
         <div className="max-w-6xl mx-auto px-6">
           <ArtDecoDivider variant="chevron" />
 
           <div className="text-center mb-16">
             <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Showcase</p>
             <h2 className="font-serif text-4xl md:text-5xl text-foreground text-balance">Moments From Envision</h2>
-            <p className="text-muted-foreground text-sm mt-4">Drag to explore</p>
+            <p className="text-muted-foreground text-sm mt-4">Drag to explore &middot; tap a photo for a closer look</p>
           </div>
         </div>
 
-        <div className="relative w-screen left-1/2 -translate-x-1/2 h-screen overflow-hidden">
+        {/* svh (not vh) so the height doesn't jump when mobile browser chrome
+            hides on scroll. fitBasis="cover" derives the radius from the dome's
+            actual projected geometry so it bleeds past the frame on both axes —
+            sizing off a single dimension either letterboxed it vertically or
+            left the sphere's silhouette showing at the sides. */}
+        <div className="relative w-screen left-1/2 -translate-x-1/2 h-svh overflow-hidden">
           <DomeGallery
-              images={SHOWCASE_PHOTOS.map((photo) => ({ src: photo.src, alt: photo.alt }))}
-              fit={0.8}
-              minRadius={600}
-              maxVerticalRotationDeg={0}
-              segments={34}
-              dragDampening={2}
-              overlayBlurColor="#08080a"
-              grayscale={false}
-            />
+            images={SHOWCASE_PHOTOS.map((photo) => ({ src: photo.src, alt: photo.alt }))}
+            fit={1.06}
+            fitBasis="cover"
+            minRadius={600}
+            maxVerticalRotationDeg={0}
+            segments={34}
+            autoRotate
+            autoRotateSpeed={3}
+            overlayBlurColor="#08080a"
+            grayscale={false}
+          />
         </div>
       </section>
 
@@ -181,7 +189,9 @@ export default function Home() {
 
             <blockquote className="relative z-10">
               <p className="font-serif text-2xl md:text-3xl text-foreground leading-relaxed italic mb-8">
-                This will be a new learning experience for all of you. All the best. Let your light shine.
+                Your first step into solving real-world problems. All the best!
+
+                               Let your light shine.
               </p>
               <footer className="text-muted-foreground">
                 <span className="text-primary">—</span> Institution&apos;s Innovation Council,{" "}

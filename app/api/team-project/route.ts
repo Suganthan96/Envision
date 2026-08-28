@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { verifySessionToken, SESSION_COOKIE } from "@/lib/session"
 
+const MAX_TITLE_LENGTH = 200
 const MAX_PROBLEM_LENGTH = 1000
 const MAX_SHORT_LENGTH = 300
 const MAX_LONG_LENGTH = 4000
@@ -19,10 +20,17 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json().catch(() => null)
+  const projectTitle = typeof body?.projectTitle === "string" ? body.projectTitle.trim() : ""
   const problemStatement = typeof body?.problemStatement === "string" ? body.problemStatement.trim() : ""
   const solutionShort = typeof body?.solutionShort === "string" ? body.solutionShort.trim() : ""
   const solutionLong = typeof body?.solutionLong === "string" ? body.solutionLong.trim() : ""
 
+  if (projectTitle.length > MAX_TITLE_LENGTH) {
+    return NextResponse.json(
+      { error: `Project title must be ${MAX_TITLE_LENGTH} characters or fewer.` },
+      { status: 400 },
+    )
+  }
   if (problemStatement.length > MAX_PROBLEM_LENGTH) {
     return NextResponse.json(
       { error: `Problem statement must be ${MAX_PROBLEM_LENGTH} characters or fewer.` },
@@ -45,6 +53,7 @@ export async function POST(request: NextRequest) {
   const supabase = getSupabaseServerClient()
   const { data, error } = await supabase.rpc("update_team_project", {
     p_user_id: session.userId,
+    p_project_title: projectTitle || null,
     p_problem_statement: problemStatement || null,
     p_solution_short: solutionShort || null,
     p_solution_long: solutionLong || null,
@@ -55,6 +64,7 @@ export async function POST(request: NextRequest) {
   }
 
   return NextResponse.json({
+    projectTitle: projectTitle || null,
     problemStatement: problemStatement || null,
     solutionShort: solutionShort || null,
     solutionLong: solutionLong || null,

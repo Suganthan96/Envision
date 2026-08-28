@@ -18,6 +18,7 @@ export interface AdminTeamProfile {
   teamLogoUrl: string | null
   venue: string | null
   domainId: string | null
+  projectTitle: string | null
   problemStatement: string | null
   solutionShort: string | null
   solutionLong: string | null
@@ -60,6 +61,7 @@ export async function getTeamProfilesForAdmin(adminUserId: string): Promise<Admi
       team_logo_url: string | null
       venue: string | null
       domain_id: string | null
+      project_title: string | null
       problem_statement: string | null
       solution_short: string | null
       solution_long: string | null
@@ -73,6 +75,7 @@ export async function getTeamProfilesForAdmin(adminUserId: string): Promise<Admi
     teamLogoUrl: row.team_logo_url,
     venue: row.venue,
     domainId: row.domain_id,
+    projectTitle: row.project_title,
     problemStatement: row.problem_statement,
     solutionShort: row.solution_short,
     solutionLong: row.solution_long,

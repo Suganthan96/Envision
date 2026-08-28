@@ -8,7 +8,7 @@ type ImageItem = string | { src: string; alt?: string }
 type DomeGalleryProps = {
   images?: ImageItem[]
   fit?: number
-  fitBasis?: "auto" | "min" | "max" | "width" | "height"
+  fitBasis?: "auto" | "min" | "max" | "width" | "height" | "cover"
   minRadius?: number
   maxRadius?: number
   padFactor?: number
@@ -23,6 +23,10 @@ type DomeGalleryProps = {
   imageBorderRadius?: string
   openedImageBorderRadius?: string
   grayscale?: boolean
+  /** Spin the dome on its own instead of letting the user drag it. */
+  autoRotate?: boolean
+  /** Degrees per second when autoRotate is on. */
+  autoRotateSpeed?: number
 }
 
 type ItemDef = {
@@ -37,6 +41,7 @@ type ItemDef = {
 const DEFAULT_IMAGES: ImageItem[] = []
 
 const DEFAULTS = {
+  autoRotateSpeed: 4,
   maxVerticalRotationDeg: 5,
   dragSensitivity: 20,
   enlargeTransitionMs: 300,
@@ -44,6 +49,27 @@ const DEFAULTS = {
 }
 
 const clamp = (v: number, min: number, max: number) => Math.min(Math.max(v, min), max)
+
+// How far a point sitting `radius` from the sphere centre at angle `deg`
+// projects on screen, as a multiple of radius. The stage puts the camera
+// 2*radius in front of the plane and the sphere centre at -radius, so a point
+// at angle t is (3 - cos t) * radius from the camera.
+const projectedExtent = (deg: number) => {
+  const t = (deg * Math.PI) / 180
+  return (2 * Math.sin(t)) / (3 - Math.cos(t))
+}
+
+// Radius needed for the dome to bleed past a w x h frame on both axes.
+// Vertically the tiles only occupy a band: with sizeY 2 and rows reaching
+// +/-6..7, the worst-covered side sits at (180/segments) * 6.5 degrees, and
+// both sides have to clear the frame. Horizontally the columns wrap the whole
+// circle, so the limit is the silhouette at 90 degrees.
+const coverRadius = (w: number, h: number, segments: number) => {
+  const verticalHalfAngle = Math.min((1170 / segments), 90)
+  const verticalCover = 2 * projectedExtent(verticalHalfAngle)
+  const horizontalCover = 2 * projectedExtent(90)
+  return Math.max(w / horizontalCover, h / verticalCover)
+}
 const normalizeAngle = (d: number) => ((d % 360) + 360) % 360
 const wrapAngleSigned = (deg: number) => {
   const a = (((deg + 180) % 360) + 360) % 360
@@ -67,8 +93,13 @@ function shuffle<T>(arr: T[]): T[] {
 function buildItems(pool: ImageItem[], seg: number, randomize: boolean): ItemDef[] {
   pool = randomize ? shuffle(pool) : pool.slice()
   const xCols = Array.from({ length: seg }, (_, i) => -37 + i * 2)
-  const evenYs = [-4, -2, 0, 2, 4]
-  const oddYs = [-3, -1, 1, 3, 5]
+  // The two column sets are staggered (honeycomb), so each one reaches further
+  // on one side than the other. With only five rows each that left a notch at
+  // the top of odd columns and the bottom of even ones, which read as a ragged
+  // gap along the edges of the frame. The extra row on each end pushes every
+  // column past the viewport so the dome always crops flush.
+  const evenYs = [-6, -4, -2, 0, 2, 4, 6]
+  const oddYs = [-5, -3, -1, 1, 3, 5, 7]
 
   const coords = xCols.flatMap((x, c) => {
     const ys = c % 2 === 0 ? evenYs : oddYs
@@ -134,6 +165,8 @@ export default function DomeGallery({
   imageBorderRadius = "30px",
   openedImageBorderRadius = "30px",
   grayscale = true,
+  autoRotate = false,
+  autoRotateSpeed = DEFAULTS.autoRotateSpeed,
 }: DomeGalleryProps) {
   const rootRef = useRef<HTMLDivElement>(null)
   const mainRef = useRef<HTMLDivElement>(null)
@@ -218,9 +251,14 @@ export default function DomeGallery({
         default:
           basis = aspect >= 1.3 ? w : minDim
       }
-      let radius = basis * fit
-      const heightGuard = h * 1.35
-      radius = Math.min(radius, heightGuard)
+      let radius: number
+      if (fitBasis === "cover") {
+        radius = coverRadius(w, h, segments) * fit
+      } else {
+        radius = basis * fit
+        const heightGuard = h * 1.35
+        radius = Math.min(radius, heightGuard)
+      }
       radius = clamp(radius, minRadius, maxRadius)
       lockedRadiusRef.current = Math.round(radius)
 
@@ -264,6 +302,7 @@ export default function DomeGallery({
   }, [
     fit,
     fitBasis,
+    segments,
     minRadius,
     maxRadius,
     padFactor,
@@ -279,6 +318,53 @@ export default function DomeGallery({
     applyTransform(rotationRef.current.x, rotationRef.current.y)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
+
+  // Continuous spin that coexists with dragging: it yields while the user is
+  // holding the dome and while a fling is still decaying, then picks up again
+  // from wherever they left it. Also pauses while an image is enlarged or the
+  // tab is hidden so it isn't burning frames off-screen.
+  useEffect(() => {
+    if (!autoRotate) return
+
+    let raf = 0
+    let last = performance.now()
+
+    const step = (now: number) => {
+      const dt = Math.min(now - last, 100) / 1000
+      last = now
+      const userInControl = draggingRef.current || inertiaRAF.current !== null
+      if (!focusedElRef.current && !userInControl) {
+        rotationRef.current = {
+          x: rotationRef.current.x,
+          y: wrapAngleSigned(rotationRef.current.y + autoRotateSpeed * dt),
+        }
+        applyTransform(rotationRef.current.x, rotationRef.current.y)
+      }
+      raf = requestAnimationFrame(step)
+    }
+
+    const start = () => {
+      if (raf === 0) {
+        last = performance.now()
+        raf = requestAnimationFrame(step)
+      }
+    }
+    const stop = () => {
+      if (raf !== 0) {
+        cancelAnimationFrame(raf)
+        raf = 0
+      }
+    }
+    const onVisibility = () => (document.hidden ? stop() : start())
+
+    document.addEventListener("visibilitychange", onVisibility)
+    start()
+
+    return () => {
+      stop()
+      document.removeEventListener("visibilitychange", onVisibility)
+    }
+  }, [autoRotate, autoRotateSpeed])
 
   const stopInertia = useCallback(() => {
     if (inertiaRAF.current) {

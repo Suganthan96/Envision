@@ -11,7 +11,7 @@ export default async function MemberProjectPage() {
   const session = await getSession()
   const project = session
     ? await getTeamProject(session.userId)
-    : { problemStatement: null, solutionShort: null, solutionLong: null }
+    : { projectTitle: null, problemStatement: null, solutionShort: null, solutionLong: null }
 
   return (
     <main className="min-h-screen bg-background px-6 py-12">

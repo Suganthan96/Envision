@@ -8,6 +8,7 @@ interface TeamDetailData {
   teamLeadName: string | null
   teamLogoUrl: string | null
   venue: string | null
+  projectTitle: string | null
   problemStatement: string | null
   solutionShort: string | null
   solutionLong: string | null
@@ -40,7 +41,7 @@ export function TeamDetailView({
   mentorHref?: (mentorUserId: string) => string
 }) {
   const displayName = team.teamName?.trim() || team.loginId
-  const hasProject = team.problemStatement || team.solutionShort || team.solutionLong
+  const hasProject = team.projectTitle || team.problemStatement || team.solutionShort || team.solutionLong
 
   return (
     <>
@@ -116,6 +117,12 @@ export function TeamDetailView({
           <h2 className="font-serif text-2xl text-foreground mb-4">Project</h2>
           {hasProject ? (
             <div className="flex flex-col gap-6">
+              {team.projectTitle && (
+                <div>
+                  <p className="text-primary text-[10px] uppercase tracking-wider mb-1">Project Title</p>
+                  <p className="font-serif text-xl text-foreground">{team.projectTitle}</p>
+                </div>
+              )}
               {team.problemStatement && (
                 <div>
                   <p className="text-primary text-[10px] uppercase tracking-wider mb-1">Problem Statement</p>
