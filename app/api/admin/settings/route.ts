@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { verifySessionToken, SESSION_COOKIE } from "@/lib/session"
+import { CACHE_TAGS, revalidateSharedData } from "@/lib/cache-tags"
 
 export async function POST(request: NextRequest) {
   const token = request.cookies.get(SESSION_COOKIE)?.value
@@ -31,6 +32,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Unable to update settings." }, { status: 400 })
     }
 
+    revalidateSharedData(CACHE_TAGS.appSettings)
     return NextResponse.json({ ok: true })
   }
 
@@ -51,5 +53,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unable to update settings." }, { status: 400 })
   }
 
+  revalidateSharedData(CACHE_TAGS.appSettings)
   return NextResponse.json({ ok: true })
 }

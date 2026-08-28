@@ -11,9 +11,14 @@ export const dynamic = "force-dynamic"
 
 export default async function MemberTeamPage() {
   const session = await getSession()
-  const { teamNameEditOpen } = await getAppSettings()
-  const teamMembers = session ? await getTeamMembers(session.userId) : []
-  const teamLogo = session ? await getTeamLogo(session.userId) : null
+
+  // Fetched together rather than in sequence — these are independent round
+  // trips to Supabase and running them serially added up to real latency.
+  const [{ teamNameEditOpen }, teamMembers, teamLogo] = await Promise.all([
+    getAppSettings(),
+    session ? getTeamMembers(session.userId) : Promise.resolve([]),
+    session ? getTeamLogo(session.userId) : Promise.resolve(null),
+  ])
 
   return (
     <main className="min-h-screen bg-background px-6 py-12">

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { verifySessionToken, SESSION_COOKIE } from "@/lib/session"
+import { CACHE_TAGS, revalidateSharedData } from "@/lib/cache-tags"
 import type { TimelinePhase } from "@/lib/timeline"
 
 function isValidPhases(value: unknown): value is TimelinePhase[] {
@@ -45,5 +46,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Unable to save the timeline." }, { status: 400 })
   }
 
+  revalidateSharedData(CACHE_TAGS.timeline)
   return NextResponse.json({ ok: true })
 }

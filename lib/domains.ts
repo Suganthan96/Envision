@@ -96,13 +96,33 @@ export const DEFAULT_DOMAINS: Domain[] = [
   },
 ]
 
-export async function getDomains(): Promise<Domain[]> {
-  const { getSupabaseServerClient } = await import("@/lib/supabase-server")
-  const supabase = getSupabaseServerClient()
-  const { data } = await supabase.rpc("get_domains")
+// Cached until an admin edits the theme list (/api/admin/domains invalidates
+// CACHE_TAGS.domains). next/cache and supabase-server are still imported
+// lazily so this module stays safe to import from client components — every
+// client import of it today is `import type`, but the guarantee is cheap to
+// keep.
+let cachedGetDomains: (() => Promise<Domain[]>) | null = null
 
-  if (Array.isArray(data) && data.length > 0) {
-    return data as Domain[]
+export async function getDomains(): Promise<Domain[]> {
+  if (!cachedGetDomains) {
+    const [{ unstable_cache }, { CACHE_TAGS }] = await Promise.all([
+      import("next/cache"),
+      import("@/lib/cache-tags"),
+    ])
+    cachedGetDomains = unstable_cache(
+      async () => {
+        const { getSupabaseServerClient } = await import("@/lib/supabase-server")
+        const supabase = getSupabaseServerClient()
+        const { data } = await supabase.rpc("get_domains")
+
+        if (Array.isArray(data) && data.length > 0) {
+          return data as Domain[]
+        }
+        return DEFAULT_DOMAINS
+      },
+      ["domains"],
+      { tags: [CACHE_TAGS.domains] },
+    )
   }
-  return DEFAULT_DOMAINS
+  return cachedGetDomains()
 }

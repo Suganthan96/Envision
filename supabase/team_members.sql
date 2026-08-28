@@ -1,6 +1,6 @@
 -- Adds a per-team roster (up to 7 members, including the team lead) that
 -- students can edit from their dashboard. Each member has their own name,
--- email, and department (dropdown: AI&DS, CSE A, CSE B, ECE, EEE, MECH) —
+-- email, and department (dropdown: AI&DS, CSE A, CSE B, ECE, EEE, IT, MECH) —
 -- department is per-member, not per-team. Already applied to the project via
 -- the Supabase MCP; kept here for reference / reruns elsewhere.
 --
@@ -28,7 +28,7 @@ alter table public.team_members
 
 alter table public.team_members
   add constraint team_members_department_check
-  check (department is null or department in ('AI&DS','CSE A','CSE B','ECE','EEE','MECH'));
+  check (department is null or department in ('AI&DS','CSE A','CSE B','ECE','EEE','IT','MECH'));
 
 create or replace function public.get_team_members(p_user_id uuid)
 returns table (id uuid, name text, email text, department text)
@@ -75,7 +75,7 @@ begin
   if exists (
     select 1 from jsonb_array_elements(p_members) as m
     where nullif(trim(m->>'department'), '') is not null
-      and trim(m->>'department') not in ('AI&DS','CSE A','CSE B','ECE','EEE','MECH')
+      and trim(m->>'department') not in ('AI&DS','CSE A','CSE B','ECE','EEE','IT','MECH')
   ) then
     raise exception 'Invalid department';
   end if;

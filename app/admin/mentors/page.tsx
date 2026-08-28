@@ -9,6 +9,7 @@ import { getSession } from "@/lib/get-session"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { getAppSettings } from "@/lib/app-settings"
 import { getDomains, type Domain } from "@/lib/domains"
+import { getDomainCapacities } from "@/lib/domain-capacities"
 
 export default async function AdminMentorsPage() {
   const session = await getSession()
@@ -20,19 +21,15 @@ export default async function AdminMentorsPage() {
   let domains: Domain[] = []
   if (session) {
     const supabase = getSupabaseServerClient()
-    const [{ data }, { data: pendingData }, { data: capacityData }, domainsResult] = await Promise.all([
+    const [{ data }, { data: pendingData }, capacityData, domainsResult] = await Promise.all([
       supabase.rpc("admin_list_domain_selections", { p_admin_user_id: session.userId }),
       supabase.rpc("admin_list_pending_domain_selections", { p_admin_user_id: session.userId, p_role: "mentor" }),
-      supabase.rpc("get_domain_capacities"),
+      getDomainCapacities(),
       getDomains(),
     ])
     domains = domainsResult
 
-    const capacityData2 = (capacityData ?? []) as {
-      domain_id: string
-      student_capacity: number
-      mentor_capacity: number
-    }[]
+    const capacityData2 = capacityData
     capacityRows = domains.map((d) => ({
       domainId: d.id,
       title: d.title,

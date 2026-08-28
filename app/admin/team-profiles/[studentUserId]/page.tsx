@@ -18,15 +18,17 @@ export default async function AdminTeamProfileDetailPage({
   const { studentUserId } = await params
   const session = await getSession()
 
-  const [teams, domains] = await Promise.all([
+  // Roster and mentor lookup don't depend on the directory fetch below, so
+  // all four run as one batch instead of two sequential rounds.
+  const [teams, domains, members, mentor] = await Promise.all([
     session ? getTeamProfilesForAdmin(session.userId) : Promise.resolve([]),
     getDomains(),
+    getTeamMembers(studentUserId),
+    getMyMentor(studentUserId),
   ])
 
   const team = teams.find((t) => t.studentUserId === studentUserId)
   if (!team) notFound()
-
-  const [members, mentor] = await Promise.all([getTeamMembers(studentUserId), getMyMentor(studentUserId)])
   const domainTitle = team.domainId ? domains.find((d) => d.id === team.domainId)?.title ?? team.domainId : null
 
   return (

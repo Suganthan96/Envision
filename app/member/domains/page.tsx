@@ -8,8 +8,10 @@ import { getDomains } from "@/lib/domains"
 export const dynamic = "force-dynamic"
 
 export default async function MemberDomainsPage() {
-  const { studentDomainSelectionOpen, studentCanSelect } = await getAppSettings()
-  const domains = await getDomains()
+  const [{ studentDomainSelectionOpen, studentCanSelect }, domains] = await Promise.all([
+    getAppSettings(),
+    getDomains(),
+  ])
 
   return (
     <main className="min-h-screen bg-background px-6 py-6">

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { getSession } from "@/lib/get-session"
+import { getDomainCapacities } from "@/lib/domain-capacities"
 
 export async function GET() {
   const session = await getSession()
@@ -10,10 +11,10 @@ export async function GET() {
 
   const supabase = getSupabaseServerClient()
 
-  const [countsResult, mineResult, capacitiesResult] = await Promise.all([
+  const [countsResult, mineResult, capacityRows] = await Promise.all([
     supabase.rpc("get_domain_counts", { p_role: session.role }),
     supabase.rpc("get_my_domain_selections", { p_user_id: session.userId, p_role: session.role }),
-    supabase.rpc("get_domain_capacities"),
+    getDomainCapacities(),
   ])
 
   if (countsResult.error) {
@@ -28,11 +29,7 @@ export async function GET() {
   const mine = ((mineResult.data ?? []) as { domain_id: string }[]).map((row) => row.domain_id)
 
   const capacities: Record<string, number> = {}
-  for (const row of (capacitiesResult.data ?? []) as {
-    domain_id: string
-    student_capacity: number
-    mentor_capacity: number
-  }[]) {
+  for (const row of capacityRows) {
     capacities[row.domain_id] = session.role === "mentor" ? row.mentor_capacity : row.student_capacity
   }
 

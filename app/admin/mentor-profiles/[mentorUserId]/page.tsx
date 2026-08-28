@@ -19,15 +19,16 @@ export default async function AdminMentorProfileDetailPage({
   const { mentorUserId } = await params
   const session = await getSession()
 
-  const [mentors, domains] = await Promise.all([
+  // This mentor's teams don't depend on the directory fetch, so all three
+  // run as one batch instead of two sequential rounds.
+  const [mentors, domains, teams] = await Promise.all([
     session ? getMentorProfilesForAdmin(session.userId) : Promise.resolve([]),
     getDomains(),
+    getMyTeams(mentorUserId),
   ])
 
   const mentor = mentors.find((m) => m.mentorUserId === mentorUserId)
   if (!mentor) notFound()
-
-  const teams = await getMyTeams(mentorUserId)
 
   return (
     <main className="min-h-screen bg-background px-6 py-12">

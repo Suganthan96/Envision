@@ -17,15 +17,16 @@ export default async function MentorTeamDetailPage({
   const { studentUserId } = await params
   const session = await getSession()
 
-  const [teams, domains] = await Promise.all([
+  // The roster doesn't depend on the assignment check below, so it's fetched
+  // alongside rather than after it.
+  const [teams, domains, members] = await Promise.all([
     session ? getMyTeams(session.userId) : Promise.resolve([]),
     getDomains(),
+    getTeamMembers(studentUserId),
   ])
 
   const team = teams.find((t) => t.studentUserId === studentUserId)
   if (!team) notFound()
-
-  const members = await getTeamMembers(studentUserId)
   const domainTitle = team.domainId ? domains.find((d) => d.id === team.domainId)?.title ?? team.domainId : null
 
   return (
