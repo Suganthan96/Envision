@@ -4,6 +4,7 @@ import { ThemeToggle } from "@/components/theme-toggle"
 import { DomainSelectionPage } from "@/components/domain-selection-page"
 import { getAppSettings } from "@/lib/app-settings"
 import { getDomains } from "@/lib/domains"
+import { BrandLink } from "@/components/brand-link"
 
 export const dynamic = "force-dynamic"
 
@@ -13,13 +14,15 @@ export default async function MemberDomainsPage() {
     getDomains(),
   ])
 
+  // The wording has to follow whether a student can actually pick a domain,
+  // not merely whether the screen is visible — with visibility on but
+  // selection closed the page used to invite a choice it wouldn't accept.
+  const canSelect = studentDomainSelectionOpen && studentCanSelect
+
   return (
     <main className="min-h-screen bg-background px-6 py-6">
       <div className="relative z-10 max-w-5xl mx-auto flex items-center justify-between mb-2">
-        <div className="flex items-center gap-4">
-          <div className="w-8 h-px bg-primary" />
-          <span className="font-serif text-xl text-foreground">Envision</span>
-        </div>
+        <BrandLink />
         <div className="flex items-center gap-3">
           <ThemeToggle variant="inline" />
           <LogoutButton />
@@ -38,15 +41,15 @@ export default async function MemberDomainsPage() {
       <DomainSelectionPage
         role="student"
         eyebrow="Student Portal"
-        heading={studentDomainSelectionOpen ? "Choose Your Domain" : "Domains"}
+        heading={canSelect ? "Choose Your Domain" : "Domains"}
         description={
-          studentDomainSelectionOpen
+          canSelect
             ? "Select the domain you'd like to build your project in for this cycle."
             : "Browse the available domains for this cycle."
         }
         domains={domains}
         maxSelections={1}
-        canSelect={studentDomainSelectionOpen && studentCanSelect}
+        canSelect={canSelect}
       />
     </main>
   )

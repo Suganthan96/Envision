@@ -5,6 +5,7 @@ import { ArtDecoDivider } from "@/components/art-deco-divider"
 import { TimelineView } from "@/components/timeline-view"
 import { getTimelinePhases } from "@/lib/timeline"
 import { getFeedbackLinks } from "@/lib/feedback-links"
+import { BrandLink } from "@/components/brand-link"
 
 export const dynamic = "force-dynamic"
 
@@ -14,10 +15,7 @@ export default async function MentorTimelinePage() {
   return (
     <main className="min-h-screen bg-background px-6 py-12">
       <div className="relative z-10 max-w-4xl mx-auto flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <div className="w-8 h-px bg-primary" />
-          <span className="font-serif text-xl text-foreground">Envision</span>
-        </div>
+        <BrandLink />
         <div className="flex items-center gap-3">
           <ThemeToggle variant="inline" />
           <LogoutButton />

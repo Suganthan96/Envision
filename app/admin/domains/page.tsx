@@ -1,8 +1,7 @@
-import { LogoutButton } from "@/components/logout-button"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { AdminNav } from "@/components/admin-nav"
 import { DomainEditor } from "@/components/domain-editor"
 import { getDomains } from "@/lib/domains"
+import { AdminHeader } from "@/components/admin-header"
 
 export const dynamic = "force-dynamic"
 
@@ -12,16 +11,7 @@ export default async function AdminDomainsPage() {
   return (
     <main className="min-h-screen bg-background px-6 py-12">
       <div className="relative z-10 max-w-4xl mx-auto">
-        <div className="flex items-center justify-between mb-16">
-          <div className="flex items-center gap-4">
-            <div className="w-8 h-px bg-primary" />
-            <span className="font-serif text-xl text-foreground">Envision</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <ThemeToggle variant="inline" />
-            <LogoutButton />
-          </div>
-        </div>
+        <AdminHeader />
 
         <AdminNav active="/admin/domains" />
 

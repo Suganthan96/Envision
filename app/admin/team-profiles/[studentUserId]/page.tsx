@@ -1,12 +1,11 @@
 import { notFound } from "next/navigation"
-import { LogoutButton } from "@/components/logout-button"
-import { ThemeToggle } from "@/components/theme-toggle"
 import { TeamDetailView } from "@/components/team-detail-view"
 import { getSession } from "@/lib/get-session"
 import { getTeamProfilesForAdmin } from "@/lib/admin-directories"
 import { getTeamMembers } from "@/lib/team-members"
 import { getMyMentor } from "@/lib/mentor-profile"
 import { getDomains } from "@/lib/domains"
+import { AdminHeader } from "@/components/admin-header"
 
 export const dynamic = "force-dynamic"
 
@@ -33,16 +32,7 @@ export default async function AdminTeamProfileDetailPage({
 
   return (
     <main className="min-h-screen bg-background px-6 py-12">
-      <div className="relative z-10 max-w-4xl mx-auto flex items-center justify-between mb-8">
-        <div className="flex items-center gap-4">
-          <div className="w-8 h-px bg-primary" />
-          <span className="font-serif text-xl text-foreground">Envision</span>
-        </div>
-        <div className="flex items-center gap-3">
-          <ThemeToggle variant="inline" />
-          <LogoutButton />
-        </div>
-      </div>
+      <AdminHeader />
 
       <div className="relative z-10 max-w-4xl mx-auto">
         <TeamDetailView
