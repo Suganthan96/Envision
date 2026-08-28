@@ -56,19 +56,6 @@ export default function Home() {
             </div>
           </div>
         </div>
-
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-primary">
-            <path
-              d="M12 5v14M5 12l7 7 7-7"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
       </section>
 
       {/* Philosophy Section */}
@@ -173,6 +160,14 @@ export default function Home() {
             overlayBlurColor="#08080a"
             grayscale={false}
           />
+
+          {/* The frame clips the dome with a hard horizontal edge, which reads
+              as a seam against the page. These feather the top and bottom into
+              the background. z-20 keeps them above the tiles but below an
+              enlarged photo (z-30), and pointer-events-none leaves taps
+              untouched. */}
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-20 h-24 md:h-32 bg-gradient-to-b from-background to-transparent" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-24 md:h-32 bg-gradient-to-t from-background to-transparent" />
         </div>
       </section>
 
@@ -190,8 +185,9 @@ export default function Home() {
             <blockquote className="relative z-10">
               <p className="font-serif text-2xl md:text-3xl text-foreground leading-relaxed italic mb-8">
                 Your first step into solving real-world problems. All the best!
-
-                               Let your light shine.
+                {/* Its own line rather than trailing whitespace, which JSX
+                    collapses — the sentence used to wrap mid-phrase. */}
+                <span className="block mt-3">Let your light shine.</span>
               </p>
               <footer className="text-muted-foreground">
                 <span className="text-primary">—</span> Institution&apos;s Innovation Council,{" "}
