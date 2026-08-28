@@ -12,13 +12,13 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json().catch(() => null)
   const userId = typeof body?.userId === "string" ? body.userId : ""
-  const venue = body?.venue === "C20" || body?.venue === "G01" ? body.venue : body?.venue === null ? null : undefined
+  const venue = typeof body?.venue === "string" ? body.venue : body?.venue === null ? null : undefined
 
   if (!userId) {
     return NextResponse.json({ error: "userId is required." }, { status: 400 })
   }
   if (venue === undefined) {
-    return NextResponse.json({ error: "venue must be 'C20', 'G01', or null." }, { status: 400 })
+    return NextResponse.json({ error: "venue must be a string or null." }, { status: 400 })
   }
 
   const supabase = getSupabaseServerClient()
@@ -29,7 +29,7 @@ export async function POST(request: NextRequest) {
   })
 
   if (error || data !== true) {
-    return NextResponse.json({ error: "Unable to set venue." }, { status: 400 })
+    return NextResponse.json({ error: error?.message ?? "Unable to set venue." }, { status: 400 })
   }
 
   return NextResponse.json({ ok: true })

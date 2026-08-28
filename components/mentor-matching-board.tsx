@@ -551,8 +551,9 @@ export function MentorMatchingBoard({
         body: JSON.stringify({ userId: mentorUserId, venue }),
       })
       if (!res.ok) {
+        const data = await res.json().catch(() => null)
         setMentors((list) => list.map((m) => (m.mentorUserId === mentorUserId ? { ...m, venue: prev } : m)))
-        setError("Unable to set the mentor's venue.")
+        setError(data?.error ?? "Unable to set the mentor's venue.")
       }
     } catch {
       setMentors((list) => list.map((m) => (m.mentorUserId === mentorUserId ? { ...m, venue: prev } : m)))
