@@ -1,10 +1,15 @@
 import Link from "next/link"
 import { Users } from "lucide-react"
+import { TeamProgressBars } from "@/components/team-progress-bars"
 
 interface TeamSummaryData {
   loginId: string
   teamName: string | null
   teamLogoUrl: string | null
+  memberCount: number
+  problemStatement: string | null
+  solutionShort: string | null
+  solutionLong: string | null
 }
 
 export function MentorTeamSummaryCard({
@@ -49,6 +54,16 @@ export function MentorTeamSummaryCard({
           #{team.loginId}
         </span>
       </div>
+
+      <TeamProgressBars
+        items={[
+          { label: "Team Roster", done: team.memberCount > 0 },
+          { label: "Problem Statement", done: !!team.problemStatement?.trim() },
+          { label: "Solution", done: !!team.solutionShort?.trim() },
+          { label: "Full Solution", done: !!team.solutionLong?.trim() },
+          { label: "PPT Upload", done: false, pending: true },
+        ]}
+      />
     </Link>
   )
 }
