@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation"
 import { Camera } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { resizeImageFile } from "@/lib/resize-image"
@@ -15,15 +16,18 @@ const AVATAR_MAX_DIMENSION = 480
 export function MentorProfileEditor({
   currentAvatarUrl,
   currentBio,
+  currentName,
   displayName,
 }: {
   currentAvatarUrl: string | null
   currentBio: string | null
+  currentName: string | null
   displayName: string
 }) {
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  const [name, setName] = useState(currentName ?? "")
   const [avatarUrl, setAvatarUrl] = useState(currentAvatarUrl)
   const [bio, setBio] = useState(currentBio ?? "")
   const [error, setError] = useState("")
@@ -62,6 +66,11 @@ export function MentorProfileEditor({
     setError("")
     setSaved(false)
 
+    const trimmedName = name.trim()
+    if (!trimmedName) {
+      setError("Your name is required.")
+      return
+    }
     const trimmedBio = bio.trim()
     if (trimmedBio.length > MAX_BIO_LENGTH) {
       setError(`Description must be ${MAX_BIO_LENGTH} characters or fewer.`)
@@ -73,7 +82,7 @@ export function MentorProfileEditor({
       const res = await fetch("/api/mentor-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ avatarUrl: avatarUrl ?? "", bio: trimmedBio }),
+        body: JSON.stringify({ name: trimmedName, avatarUrl: avatarUrl ?? "", bio: trimmedBio }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -95,7 +104,7 @@ export function MentorProfileEditor({
         <Avatar className="size-28 border border-border">
           <AvatarImage src={avatarUrl ?? undefined} alt={displayName} className="object-cover" />
           <AvatarFallback className="text-2xl font-serif text-primary bg-card">
-            {displayName.charAt(0).toUpperCase()}
+            {(name.trim() || displayName).charAt(0).toUpperCase()}
           </AvatarFallback>
         </Avatar>
         <div className="flex flex-col gap-2">
@@ -126,6 +135,20 @@ export function MentorProfileEditor({
             </button>
           )}
         </div>
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="mentor-name" className="text-primary tracking-[0.15em] uppercase text-xs">
+          Your Name
+        </Label>
+        <Input
+          id="mentor-name"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Full name"
+          required
+          className="bg-card border-border text-foreground h-11"
+        />
       </div>
 
       <div className="flex flex-col gap-2">

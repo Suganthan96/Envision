@@ -28,12 +28,14 @@ export default async function MentorProfilePage() {
           Your <span className="text-gold-gradient">Profile</span>
         </h1>
         <p className="text-muted-foreground text-lg mb-10">
-          Add a photo and a short description — your assigned team will see this on their dashboard.
+          Edit your name, add a photo, and a short description — your assigned team will see this on their
+          dashboard.
         </p>
 
         <MentorProfileEditor
           currentAvatarUrl={profile.avatarUrl}
           currentBio={profile.bio}
+          currentName={session?.name ?? null}
           displayName={displayName}
         />
       </div>
