@@ -38,6 +38,11 @@
   --sidebar-accent: oklch(0.9 0.02 85);
   --sidebar-accent-foreground: oklch(0.2 0.02 85);
   --sidebar-border: oklch(0.85 0.02 85);
+  /* Public nav pill text: near-black against the light/cream glass bar. */
+  --pill-idle-text: var(--foreground);
+  /* Text over the gold hover-fill reads dark in both themes, since the fill
+     itself is gold either way. */
+  --pill-hover-text: oklch(0.15 0.02 85);
   --sidebar-ring: oklch(0.52 0.13 85);
   /* Deepened gold gradient stops for readability against the cream background */
   --gold-gradient-1: oklch(0.42 0.13 85);
@@ -82,6 +87,8 @@
   --gold-gradient-1: oklch(0.72 0.12 85);
   --gold-gradient-2: oklch(0.85 0.1 90);
   --gold-gradient-3: oklch(0.72 0.12 85);
+  /* Public nav pill text: gold against the dark glass bar. */
+  --pill-idle-text: var(--primary);
 }
 
 @theme inline {
@@ -143,4 +150,11 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
+}
+
+/* Landing-page-only scroll snap, toggled on <html> by LandingSnapScroll.
+   Proximity (not mandatory) so a scroll gesture never gets fought — it only
+   settles at a section boundary when the user has already stopped near one. */
+html.landing-snap-scroll {
+  scroll-snap-type: y proximity;
 }
