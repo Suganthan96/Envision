@@ -18,6 +18,7 @@ export const CACHE_TAGS = {
   feedbackLinks: "feedback-links",
   venues: "venues",
   domainCapacities: "domain-capacities",
+  projectGuideline: "project-guideline",
 } as const
 
 export type CacheTag = (typeof CACHE_TAGS)[keyof typeof CACHE_TAGS]
