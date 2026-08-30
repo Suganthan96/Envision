@@ -3,16 +3,17 @@ import { MentorsSearch } from "@/components/mentors-search"
 import { ArtDecoDivider } from "@/components/art-deco-divider"
 import { getPublicMentorShowcase } from "@/lib/public-showcase"
 import { getDomains } from "@/lib/domains"
+import { getSession } from "@/lib/get-session"
 
 export const dynamic = "force-dynamic"
 
 export default async function PublicMentorsPage() {
-  const [mentors, domains] = await Promise.all([getPublicMentorShowcase(), getDomains()])
+  const [mentors, domains, session] = await Promise.all([getPublicMentorShowcase(), getDomains(), getSession()])
   const domainTitleById = Object.fromEntries(domains.map((d) => [d.id, d.title]))
 
   return (
     <main className="min-h-screen bg-background">
-      <PublicNav />
+      <PublicNav isAuthenticated={!!session} />
 
       <div className="px-6 pt-16 pb-24 max-w-6xl mx-auto">
         <div className="text-center mb-16">

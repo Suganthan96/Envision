@@ -5,12 +5,15 @@ import { PublicNav } from "@/components/public-nav"
 import { ScrollDots } from "@/components/scroll-dots"
 import { LandingSnapScroll } from "@/components/landing-snap-scroll"
 import { SHOWCASE_PHOTOS } from "@/lib/showcase-photos"
+import { getSession } from "@/lib/get-session"
 
-export default function Home() {
+export default async function Home() {
+  const session = await getSession()
+
   return (
     <main className="bg-background overflow-x-clip">
       <LandingSnapScroll />
-      <PublicNav />
+      <PublicNav isAuthenticated={!!session} />
       <ScrollDots
         sections={[
           { id: "hero", label: "Envision" },

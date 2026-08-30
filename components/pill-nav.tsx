@@ -7,7 +7,9 @@ import "./pill-nav.css"
 
 export interface PillNavItem {
   label: string
-  href: string
+  /** Either a href (renders a Link) or an onClick (renders a button) — e.g. Sign Out. */
+  href?: string
+  onClick?: () => void
   ariaLabel?: string
 }
 
@@ -180,16 +182,9 @@ export default function PillNav({
 
         <div className="pill-nav-items" ref={navItemsRef}>
           <ul className="pill-list" role="menubar">
-            {items.map((item, i) => (
-              <li key={item.href || `item-${i}`} role="none">
-                <Link
-                  role="menuitem"
-                  href={item.href}
-                  className={`pill${activeHref === item.href ? " is-active" : ""}`}
-                  aria-label={item.ariaLabel || item.label}
-                  onMouseEnter={() => handleEnter(i)}
-                  onMouseLeave={() => handleLeave(i)}
-                >
+            {items.map((item, i) => {
+              const pillBody = (
+                <>
                   <span
                     className="hover-circle"
                     aria-hidden="true"
@@ -203,9 +198,38 @@ export default function PillNav({
                       {item.label}
                     </span>
                   </span>
-                </Link>
-              </li>
-            ))}
+                </>
+              )
+
+              return (
+                <li key={item.href ?? `item-${i}`} role="none">
+                  {item.href ? (
+                    <Link
+                      role="menuitem"
+                      href={item.href}
+                      className={`pill${activeHref === item.href ? " is-active" : ""}`}
+                      aria-label={item.ariaLabel || item.label}
+                      onMouseEnter={() => handleEnter(i)}
+                      onMouseLeave={() => handleLeave(i)}
+                    >
+                      {pillBody}
+                    </Link>
+                  ) : (
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className="pill"
+                      aria-label={item.ariaLabel || item.label}
+                      onMouseEnter={() => handleEnter(i)}
+                      onMouseLeave={() => handleLeave(i)}
+                      onClick={item.onClick}
+                    >
+                      {pillBody}
+                    </button>
+                  )}
+                </li>
+              )
+            })}
           </ul>
         </div>
       </nav>

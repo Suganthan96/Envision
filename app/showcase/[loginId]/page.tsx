@@ -3,12 +3,13 @@ import { PublicNav } from "@/components/public-nav"
 import { BackLink } from "@/components/back-link"
 import { getPublicShowcaseTeam } from "@/lib/public-showcase"
 import { getDomains } from "@/lib/domains"
+import { getSession } from "@/lib/get-session"
 
 export const dynamic = "force-dynamic"
 
 export default async function ShowcaseTeamPage({ params }: { params: Promise<{ loginId: string }> }) {
   const { loginId } = await params
-  const [team, domains] = await Promise.all([getPublicShowcaseTeam(loginId), getDomains()])
+  const [team, domains, session] = await Promise.all([getPublicShowcaseTeam(loginId), getDomains(), getSession()])
 
   if (!team) notFound()
 
@@ -18,7 +19,7 @@ export default async function ShowcaseTeamPage({ params }: { params: Promise<{ l
 
   return (
     <main className="min-h-screen bg-background">
-      <PublicNav />
+      <PublicNav isAuthenticated={!!session} />
 
       <div className="px-6 py-16 max-w-3xl mx-auto">
         <BackLink label="Back to Showcase" fallbackHref="/showcase" />

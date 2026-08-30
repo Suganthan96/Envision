@@ -1,3 +1,4 @@
+import Link from "next/link"
 import { BrandLink } from "@/components/brand-link"
 import { LogoutButton } from "@/components/logout-button"
 import { ThemeToggle } from "@/components/theme-toggle"
@@ -28,6 +29,17 @@ export function PortalHeader({
     <div className="relative w-screen left-1/2 -translate-x-1/2 px-6">
       <div className={`${maxWidth} mx-auto flex items-center justify-between ${marginBottom}`}>
         <BrandLink />
+        <nav className="hidden sm:flex items-center gap-6">
+          <Link
+            href="/showcase"
+            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
+          >
+            Showcase
+          </Link>
+          <Link href="/mentors" className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider">
+            Mentors
+          </Link>
+        </nav>
         <div className="flex items-center gap-3">
           <ThemeToggle variant="inline" />
           <LogoutButton />
