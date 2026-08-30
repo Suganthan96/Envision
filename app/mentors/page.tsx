@@ -1,16 +1,15 @@
+import { Suspense } from "react"
 import { PublicNav } from "@/components/public-nav"
-import { MentorsSearch } from "@/components/mentors-search"
 import { ArtDecoDivider } from "@/components/art-deco-divider"
-import { getPublicMentorShowcase } from "@/lib/public-showcase"
-import { getDomains } from "@/lib/domains"
+import { CardGridSkeleton } from "@/components/skeletons"
 import { getSession } from "@/lib/get-session"
 import { roleHome } from "@/lib/session"
+import { MentorsGrid } from "./mentors-grid"
 
 export const dynamic = "force-dynamic"
 
 export default async function PublicMentorsPage() {
-  const [mentors, domains, session] = await Promise.all([getPublicMentorShowcase(), getDomains(), getSession()])
-  const domainTitleById = Object.fromEntries(domains.map((d) => [d.id, d.title]))
+  const session = await getSession()
 
   return (
     <main className="min-h-screen bg-background">
@@ -32,20 +31,13 @@ export default async function PublicMentorsPage() {
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
             The mentors guiding teams through this cycle.
           </p>
-          {mentors.length > 0 && (
-            <p className="text-primary text-xs uppercase tracking-[0.2em] mt-6">
-              {mentors.length} {mentors.length === 1 ? "Mentor" : "Mentors"}
-            </p>
-          )}
         </div>
 
         <ArtDecoDivider variant="chevron" />
 
-        {mentors.length === 0 ? (
-          <p className="text-muted-foreground text-center py-16">No mentors yet.</p>
-        ) : (
-          <MentorsSearch mentors={mentors} domainTitleById={domainTitleById} />
-        )}
+        <Suspense fallback={<CardGridSkeleton />}>
+          <MentorsGrid />
+        </Suspense>
       </div>
     </main>
   )

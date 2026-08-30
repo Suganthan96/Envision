@@ -1,20 +1,12 @@
 import { Suspense } from "react"
 import { AdminNav } from "@/components/admin-nav"
-import { AdminMentorProfilesView } from "@/components/admin-mentor-profiles-view"
-import { getSession } from "@/lib/get-session"
-import { getMentorProfilesForAdmin } from "@/lib/admin-directories"
-import { getDomains } from "@/lib/domains"
 import { AdminHeader } from "@/components/admin-header"
+import { CardGridSkeleton } from "@/components/skeletons"
+import { MentorProfilesSection } from "./mentor-profiles-section"
 
 export const dynamic = "force-dynamic"
 
-export default async function AdminMentorProfilesPage() {
-  const session = await getSession()
-  const [mentors, domains] = await Promise.all([
-    session ? getMentorProfilesForAdmin(session.userId) : Promise.resolve([]),
-    getDomains(),
-  ])
-
+export default function AdminMentorProfilesPage() {
   return (
     <main className="min-h-screen bg-background px-6 py-12">
       <div className="relative z-10 max-w-5xl mx-auto">
@@ -27,8 +19,8 @@ export default async function AdminMentorProfilesPage() {
           Mentor <span className="text-gold-gradient">Profiles</span>
         </h1>
 
-        <Suspense fallback={null}>
-          <AdminMentorProfilesView mentors={mentors} domains={domains} />
+        <Suspense fallback={<CardGridSkeleton />}>
+          <MentorProfilesSection />
         </Suspense>
       </div>
     </main>

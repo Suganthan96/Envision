@@ -1,16 +1,15 @@
+import { Suspense } from "react"
 import { PublicNav } from "@/components/public-nav"
-import { ShowcaseSearch } from "@/components/showcase-search"
 import { ArtDecoDivider } from "@/components/art-deco-divider"
-import { getPublicShowcaseTeams } from "@/lib/public-showcase"
-import { getDomains } from "@/lib/domains"
+import { CardGridSkeleton } from "@/components/skeletons"
 import { getSession } from "@/lib/get-session"
 import { roleHome } from "@/lib/session"
+import { ShowcaseGrid } from "./showcase-grid"
 
 export const dynamic = "force-dynamic"
 
 export default async function ShowcasePage() {
-  const [teams, domains, session] = await Promise.all([getPublicShowcaseTeams(), getDomains(), getSession()])
-  const domainTitleById = Object.fromEntries(domains.map((d) => [d.id, d.title]))
+  const session = await getSession()
 
   return (
     <main className="min-h-screen bg-background">
@@ -32,20 +31,13 @@ export default async function ShowcasePage() {
           <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
             Every team&apos;s prototype from this cycle — what they set out to solve, and how.
           </p>
-          {teams.length > 0 && (
-            <p className="text-primary text-xs uppercase tracking-[0.2em] mt-6">
-              {teams.length} {teams.length === 1 ? "Team" : "Teams"}
-            </p>
-          )}
         </div>
 
         <ArtDecoDivider variant="chevron" />
 
-        {teams.length === 0 ? (
-          <p className="text-muted-foreground text-center py-16">No teams yet.</p>
-        ) : (
-          <ShowcaseSearch teams={teams} domainTitleById={domainTitleById} />
-        )}
+        <Suspense fallback={<CardGridSkeleton />}>
+          <ShowcaseGrid />
+        </Suspense>
       </div>
     </main>
   )

@@ -1,3 +1,4 @@
+import { unstable_cache } from "next/cache"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 
 export interface PublicShowcaseTeam {
@@ -56,39 +57,54 @@ function mapTeam(row: TeamRow): PublicShowcaseTeam {
   }
 }
 
-// Not cached: this mirrors every team's in-progress project, which changes
-// as students edit it and has no admin-triggered invalidation point.
-export async function getPublicShowcaseTeams(): Promise<PublicShowcaseTeam[]> {
-  const supabase = getSupabaseServerClient()
-  const { data } = await supabase.rpc("get_public_showcase_teams")
-  return ((data ?? []) as TeamRow[]).map(mapTeam)
-}
+// Short-lived cache (not tag-invalidated): this mirrors every team's
+// in-progress project, which students edit continuously and which has no
+// single admin-triggered invalidation point. A 20s window makes the
+// public /showcase list near-instant on repeat hits while staying fresh
+// enough that an edit shows up almost immediately.
+export const getPublicShowcaseTeams = unstable_cache(
+  async (): Promise<PublicShowcaseTeam[]> => {
+    const supabase = getSupabaseServerClient()
+    const { data } = await supabase.rpc("get_public_showcase_teams")
+    return ((data ?? []) as TeamRow[]).map(mapTeam)
+  },
+  ["public-showcase-teams"],
+  { revalidate: 20 },
+)
 
-export async function getPublicShowcaseTeam(loginId: string): Promise<PublicShowcaseTeam | null> {
-  const supabase = getSupabaseServerClient()
-  const { data } = await supabase.rpc("get_public_showcase_team", { p_login_id: loginId })
-  const row = (data as TeamRow[] | null)?.[0]
-  return row ? mapTeam(row) : null
-}
+export const getPublicShowcaseTeam = unstable_cache(
+  async (loginId: string): Promise<PublicShowcaseTeam | null> => {
+    const supabase = getSupabaseServerClient()
+    const { data } = await supabase.rpc("get_public_showcase_team", { p_login_id: loginId })
+    const row = (data as TeamRow[] | null)?.[0]
+    return row ? mapTeam(row) : null
+  },
+  ["public-showcase-team"],
+  { revalidate: 20 },
+)
 
-export async function getPublicMentorShowcase(): Promise<PublicShowcaseMentor[]> {
-  const supabase = getSupabaseServerClient()
-  const { data } = await supabase.rpc("get_public_mentor_showcase")
-  return (
-    (data ?? []) as {
-      mentor_user_id: string
-      login_id: string
-      name: string | null
-      avatar_url: string | null
-      bio: string | null
-      domain_ids: string[]
-    }[]
-  ).map((row) => ({
-    mentorUserId: row.mentor_user_id,
-    loginId: row.login_id,
-    name: row.name,
-    avatarUrl: row.avatar_url,
-    bio: row.bio,
-    domainIds: row.domain_ids ?? [],
-  }))
-}
+export const getPublicMentorShowcase = unstable_cache(
+  async (): Promise<PublicShowcaseMentor[]> => {
+    const supabase = getSupabaseServerClient()
+    const { data } = await supabase.rpc("get_public_mentor_showcase")
+    return (
+      (data ?? []) as {
+        mentor_user_id: string
+        login_id: string
+        name: string | null
+        avatar_url: string | null
+        bio: string | null
+        domain_ids: string[]
+      }[]
+    ).map((row) => ({
+      mentorUserId: row.mentor_user_id,
+      loginId: row.login_id,
+      name: row.name,
+      avatarUrl: row.avatar_url,
+      bio: row.bio,
+      domainIds: row.domain_ids ?? [],
+    }))
+  },
+  ["public-mentor-showcase"],
+  { revalidate: 60 },
+)

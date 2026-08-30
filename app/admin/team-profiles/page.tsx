@@ -1,20 +1,12 @@
 import { Suspense } from "react"
 import { AdminNav } from "@/components/admin-nav"
-import { AdminTeamProfilesView } from "@/components/admin-team-profiles-view"
-import { getSession } from "@/lib/get-session"
-import { getTeamProfilesForAdmin, type AdminTeamProfile } from "@/lib/admin-directories"
-import { getDomains } from "@/lib/domains"
 import { AdminHeader } from "@/components/admin-header"
+import { CardGridSkeleton } from "@/components/skeletons"
+import { TeamProfilesSection } from "./team-profiles-section"
 
 export const dynamic = "force-dynamic"
 
-export default async function AdminTeamProfilesPage() {
-  const session = await getSession()
-  const [teams, domains]: [AdminTeamProfile[], Awaited<ReturnType<typeof getDomains>>] = await Promise.all([
-    session ? getTeamProfilesForAdmin(session.userId) : Promise.resolve([]),
-    getDomains(),
-  ])
-
+export default function AdminTeamProfilesPage() {
   return (
     <main className="min-h-screen bg-background px-6 py-12">
       <div className="relative z-10 max-w-5xl mx-auto">
@@ -30,8 +22,8 @@ export default async function AdminTeamProfilesPage() {
           Every team&apos;s logo, roster size, domain, and project, in one searchable directory.
         </p>
 
-        <Suspense fallback={null}>
-          <AdminTeamProfilesView teams={teams} domains={domains} />
+        <Suspense fallback={<CardGridSkeleton />}>
+          <TeamProfilesSection />
         </Suspense>
       </div>
     </main>
