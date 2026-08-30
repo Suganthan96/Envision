@@ -19,11 +19,6 @@ export default async function AdminDomainsPage() {
         <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-4">
           Domain <span className="text-gold-gradient">Themes</span>
         </h1>
-        <p className="text-muted-foreground text-lg mb-12">
-          Add, edit, or delete the themes students and mentors can choose from. A theme with existing selections
-          can&apos;t be deleted. New themes start with a default capacity of 6 students / 7 mentors — adjust that
-          from the Mentor or Student Selections page.
-        </p>
 
         <DomainEditor initialDomains={domains} />
       </div>

@@ -89,11 +89,6 @@ export default async function AdminMatchingPage() {
         <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-4">
           Mentor <span className="text-gold-gradient">Matching</span>
         </h1>
-        <p className="text-muted-foreground text-lg mb-12">
-          Manage venues and their team capacity below, then drag a team onto a mentor to assign it. Each mentor
-          takes at most 2 teams, and a team can only join a mentor in the same venue. Use Download PDF for the
-          final printable list, grouped by venue.
-        </p>
 
         <MentorMatchingBoard
           initialMentors={mentors}

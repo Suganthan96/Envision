@@ -41,7 +41,11 @@ begin
 end;
 $$;
 
-create or replace function public.admin_list_team_profiles(p_admin_user_id uuid)
+-- team_name is DROP + CREATE (not CREATE OR REPLACE) because the return
+-- type changed when mentor columns were added.
+drop function if exists public.admin_list_team_profiles(uuid);
+
+create function public.admin_list_team_profiles(p_admin_user_id uuid)
 returns table (
   student_user_id uuid,
   login_id text,
@@ -54,7 +58,10 @@ returns table (
   problem_statement text,
   solution_short text,
   solution_long text,
-  member_count integer
+  member_count integer,
+  mentor_user_id uuid,
+  mentor_name text,
+  mentor_login_id text
 )
 language plpgsql
 security definer
@@ -78,9 +85,14 @@ begin
     u.problem_statement,
     u.solution_short,
     u.solution_long,
-    coalesce((select count(*) from public.team_members tm where tm.student_user_id = u.id), 0)::integer
+    coalesce((select count(*) from public.team_members tm where tm.student_user_id = u.id), 0)::integer,
+    m.id,
+    m.name,
+    m.login_id
   from public.app_users u
   left join public.domain_selections ds on ds.user_id = u.id and ds.role = 'member'
+  left join public.mentor_assignments ma on ma.student_user_id = u.id
+  left join public.app_users m on m.id = ma.mentor_user_id
   where u.role = 'member'
   order by u.login_id;
 end;

@@ -20,10 +20,6 @@ export default async function AdminTimelinePage() {
         <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-4">
           Program <span className="text-gold-gradient">Timeline</span>
         </h1>
-        <p className="text-muted-foreground text-lg mb-12">
-          Edit every phase and session — labels, dates, titles, resources, venues, and feedback form links. This is
-          what students and mentors see when domain selection is closed.
-        </p>
 
         <TimelineEditor initialPhases={phases} initialFeedbackLinks={feedbackLinks} />
       </div>

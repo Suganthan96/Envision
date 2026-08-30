@@ -31,9 +31,6 @@ export default async function AdminDomainSelectionPage() {
         <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-4">
           Domain <span className="text-gold-gradient">Selection</span>
         </h1>
-        <p className="text-muted-foreground text-lg mb-12">
-          Open or close domain selection for each side, set theme capacities, and see who has chosen what.
-        </p>
 
         <div className="grid sm:grid-cols-2 gap-8 max-w-3xl">
           <DashboardNavCard

@@ -45,7 +45,8 @@ export function AdminTeamProfilesView({ teams, domains }: { teams: AdminTeamProf
       if (!q) return true
       const name = (t.teamName ?? "").toLowerCase()
       const lead = (t.teamLeadName ?? "").toLowerCase()
-      return name.includes(q) || lead.includes(q) || t.loginId.toLowerCase().includes(q)
+      const mentor = (t.mentorName ?? "").toLowerCase()
+      return name.includes(q) || lead.includes(q) || mentor.includes(q) || t.loginId.toLowerCase().includes(q)
     })
   }, [teams, query, themeFilter])
 
@@ -57,7 +58,7 @@ export function AdminTeamProfilesView({ teams, domains }: { teams: AdminTeamProf
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Search team name, lead, or login ID..."
+            placeholder="Search team name, lead, mentor, or login ID..."
             className="bg-card border-border text-foreground h-10"
           />
         </div>
@@ -91,6 +92,7 @@ export function AdminTeamProfilesView({ teams, domains }: { teams: AdminTeamProf
               team={team}
               domainTitle={team.domainId ? domains.find((d) => d.id === team.domainId)?.title ?? team.domainId : null}
               href={`/admin/team-profiles/${team.studentUserId}`}
+              mentorName={team.mentorName}
             />
           ))}
         </div>

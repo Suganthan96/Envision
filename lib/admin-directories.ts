@@ -23,6 +23,9 @@ export interface AdminTeamProfile {
   solutionShort: string | null
   solutionLong: string | null
   memberCount: number
+  mentorUserId: string | null
+  mentorName: string | null
+  mentorLoginId: string | null
 }
 
 export async function getMentorProfilesForAdmin(adminUserId: string): Promise<AdminMentorProfile[]> {
@@ -66,6 +69,9 @@ export async function getTeamProfilesForAdmin(adminUserId: string): Promise<Admi
       solution_short: string | null
       solution_long: string | null
       member_count: number
+      mentor_user_id: string | null
+      mentor_name: string | null
+      mentor_login_id: string | null
     }[]
   ).map((row) => ({
     studentUserId: row.student_user_id,
@@ -80,5 +86,8 @@ export async function getTeamProfilesForAdmin(adminUserId: string): Promise<Admi
     solutionShort: row.solution_short,
     solutionLong: row.solution_long,
     memberCount: row.member_count,
+    mentorUserId: row.mentor_user_id,
+    mentorName: row.mentor_name,
+    mentorLoginId: row.mentor_login_id,
   }))
 }

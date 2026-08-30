@@ -26,9 +26,6 @@ export default async function AdminMentorProfilesPage() {
         <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-4">
           Mentor <span className="text-gold-gradient">Profiles</span>
         </h1>
-        <p className="text-muted-foreground text-lg mb-12">
-          Every mentor, in one searchable directory. Click a card for their full profile.
-        </p>
 
         <Suspense fallback={null}>
           <AdminMentorProfilesView mentors={mentors} domains={domains} />

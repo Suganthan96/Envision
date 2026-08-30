@@ -25,10 +25,7 @@ export default async function AdminPage() {
         <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-4">
           Welcome, <span className="text-gold-gradient">Administrator</span>
         </h1>
-        <p className="text-muted-foreground text-lg mb-12">
-          Reset a forgotten password below. The account will be required to set a new password at their next
-          sign-in.
-        </p>
+        
 
         <AdminUserTable users={users} />
       </div>
