@@ -30,7 +30,7 @@
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.65 0.15 84.429);
   --chart-5: oklch(0.6 0.17 70.08);
-  --radius: 0rem;
+  --radius: 0.625rem;
   --sidebar: oklch(0.95 0.015 85);
   --sidebar-foreground: oklch(0.2 0.02 85);
   --sidebar-primary: oklch(0.52 0.13 85);
@@ -140,6 +140,27 @@
   }
   body {
     @apply bg-background text-foreground overflow-x-hidden;
+  }
+
+  /* Global rounding: every button, native form control, and full-box
+     bordered container (cards, panels, table wrappers, chips) gets the
+     theme radius unless it already opts into a specific `rounded-*`
+     class. `:not([class*="rounded"])` also skips anything set to
+     `rounded-none` on purpose. Single-side borders (border-t/x/b used as
+     dividers) don't match `.border`, so they're untouched. */
+  button:not([class*="rounded"]),
+  input:not([class*="rounded"]),
+  textarea:not([class*="rounded"]),
+  select:not([class*="rounded"]),
+  .border:not([class*="rounded"]),
+  [class*="border-dashed"]:not([class*="rounded"]) {
+    border-radius: var(--radius);
+  }
+
+  /* A bordered box that wraps a table needs its overflow clipped so the
+     table's square corners don't poke past the new rounded border. */
+  .border:not([class*="rounded"]):has(> table, > * > table) {
+    overflow: hidden;
   }
 }
 

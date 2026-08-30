@@ -1,4 +1,6 @@
 import { PublicNav } from "@/components/public-nav"
+import { getSession } from "@/lib/get-session"
+import { roleHome } from "@/lib/session"
 
 /**
  * The header at the top of every signed-in page (admin, student, mentor) —
@@ -12,15 +14,16 @@ import { PublicNav } from "@/components/public-nav"
  * so `maxWidth` (kept only so existing call sites don't need to change) no
  * longer does anything.
  */
-export function PortalHeader({
+export async function PortalHeader({
   marginBottom = "mb-8",
 }: {
   maxWidth?: "max-w-4xl" | "max-w-5xl"
   marginBottom?: "mb-8" | "mb-16"
 }) {
+  const session = await getSession()
   return (
     <>
-      <PublicNav isAuthenticated />
+      <PublicNav isAuthenticated dashboardHref={session ? roleHome(session.role) : undefined} />
       <div className={marginBottom} />
     </>
   )

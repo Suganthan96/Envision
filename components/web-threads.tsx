@@ -207,7 +207,10 @@ export function WebThreads({
     canvas.style.width = "100%"
     canvas.style.height = "100%"
     canvas.style.display = "block"
-    canvas.style.pointerEvents = "auto"
+    // Must stay click-through: this canvas is a full-viewport fixed layer,
+    // so `auto` here would swallow every click on the page beneath it.
+    // Mouse-parallax listeners are bound to `window` below instead.
+    canvas.style.pointerEvents = "none"
     container.appendChild(canvas)
 
     const geometry = new Triangle(gl)
@@ -278,9 +281,11 @@ export function WebThreads({
     const onMouseLeave = () => {
       targetActive = 0
     }
-    canvas.addEventListener("mousemove", onMouseMove)
-    canvas.addEventListener("mouseenter", onMouseEnter)
-    canvas.addEventListener("mouseleave", onMouseLeave)
+    // Bound to `window` (not the canvas) because the canvas is now
+    // pointer-events:none so page clicks pass through to real content.
+    window.addEventListener("mousemove", onMouseMove)
+    window.addEventListener("mouseenter", onMouseEnter)
+    window.addEventListener("mouseleave", onMouseLeave)
 
     let raf = 0
     let isVisible = true
@@ -333,9 +338,9 @@ export function WebThreads({
       ro.disconnect()
       io.disconnect()
       document.removeEventListener("visibilitychange", onVisibility)
-      canvas.removeEventListener("mousemove", onMouseMove)
-      canvas.removeEventListener("mouseenter", onMouseEnter)
-      canvas.removeEventListener("mouseleave", onMouseLeave)
+      window.removeEventListener("mousemove", onMouseMove)
+      window.removeEventListener("mouseenter", onMouseEnter)
+      window.removeEventListener("mouseleave", onMouseLeave)
       ctxMap.delete(container)
       try {
         container.removeChild(canvas)

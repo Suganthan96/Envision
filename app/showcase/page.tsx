@@ -4,6 +4,7 @@ import { ArtDecoDivider } from "@/components/art-deco-divider"
 import { getPublicShowcaseTeams } from "@/lib/public-showcase"
 import { getDomains } from "@/lib/domains"
 import { getSession } from "@/lib/get-session"
+import { roleHome } from "@/lib/session"
 
 export const dynamic = "force-dynamic"
 
@@ -13,7 +14,7 @@ export default async function ShowcasePage() {
 
   return (
     <main className="min-h-screen bg-background">
-      <PublicNav isAuthenticated={!!session} />
+      <PublicNav isAuthenticated={!!session} dashboardHref={session ? roleHome(session.role) : undefined} />
 
       <div className="px-6 pt-16 pb-24 max-w-6xl mx-auto">
         <div className="text-center mb-16">

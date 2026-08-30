@@ -6,6 +6,7 @@ import { ScrollDots } from "@/components/scroll-dots"
 import { LandingSnapScroll } from "@/components/landing-snap-scroll"
 import { SHOWCASE_PHOTOS } from "@/lib/showcase-photos"
 import { getSession } from "@/lib/get-session"
+import { roleHome } from "@/lib/session"
 
 export default async function Home() {
   const session = await getSession()
@@ -13,7 +14,7 @@ export default async function Home() {
   return (
     <main className="bg-background overflow-x-clip">
       <LandingSnapScroll />
-      <PublicNav isAuthenticated={!!session} />
+      <PublicNav isAuthenticated={!!session} dashboardHref={session ? roleHome(session.role) : undefined} />
       <ScrollDots
         sections={[
           { id: "hero", label: "Envision" },

@@ -20,7 +20,15 @@ import GlassSurface from "@/components/glass-surface"
  * session server-side and pass the boolean down, since this is a client
  * component and can't read the session cookie itself.
  */
-export function PublicNav({ isAuthenticated = false }: { isAuthenticated?: boolean }) {
+export function PublicNav({
+  isAuthenticated = false,
+  dashboardHref,
+}: {
+  isAuthenticated?: boolean
+  /** Role-specific portal home (/admin, /mentor, /member). When set and the
+   *  visitor is signed in, a "Dashboard" pill links back to their portal. */
+  dashboardHref?: string
+}) {
   const pathname = usePathname()
   const router = useRouter()
 
@@ -31,6 +39,9 @@ export function PublicNav({ isAuthenticated = false }: { isAuthenticated?: boole
     ]
 
     if (isAuthenticated) {
+      if (dashboardHref) {
+        items.push({ label: "Dashboard", href: dashboardHref })
+      }
       items.push({
         label: "Sign Out",
         onClick: async () => {
@@ -44,7 +55,7 @@ export function PublicNav({ isAuthenticated = false }: { isAuthenticated?: boole
     }
 
     return items
-  }, [isAuthenticated, router])
+  }, [isAuthenticated, dashboardHref, router])
 
   return (
     <div className="sticky top-0 z-30 flex justify-center px-4 pt-4 pb-2 pointer-events-none">

@@ -193,7 +193,7 @@ export function AdminUserTable({ users }: { users: AppUserRow[] }) {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Search by login ID or role..."
-            className="pl-9 bg-card border-border text-foreground rounded-none h-10"
+            className="pl-9 bg-card border-border text-foreground h-10"
           />
         </div>
 
@@ -226,7 +226,7 @@ export function AdminUserTable({ users }: { users: AppUserRow[] }) {
           <p className="text-muted-foreground">No users match your search.</p>
         </div>
       ) : (
-        <div className="border border-border">
+        <div className="border border-border rounded-lg overflow-hidden">
           <Table>
             <TableHeader>
               <TableRow className="border-border">

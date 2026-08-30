@@ -86,7 +86,7 @@ function PersonCardsView({
           value={query}
           onChange={(e) => setQuery(e.target.value)}
           placeholder="Search by name or login ID..."
-          className="pl-9 bg-card border-border text-foreground rounded-none h-10"
+          className="pl-9 bg-card border-border text-foreground h-10"
         />
       </div>
 

@@ -4,6 +4,7 @@ import { BackLink } from "@/components/back-link"
 import { getPublicShowcaseTeam } from "@/lib/public-showcase"
 import { getDomains } from "@/lib/domains"
 import { getSession } from "@/lib/get-session"
+import { roleHome } from "@/lib/session"
 
 export const dynamic = "force-dynamic"
 
@@ -19,9 +20,9 @@ export default async function ShowcaseTeamPage({ params }: { params: Promise<{ l
 
   return (
     <main className="min-h-screen bg-background">
-      <PublicNav isAuthenticated={!!session} />
+      <PublicNav isAuthenticated={!!session} dashboardHref={session ? roleHome(session.role) : undefined} />
 
-      <div className="px-6 py-16 max-w-3xl mx-auto">
+      <div className="relative z-10 px-6 py-16 max-w-3xl mx-auto">
         <BackLink label="Back to Showcase" fallbackHref="/showcase" />
 
         <div className="flex flex-col sm:flex-row items-start gap-8 mb-12">
@@ -54,7 +55,7 @@ export default async function ShowcaseTeamPage({ params }: { params: Promise<{ l
         </div>
 
         {hasProject ? (
-          <div className="flex flex-col gap-10">
+          <div className="flex flex-col gap-10 rounded-2xl border border-border/60 bg-card/50 backdrop-blur-md p-6 sm:p-10 shadow-sm">
             {team.projectTitle && (
               <div>
                 <p className="text-primary text-[10px] uppercase tracking-wider mb-2">Project</p>
