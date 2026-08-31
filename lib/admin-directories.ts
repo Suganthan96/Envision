@@ -26,7 +26,8 @@ export interface AdminTeamProfile {
   mentorUserId: string | null
   mentorName: string | null
   mentorLoginId: string | null
-  submissionLink: string | null
+  submissionDriveUrl: string | null
+  submissionCanvaUrl: string | null
   submissionUpdatedAt: string | null
 }
 
@@ -60,7 +61,8 @@ export interface AdminSubmissionRow {
   teamName: string | null
   venue: string | null
   domainId: string | null
-  link: string | null
+  driveUrl: string | null
+  canvaUrl: string | null
   updatedAt: string | null
 }
 
@@ -75,6 +77,7 @@ export async function getSubmissionsForAdmin(adminUserId: string): Promise<Admin
       venue: string | null
       domain_id: string | null
       submission_canva_url: string | null
+      submission_file_url: string | null
       submission_updated_at: string | null
     }[]
   ).map((row) => ({
@@ -83,7 +86,8 @@ export async function getSubmissionsForAdmin(adminUserId: string): Promise<Admin
     teamName: row.team_name,
     venue: row.venue,
     domainId: row.domain_id,
-    link: row.submission_canva_url,
+    driveUrl: row.submission_file_url,
+    canvaUrl: row.submission_canva_url,
     updatedAt: row.submission_updated_at,
   }))
 }
@@ -109,6 +113,7 @@ export async function getTeamProfilesForAdmin(adminUserId: string): Promise<Admi
       mentor_name: string | null
       mentor_login_id: string | null
       submission_canva_url: string | null
+      submission_file_url: string | null
       submission_updated_at: string | null
     }[]
   ).map((row) => ({
@@ -127,7 +132,8 @@ export async function getTeamProfilesForAdmin(adminUserId: string): Promise<Admi
     mentorUserId: row.mentor_user_id,
     mentorName: row.mentor_name,
     mentorLoginId: row.mentor_login_id,
-    submissionLink: row.submission_canva_url,
+    submissionDriveUrl: row.submission_file_url,
+    submissionCanvaUrl: row.submission_canva_url,
     submissionUpdatedAt: row.submission_updated_at,
   }))
 }

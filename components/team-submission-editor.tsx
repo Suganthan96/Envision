@@ -18,7 +18,8 @@ export function TeamSubmissionEditor({
   current: TeamSubmission
 }) {
   const router = useRouter()
-  const [link, setLink] = useState(current.link ?? "")
+  const [driveUrl, setDriveUrl] = useState(current.driveUrl ?? "")
+  const [canvaUrl, setCanvaUrl] = useState(current.canvaUrl ?? "")
   const [error, setError] = useState("")
   const [busy, setBusy] = useState<"save" | "delete" | null>(null)
   const [saved, setSaved] = useState(false)
@@ -32,7 +33,7 @@ export function TeamSubmissionEditor({
       const res = await fetch("/api/team-submission", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ link: link.trim() }),
+        body: JSON.stringify({ driveUrl: driveUrl.trim(), canvaUrl: canvaUrl.trim() }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -49,7 +50,7 @@ export function TeamSubmissionEditor({
   }
 
   async function handleDelete() {
-    if (!confirm("Remove your submission link?")) return
+    if (!confirm("Remove your submission (Drive link and Canva link)?")) return
     setError("")
     setSaved(false)
     setBusy("delete")
@@ -60,7 +61,8 @@ export function TeamSubmissionEditor({
         setError(data.error ?? "Unable to clear your submission.")
         return
       }
-      setLink("")
+      setDriveUrl("")
+      setCanvaUrl("")
       router.refresh()
     } catch {
       setError("Something went wrong. Please try again.")
@@ -74,10 +76,10 @@ export function TeamSubmissionEditor({
       <div className="flex items-center gap-3 text-xs">
         <span
           className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 uppercase tracking-wider ${
-            current.link ? "border-primary/50 text-primary" : "border-border text-muted-foreground"
+            current.driveUrl ? "border-primary/50 text-primary" : "border-border text-muted-foreground"
           }`}
         >
-          {current.link ? "Submitted" : "Not submitted yet"}
+          {current.driveUrl ? "Submitted" : "Not submitted yet"}
         </span>
         {current.updatedAt && (
           <span className="text-muted-foreground">
@@ -89,54 +91,81 @@ export function TeamSubmissionEditor({
       <ol className="text-sm text-muted-foreground flex flex-col gap-2 list-decimal pl-5">
         <li>
           Name your file <span className="text-foreground font-medium">Team {teamNo} …</span> (e.g.
-          <span className="text-foreground"> Team {teamNo} Final Deck.pptx</span>), then upload it to the
-          shared Drive folder — or open your deck in Canva.
+          <span className="text-foreground"> Team {teamNo} Final Deck.pptx</span>) and upload it to the
+          shared Drive folder.
         </li>
         <li>
-          In Drive, right-click your file → <span className="text-foreground">Share → General access →
-          Anyone with the link</span> → Copy link. In Canva, use <span className="text-foreground">Share →
-          Copy link</span>.
+          Right-click it → <span className="text-foreground">Share → General access → Anyone with the
+          link</span> → Copy link, and paste it below.
         </li>
-        <li>Paste that link below and save.</li>
+        <li>Optionally, also paste a Canva link to your design.</li>
       </ol>
 
-      {driveFolderUrl && (
-        <a
-          href={driveFolderUrl}
-          target="_blank"
-          rel="noreferrer"
-          className="inline-flex items-center gap-2 self-start border border-border bg-card/60 hover:border-primary transition-colors px-3 py-2 text-sm text-foreground rounded-lg"
-        >
-          <FolderUp className="w-4 h-4 text-primary" />
-          Open the shared Drive folder
-          <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
-        </a>
-      )}
+      {/* Always shown so teams can get back to the folder any time. */}
+      <a
+        href={driveFolderUrl}
+        target="_blank"
+        rel="noreferrer"
+        className="inline-flex items-center gap-2 self-start border border-border bg-card/60 hover:border-primary transition-colors px-3 py-2 text-sm text-foreground rounded-lg"
+      >
+        <FolderUp className="w-4 h-4 text-primary" />
+        Open the shared Drive folder
+        <ExternalLink className="w-3.5 h-3.5 text-muted-foreground" />
+      </a>
 
       <div className="flex flex-col gap-2">
-        <Label htmlFor="submission-link" className="text-primary tracking-[0.15em] uppercase text-xs">
-          Submission Link — Google Drive or Canva
+        <Label htmlFor="drive-url" className="text-primary tracking-[0.15em] uppercase text-xs">
+          Google Drive Link <span className="text-destructive">*</span>
         </Label>
         <Input
-          id="submission-link"
+          id="drive-url"
           type="url"
-          value={link}
+          required
+          value={driveUrl}
           onChange={(e) => {
-            setLink(e.target.value)
+            setDriveUrl(e.target.value)
             setSaved(false)
           }}
-          placeholder="https://drive.google.com/…  or  https://www.canva.com/design/…"
+          placeholder="https://drive.google.com/file/d/…"
           maxLength={500}
           className="bg-card border-border text-foreground h-11"
         />
-        {current.link && (
+        {current.driveUrl && (
           <a
-            href={current.link}
+            href={current.driveUrl}
             target="_blank"
             rel="noreferrer"
             className="text-xs text-primary hover:underline inline-flex items-center gap-1 self-start"
           >
-            <ExternalLink className="w-3 h-3" /> Open current submission
+            <ExternalLink className="w-3 h-3" /> Open saved Drive file
+          </a>
+        )}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <Label htmlFor="canva-url" className="text-primary tracking-[0.15em] uppercase text-xs">
+          Canva Link <span className="text-muted-foreground normal-case tracking-normal">(optional)</span>
+        </Label>
+        <Input
+          id="canva-url"
+          type="url"
+          value={canvaUrl}
+          onChange={(e) => {
+            setCanvaUrl(e.target.value)
+            setSaved(false)
+          }}
+          placeholder="https://www.canva.com/design/…"
+          maxLength={500}
+          className="bg-card border-border text-foreground h-11"
+        />
+        {current.canvaUrl && (
+          <a
+            href={current.canvaUrl}
+            target="_blank"
+            rel="noreferrer"
+            className="text-xs text-primary hover:underline inline-flex items-center gap-1 self-start"
+          >
+            <ExternalLink className="w-3 h-3" /> Open saved Canva link
           </a>
         )}
       </div>
@@ -151,7 +180,7 @@ export function TeamSubmissionEditor({
         >
           {busy === "save" ? "Saving…" : saved ? "Saved" : "Save Submission"}
         </Button>
-        {current.link && (
+        {current.driveUrl && (
           <Button
             type="button"
             variant="outline"

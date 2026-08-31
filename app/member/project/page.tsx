@@ -4,6 +4,7 @@ import { TeamSubmissionEditor } from "@/components/team-submission-editor"
 import { getSession } from "@/lib/get-session"
 import { getTeamProject } from "@/lib/team-project"
 import { getTeamSubmission, EMPTY_SUBMISSION } from "@/lib/team-submission"
+import { SUBMISSION_DRIVE_FOLDER_URL } from "@/lib/submission-config"
 import { PortalHeader } from "@/components/portal-header"
 
 export const dynamic = "force-dynamic"
@@ -44,11 +45,12 @@ export default async function MemberProjectPage() {
             Final <span className="text-gold-gradient">Submission</span>
           </h2>
           <p className="text-muted-foreground mb-8">
-            Your presentation deck for judging — a Canva link and/or an uploaded file.
+            Your presentation deck for judging — upload it to the shared Drive folder and paste the
+            link. A Canva link is optional.
           </p>
           <TeamSubmissionEditor
             teamNo={session?.loginId ?? ""}
-            driveFolderUrl={process.env.NEXT_PUBLIC_SUBMISSION_DRIVE_FOLDER_URL ?? ""}
+            driveFolderUrl={SUBMISSION_DRIVE_FOLDER_URL}
             current={submission}
           />
         </div>

@@ -1,18 +1,23 @@
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 
 /**
- * A team's final submission is a single link — either a Canva design URL or
- * the "anyone with the link" URL of a file the team uploaded to the shared
- * Google Drive folder themselves. The app just stores and shows the URL; it
- * never touches Google. (Stored in the `submission_canva_url` column, which
- * predates the field being used for Drive links too.)
+ * A team's final submission: a Google Drive share link (required) and an
+ * optional Canva link. The app only stores and shows the URLs — it never
+ * calls Google. Stored in columns kept from an earlier design:
+ *   driveUrl  -> submission_file_url
+ *   canvaUrl  -> submission_canva_url
  */
 export interface TeamSubmission {
-  link: string | null
+  driveUrl: string | null
+  canvaUrl: string | null
   updatedAt: string | null
 }
 
-export const EMPTY_SUBMISSION: TeamSubmission = { link: null, updatedAt: null }
+export const EMPTY_SUBMISSION: TeamSubmission = {
+  driveUrl: null,
+  canvaUrl: null,
+  updatedAt: null,
+}
 
 export async function getTeamSubmission(userId: string): Promise<TeamSubmission> {
   const supabase = getSupabaseServerClient()
@@ -20,7 +25,8 @@ export async function getTeamSubmission(userId: string): Promise<TeamSubmission>
   const row = data?.[0]
   if (!row) return EMPTY_SUBMISSION
   return {
-    link: row.submission_canva_url ?? null,
+    driveUrl: row.submission_file_url ?? null,
+    canvaUrl: row.submission_canva_url ?? null,
     updatedAt: row.submission_updated_at ?? null,
   }
 }

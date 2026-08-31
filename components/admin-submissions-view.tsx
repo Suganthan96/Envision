@@ -45,7 +45,7 @@ export function AdminSubmissionsView({
     return rows.filter((r) => {
       if (themeFilter && r.domainId !== themeFilter) return false
       if (venueFilter && (r.venue ?? "").trim() !== venueFilter) return false
-      const submitted = Boolean(r.link)
+      const submitted = Boolean(r.driveUrl)
       if (statusFilter === "submitted" && !submitted) return false
       if (statusFilter === "missing" && submitted) return false
       if (!q) return true
@@ -57,7 +57,7 @@ export function AdminSubmissionsView({
     })
   }, [rows, query, themeFilter, venueFilter, statusFilter])
 
-  const submittedCount = rows.filter((r) => r.link).length
+  const submittedCount = rows.filter((r) => r.driveUrl).length
 
   return (
     <div className="flex flex-col gap-6">
@@ -124,14 +124,15 @@ export function AdminSubmissionsView({
                 <th className="text-left font-medium px-4 py-3">Team</th>
                 <th className="text-left font-medium px-4 py-3">Venue</th>
                 <th className="text-left font-medium px-4 py-3">Theme</th>
-                <th className="text-left font-medium px-4 py-3">Submission Link</th>
+                <th className="text-left font-medium px-4 py-3">Drive</th>
+                <th className="text-left font-medium px-4 py-3">Canva</th>
                 <th className="text-left font-medium px-4 py-3">Status</th>
                 <th className="text-left font-medium px-4 py-3">Updated</th>
               </tr>
             </thead>
             <tbody>
               {filtered.map((r) => {
-                const submitted = Boolean(r.link)
+                const submitted = Boolean(r.driveUrl)
                 return (
                   <tr key={r.studentUserId} className="border-b border-border last:border-0 align-top">
                     <td className="px-4 py-3">
@@ -146,16 +147,30 @@ export function AdminSubmissionsView({
                     <td className="px-4 py-3 text-muted-foreground">{r.venue ?? "—"}</td>
                     <td className="px-4 py-3 text-muted-foreground">{domainTitle(r.domainId) ?? "—"}</td>
                     <td className="px-4 py-3">
-                      {r.link ? (
+                      {r.driveUrl ? (
                         <a
-                          href={r.link}
+                          href={r.driveUrl}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-1 text-primary hover:underline max-w-[280px]"
-                          title={r.link}
+                          className="inline-flex items-center gap-1 text-primary hover:underline"
+                          title={r.driveUrl}
                         >
-                          <ExternalLink className="w-3.5 h-3.5 shrink-0" />
-                          <span className="truncate">{r.link}</span>
+                          <ExternalLink className="w-3.5 h-3.5 shrink-0" /> Open
+                        </a>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3">
+                      {r.canvaUrl ? (
+                        <a
+                          href={r.canvaUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="inline-flex items-center gap-1 text-primary hover:underline"
+                          title={r.canvaUrl}
+                        >
+                          <ExternalLink className="w-3.5 h-3.5 shrink-0" /> Open
                         </a>
                       ) : (
                         <span className="text-muted-foreground">—</span>
