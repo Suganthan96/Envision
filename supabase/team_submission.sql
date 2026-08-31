@@ -89,13 +89,15 @@ begin
 end;
 $$;
 
-create or replace function public.admin_list_submissions(p_admin_user_id uuid)
+drop function if exists public.admin_list_submissions(uuid);
+create function public.admin_list_submissions(p_admin_user_id uuid)
 returns table (
   student_user_id uuid,
   login_id text,
   team_name text,
   venue text,
   domain_id text,
+  mentor_name text,
   submission_canva_url text,
   submission_file_url text,
   submission_file_name text,
@@ -117,6 +119,7 @@ begin
     u.name,
     coalesce(u.venue, m.venue),
     ds.domain_id,
+    m.name,
     u.submission_canva_url,
     u.submission_file_url,
     u.submission_file_name,

@@ -61,6 +61,7 @@ export interface AdminSubmissionRow {
   teamName: string | null
   venue: string | null
   domainId: string | null
+  mentorName: string | null
   driveUrl: string | null
   canvaUrl: string | null
   updatedAt: string | null
@@ -76,6 +77,7 @@ export async function getSubmissionsForAdmin(adminUserId: string): Promise<Admin
       team_name: string | null
       venue: string | null
       domain_id: string | null
+      mentor_name: string | null
       submission_canva_url: string | null
       submission_file_url: string | null
       submission_updated_at: string | null
@@ -86,6 +88,7 @@ export async function getSubmissionsForAdmin(adminUserId: string): Promise<Admin
     teamName: row.team_name,
     venue: row.venue,
     domainId: row.domain_id,
+    mentorName: row.mentor_name,
     driveUrl: row.submission_file_url,
     canvaUrl: row.submission_canva_url,
     updatedAt: row.submission_updated_at,

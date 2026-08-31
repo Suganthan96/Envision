@@ -6,6 +6,7 @@ import { CheckCircle2, Circle, ExternalLink } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SearchableSelect } from "@/components/searchable-select"
+import { formatDate } from "@/lib/format-date"
 import type { AdminSubmissionRow } from "@/lib/admin-directories"
 import type { Domain } from "@/lib/domains"
 
@@ -52,6 +53,7 @@ export function AdminSubmissionsView({
       return (
         (r.teamName ?? "").toLowerCase().includes(q) ||
         r.loginId.toLowerCase().includes(q) ||
+        (r.mentorName ?? "").toLowerCase().includes(q) ||
         (r.venue ?? "").toLowerCase().includes(q)
       )
     })
@@ -72,7 +74,7 @@ export function AdminSubmissionsView({
           <Input
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Team, login ID, file name, venue…"
+            placeholder="Team, login ID, mentor, venue…"
             className="bg-card border-border text-foreground h-10"
           />
         </div>
@@ -122,6 +124,7 @@ export function AdminSubmissionsView({
             <thead>
               <tr className="border-b border-border text-primary uppercase tracking-[0.1em] text-[10px]">
                 <th className="text-left font-medium px-4 py-3">Team</th>
+                <th className="text-left font-medium px-4 py-3">Mentor</th>
                 <th className="text-left font-medium px-4 py-3">Venue</th>
                 <th className="text-left font-medium px-4 py-3">Theme</th>
                 <th className="text-left font-medium px-4 py-3">Drive</th>
@@ -144,6 +147,7 @@ export function AdminSubmissionsView({
                       </Link>
                       <span className="text-muted-foreground font-mono text-xs ml-2">#{r.loginId}</span>
                     </td>
+                    <td className="px-4 py-3 text-muted-foreground">{r.mentorName ?? "—"}</td>
                     <td className="px-4 py-3 text-muted-foreground">{r.venue ?? "—"}</td>
                     <td className="px-4 py-3 text-muted-foreground">{domainTitle(r.domainId) ?? "—"}</td>
                     <td className="px-4 py-3">
@@ -188,7 +192,7 @@ export function AdminSubmissionsView({
                       )}
                     </td>
                     <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
-                      {r.updatedAt ? new Date(r.updatedAt).toLocaleDateString() : "—"}
+                      {formatDate(r.updatedAt)}
                     </td>
                   </tr>
                 )

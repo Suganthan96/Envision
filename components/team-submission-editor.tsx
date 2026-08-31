@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { TeamSubmission } from "@/lib/team-submission"
+import { formatDate } from "@/lib/format-date"
 
 export function TeamSubmissionEditor({
   teamNo,
@@ -82,9 +83,7 @@ export function TeamSubmissionEditor({
           {current.driveUrl ? "Submitted" : "Not submitted yet"}
         </span>
         {current.updatedAt && (
-          <span className="text-muted-foreground">
-            Updated {new Date(current.updatedAt).toLocaleDateString()}
-          </span>
+          <span className="text-muted-foreground">Updated {formatDate(current.updatedAt)}</span>
         )}
       </div>
 

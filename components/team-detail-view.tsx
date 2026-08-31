@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { ExternalLink } from "lucide-react"
 import { BackLink } from "@/components/back-link"
+import { formatDate } from "@/lib/format-date"
 import type { TeamMember } from "@/lib/team-members"
 
 interface TeamDetailData {
@@ -184,7 +185,7 @@ export function TeamDetailView({
               )}
               {team.submissionUpdatedAt && (
                 <p className="text-muted-foreground text-xs">
-                  Updated {new Date(team.submissionUpdatedAt).toLocaleDateString()}
+                  Updated {formatDate(team.submissionUpdatedAt)}
                 </p>
               )}
             </div>
