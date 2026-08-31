@@ -13,6 +13,8 @@ export interface MentorTeam {
   solutionShort: string | null
   solutionLong: string | null
   memberCount: number
+  submissionLink: string | null
+  submissionUpdatedAt: string | null
 }
 
 export async function getMyTeams(mentorUserId: string): Promise<MentorTeam[]> {
@@ -32,6 +34,8 @@ export async function getMyTeams(mentorUserId: string): Promise<MentorTeam[]> {
       solution_short: string | null
       solution_long: string | null
       member_count: number
+      submission_canva_url: string | null
+      submission_updated_at: string | null
     }[]
   ).map((row) => ({
     studentUserId: row.student_user_id,
@@ -46,5 +50,7 @@ export async function getMyTeams(mentorUserId: string): Promise<MentorTeam[]> {
     solutionShort: row.solution_short,
     solutionLong: row.solution_long,
     memberCount: row.member_count,
+    submissionLink: row.submission_canva_url,
+    submissionUpdatedAt: row.submission_updated_at,
   }))
 }

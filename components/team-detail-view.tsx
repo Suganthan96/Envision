@@ -1,4 +1,5 @@
 import Link from "next/link"
+import { ExternalLink } from "lucide-react"
 import { BackLink } from "@/components/back-link"
 import type { TeamMember } from "@/lib/team-members"
 
@@ -12,6 +13,8 @@ interface TeamDetailData {
   problemStatement: string | null
   solutionShort: string | null
   solutionLong: string | null
+  submissionLink?: string | null
+  submissionUpdatedAt?: string | null
 }
 
 interface TeamMentor {
@@ -42,6 +45,7 @@ export function TeamDetailView({
 }) {
   const displayName = team.teamName?.trim() || team.loginId
   const hasProject = team.projectTitle || team.problemStatement || team.solutionShort || team.solutionLong
+  const hasSubmission = Boolean(team.submissionLink)
 
   return (
     <>
@@ -148,6 +152,30 @@ export function TeamDetailView({
             </div>
           ) : (
             <p className="text-muted-foreground text-sm italic">This team hasn&apos;t added their project details yet.</p>
+          )}
+        </section>
+
+        <section>
+          <h2 className="font-serif text-2xl text-foreground mb-4">Submission</h2>
+          {hasSubmission ? (
+            <div className="flex flex-col gap-2">
+              <a
+                href={team.submissionLink!}
+                target="_blank"
+                rel="noreferrer"
+                className="flex items-center gap-2 border border-border bg-card/40 px-3 py-2 w-fit max-w-full text-sm text-foreground hover:border-primary transition-colors"
+              >
+                <ExternalLink className="w-4 h-4 text-primary shrink-0" />
+                <span className="truncate">{team.submissionLink}</span>
+              </a>
+              {team.submissionUpdatedAt && (
+                <p className="text-muted-foreground text-xs">
+                  Updated {new Date(team.submissionUpdatedAt).toLocaleDateString()}
+                </p>
+              )}
+            </div>
+          ) : (
+            <p className="text-muted-foreground text-sm italic">No submission yet.</p>
           )}
         </section>
       </div>

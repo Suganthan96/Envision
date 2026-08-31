@@ -8,6 +8,7 @@ const ADMIN_NAV_ITEMS = [
   { href: "/admin/domains", label: "Domains" },
   { href: "/admin/mentor-profiles", label: "Mentor Profiles" },
   { href: "/admin/team-profiles", label: "Team Profiles" },
+  { href: "/admin/submissions", label: "Submissions" },
   { href: "/admin/guidelines", label: "Guidelines" },
 ] as const
 
