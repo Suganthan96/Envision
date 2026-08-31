@@ -1,5 +1,5 @@
 import Link from "next/link"
-import { Users, UserRound } from "lucide-react"
+import { Users, UserRound, MapPin } from "lucide-react"
 import { TeamProgressBars } from "@/components/team-progress-bars"
 
 interface TeamSummaryData {
@@ -17,11 +17,13 @@ export function MentorTeamSummaryCard({
   domainTitle,
   href,
   mentorName,
+  venue,
 }: {
   team: TeamSummaryData
   domainTitle: string | null
   href: string
   mentorName?: string | null
+  venue?: string | null
 }) {
   const displayName = team.teamName?.trim() || team.loginId
 
@@ -53,6 +55,17 @@ export function MentorTeamSummaryCard({
             <>Mentor: <span className="text-foreground">{mentorName}</span></>
           ) : (
             <span className="italic">No mentor assigned</span>
+          )}
+        </span>
+      )}
+
+      {venue !== undefined && (
+        <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+          <MapPin className="w-3.5 h-3.5 text-primary shrink-0" />
+          {venue?.trim() ? (
+            <>Venue: <span className="text-foreground">{venue}</span></>
+          ) : (
+            <span className="italic">No venue set</span>
           )}
         </span>
       )}

@@ -79,7 +79,11 @@ begin
     u.name,
     u.team_lead_name,
     u.team_logo_url,
-    u.venue,
+    -- A team's venue follows its assigned mentor. Prefer the value copied
+    -- onto the team at assignment time, but fall back to the mentor's
+    -- current venue so teams assigned before that copy existed (or before
+    -- the mentor had a venue) still resolve instead of showing blank.
+    coalesce(u.venue, m.venue),
     ds.domain_id,
     u.project_title,
     u.problem_statement,
