@@ -24,6 +24,7 @@ import {
   type JudgingSettings,
   type JudgingVenue,
   type RubricRow,
+  type VenueKind,
 } from "@/lib/judging"
 import {
   downloadJudgingSheetsPdf,
@@ -48,18 +49,21 @@ export function AdminSubmissionsView({
   rows,
   domains,
   venues: initialVenues,
+  waitingVenues: initialWaitingVenues,
   assignments: initialAssignments,
   settings: initialSettings,
 }: {
   rows: AdminSubmissionRow[]
   domains: Domain[]
   venues: JudgingVenue[]
+  waitingVenues: JudgingVenue[]
   assignments: JudgingAssignment[]
   settings: JudgingSettings
 }) {
   const router = useRouter()
 
   const [venues, setVenues] = useState(initialVenues)
+  const [waitingVenues, setWaitingVenues] = useState(initialWaitingVenues)
   const [assignments, setAssignments] = useState(initialAssignments)
   const [liveSettings, setLiveSettings] = useState(initialSettings)
   const [error, setError] = useState("")
@@ -70,27 +74,31 @@ export function AdminSubmissionsView({
   }, [domains])
 
   const venueName = useMemo(() => {
-    const m = new Map(venues.map((v) => [v.id, v.name]))
+    const m = new Map([...venues, ...waitingVenues].map((v) => [v.id, v.name]))
     return (id: string | null) => (id ? m.get(id) ?? null : null)
-  }, [venues])
+  }, [venues, waitingVenues])
 
-  const venueSelectOptions = useMemo(
+  const judgingVenueOptions = useMemo(
     () => venues.map((v) => ({ value: v.id, label: v.name })),
     [venues],
   )
+  const waitingVenueOptions = useMemo(
+    () => waitingVenues.map((v) => ({ value: v.id, label: v.name })),
+    [waitingVenues],
+  )
 
-  const assignmentValue = (scope: JudgingScope, refId: string) =>
-    assignments.find((a) => a.scope === scope && a.refId === refId)?.venueId ?? ""
+  const assignmentValue = (kind: VenueKind, scope: JudgingScope, refId: string) =>
+    assignments.find((a) => a.kind === kind && a.scope === scope && a.refId === refId)?.venueId ?? ""
 
-  async function setAssignment(scope: JudgingScope, refId: string, venueId: string) {
+  async function setAssignment(kind: VenueKind, scope: JudgingScope, refId: string, venueId: string) {
     setError("")
     const prev = assignments
     setAssignments((cur) => {
-      const rest = cur.filter((a) => !(a.scope === scope && a.refId === refId))
-      return venueId ? [...rest, { scope, refId, venueId }] : rest
+      const rest = cur.filter((a) => !(a.kind === kind && a.scope === scope && a.refId === refId))
+      return venueId ? [...rest, { kind, scope, refId, venueId }] : rest
     })
     try {
-      await callJudging("set-assignment", { scope, refId, venueId: venueId || null })
+      await callJudging("set-assignment", { kind, scope, refId, venueId: venueId || null })
     } catch (e) {
       setAssignments(prev)
       setError(e instanceof Error ? e.message : "Could not save.")
@@ -120,31 +128,37 @@ export function AdminSubmissionsView({
       .sort((a, b) => a.name.localeCompare(b.name))
   }, [rows])
 
-  const resolvedByTeam = useMemo(() => {
+  function resolveMap(kind: VenueKind) {
     const map = new Map<string, { venueId: string | null; source: JudgingScope | null }>()
     for (const r of rows) {
       map.set(
         r.studentUserId,
-        resolveJudgingVenue(assignments, {
-          studentUserId: r.studentUserId,
-          mentorUserId: r.mentorUserId,
-          domainId: r.domainId,
-        }),
+        resolveJudgingVenue(
+          assignments,
+          { studentUserId: r.studentUserId, mentorUserId: r.mentorUserId, domainId: r.domainId },
+          kind,
+        ),
       )
     }
     return map
-  }, [rows, assignments])
+  }
 
-  const teamCountByVenue = useMemo(() => {
+  const resolvedByTeam = useMemo(() => resolveMap("judging"), [rows, assignments])
+  const resolvedWaitingByTeam = useMemo(() => resolveMap("waiting"), [rows, assignments])
+
+  function countMap(resolved: Map<string, { venueId: string | null }>) {
     const m = new Map<string, number>()
     let unassigned = 0
     for (const r of rows) {
-      const vid = resolvedByTeam.get(r.studentUserId)?.venueId ?? null
+      const vid = resolved.get(r.studentUserId)?.venueId ?? null
       if (vid) m.set(vid, (m.get(vid) ?? 0) + 1)
       else unassigned += 1
     }
     return { byVenue: m, unassigned }
-  }, [rows, resolvedByTeam])
+  }
+
+  const teamCountByVenue = useMemo(() => countMap(resolvedByTeam), [rows, resolvedByTeam])
+  const waitingCountByVenue = useMemo(() => countMap(resolvedWaitingByTeam), [rows, resolvedWaitingByTeam])
 
   const presVenueFilterOptions = useMemo(
     () => [
@@ -243,7 +257,7 @@ export function AdminSubmissionsView({
         teamName: r.teamName ?? "",
         teamLeadName: r.teamLeadName ?? "",
         mentorName: r.mentorName ?? "",
-        allocationVenue: r.venue ?? "",
+        waitingVenue: venueName(resolvedWaitingByTeam.get(r.studentUserId)?.venueId ?? null) ?? "",
       }))
       if (groups.length === 0) {
         setError("No teams to include. Add venues and assign them first.")
@@ -312,7 +326,10 @@ export function AdminSubmissionsView({
 
       {error && <p className="text-destructive text-sm">{error}</p>}
 
-      <JudgingVenuesCard
+      <VenuesCard
+        kind="judging"
+        title="Judging Venues"
+        description="Rooms teams present in. Separate from the allocation venues on Mentor Matching."
         venues={venues}
         countByVenue={teamCountByVenue.byVenue}
         setVenues={setVenues}
@@ -320,12 +337,33 @@ export function AdminSubmissionsView({
         setError={setError}
       />
 
+      <VenuesCard
+        kind="waiting"
+        title="Waiting Venues"
+        description="Rooms teams wait in before their slot."
+        venues={waitingVenues}
+        countByVenue={waitingCountByVenue.byVenue}
+        setVenues={setWaitingVenues}
+        setAssignments={setAssignments}
+        setError={setError}
+      />
+
       <AssignmentsCard
+        title="Judging Venue Assignment"
         themeOptions={themeOptions}
         mentorList={mentorList}
-        venueSelectOptions={venueSelectOptions}
-        assignmentValue={assignmentValue}
-        setAssignment={setAssignment}
+        venueSelectOptions={judgingVenueOptions}
+        assignmentValue={(s, r) => assignmentValue("judging", s, r)}
+        setAssignment={(s, r, v) => setAssignment("judging", s, r, v)}
+      />
+
+      <AssignmentsCard
+        title="Waiting Venue Assignment"
+        themeOptions={themeOptions}
+        mentorList={mentorList}
+        venueSelectOptions={waitingVenueOptions}
+        assignmentValue={(s, r) => assignmentValue("waiting", s, r)}
+        setAssignment={(s, r, v) => setAssignment("waiting", s, r, v)}
       />
 
       <RubricCard
@@ -398,7 +436,8 @@ export function AdminSubmissionsView({
                   <th className="text-left font-medium px-4 py-3">Team</th>
                   <th className="text-left font-medium px-4 py-3">Mentor</th>
                   <th className="text-left font-medium px-4 py-3">Theme</th>
-                  <th className="text-left font-medium px-4 py-3 min-w-[180px]">Presentation Venue</th>
+                  <th className="text-left font-medium px-4 py-3 min-w-[170px]">Presentation Venue</th>
+                  <th className="text-left font-medium px-4 py-3 min-w-[170px]">Waiting Venue</th>
                   <th className="text-left font-medium px-4 py-3">Drive</th>
                   <th className="text-left font-medium px-4 py-3">Canva</th>
                   <th className="text-left font-medium px-4 py-3">Status</th>
@@ -409,6 +448,10 @@ export function AdminSubmissionsView({
                 {filtered.map((r) => {
                   const submitted = Boolean(r.driveUrl)
                   const resolved = resolvedByTeam.get(r.studentUserId) ?? { venueId: null, source: null }
+                  const resolvedWait = resolvedWaitingByTeam.get(r.studentUserId) ?? {
+                    venueId: null,
+                    source: null,
+                  }
                   return (
                     <tr key={r.studentUserId} className="border-b border-border last:border-0 align-top">
                       <td className="px-4 py-3">
@@ -424,12 +467,26 @@ export function AdminSubmissionsView({
                       <td className="px-4 py-3 text-muted-foreground">{domainTitle(r.domainId) ?? "—"}</td>
                       <td className="px-4 py-3">
                         <SearchableSelect
-                          value={assignmentValue("team", r.studentUserId)}
-                          onChange={(v) => setAssignment("team", r.studentUserId, v)}
-                          options={venueSelectOptions}
+                          value={assignmentValue("judging", "team", r.studentUserId)}
+                          onChange={(v) => setAssignment("judging", "team", r.studentUserId, v)}
+                          options={judgingVenueOptions}
                           allLabel={
                             resolved.venueId && resolved.source !== "team"
                               ? `Inherited: ${venueName(resolved.venueId)} (${resolved.source})`
+                              : "Not set"
+                          }
+                          placeholder="Search venues…"
+                          className="h-9 text-xs"
+                        />
+                      </td>
+                      <td className="px-4 py-3">
+                        <SearchableSelect
+                          value={assignmentValue("waiting", "team", r.studentUserId)}
+                          onChange={(v) => setAssignment("waiting", "team", r.studentUserId, v)}
+                          options={waitingVenueOptions}
+                          allLabel={
+                            resolvedWait.venueId && resolvedWait.source !== "team"
+                              ? `Inherited: ${venueName(resolvedWait.venueId)} (${resolvedWait.source})`
                               : "Not set"
                           }
                           placeholder="Search venues…"
@@ -494,13 +551,19 @@ export function AdminSubmissionsView({
 
 /* ------------------------------------------------------------------ */
 
-function JudgingVenuesCard({
+function VenuesCard({
+  kind,
+  title,
+  description,
   venues,
   countByVenue,
   setVenues,
   setAssignments,
   setError,
 }: {
+  kind: VenueKind
+  title: string
+  description: string
   venues: JudgingVenue[]
   countByVenue: Map<string, number>
   setVenues: React.Dispatch<React.SetStateAction<JudgingVenue[]>>
@@ -516,7 +579,7 @@ function JudgingVenuesCard({
     setBusy(true)
     setError("")
     try {
-      const { venue } = await callJudging("add-venue", { name })
+      const { venue } = await callJudging("add-venue", { name, kind })
       setVenues((cur) => [...cur, { id: venue.id, name: venue.name, sortOrder: venue.sort_order }])
       setNewName("")
     } catch (e) {
@@ -536,7 +599,7 @@ function JudgingVenuesCard({
   }
 
   async function remove(id: string) {
-    if (!confirm("Delete this judging venue? Any assignments to it are cleared.")) return
+    if (!confirm("Delete this venue? Any assignments to it are cleared.")) return
     setError("")
     try {
       await callJudging("delete-venue", { id })
@@ -549,10 +612,8 @@ function JudgingVenuesCard({
 
   return (
     <section className="border border-border rounded-lg bg-card/40 p-5 flex flex-col gap-4">
-      <h2 className="font-serif text-2xl text-foreground">Judging Venues</h2>
-      <p className="text-sm text-muted-foreground -mt-2">
-        Rooms teams present in. Separate from the allocation venues on Mentor Matching.
-      </p>
+      <h2 className="font-serif text-2xl text-foreground">{title}</h2>
+      <p className="text-sm text-muted-foreground -mt-2">{description}</p>
 
       {venues.length > 0 && (
         <div className="flex flex-col gap-2">
@@ -637,12 +698,14 @@ function VenueRow({
 /* ------------------------------------------------------------------ */
 
 function AssignmentsCard({
+  title,
   themeOptions,
   mentorList,
   venueSelectOptions,
   assignmentValue,
   setAssignment,
 }: {
+  title: string
   themeOptions: { value: string; label: string }[]
   mentorList: { id: string; name: string }[]
   venueSelectOptions: { value: string; label: string }[]
@@ -652,7 +715,7 @@ function AssignmentsCard({
   return (
     <section className="border border-border rounded-lg bg-card/40 p-5 flex flex-col gap-5">
       <div>
-        <h2 className="font-serif text-2xl text-foreground">Presentation Venue Assignment</h2>
+        <h2 className="font-serif text-2xl text-foreground">{title}</h2>
         <p className="text-sm text-muted-foreground mt-1">
           Layered — a team uses its own venue if set, otherwise its mentor&apos;s, otherwise its
           theme&apos;s.

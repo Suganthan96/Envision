@@ -13,10 +13,11 @@ export async function SubmissionsSection() {
   const session = await getSession()
   const admin = session?.userId
 
-  const [rows, domains, venues, assignments, settings] = await Promise.all([
+  const [rows, domains, venues, waitingVenues, assignments, settings] = await Promise.all([
     admin ? getSubmissionsForAdmin(admin) : Promise.resolve([]),
     getDomains(),
-    admin ? getJudgingVenues(admin) : Promise.resolve([]),
+    admin ? getJudgingVenues(admin, "judging") : Promise.resolve([]),
+    admin ? getJudgingVenues(admin, "waiting") : Promise.resolve([]),
     admin ? getJudgingAssignments(admin) : Promise.resolve([]),
     admin
       ? getJudgingSettings(admin)
@@ -33,6 +34,7 @@ export async function SubmissionsSection() {
       rows={rows}
       domains={domains}
       venues={venues}
+      waitingVenues={waitingVenues}
       assignments={assignments}
       settings={settings}
     />

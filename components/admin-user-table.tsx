@@ -59,10 +59,26 @@ export function AdminUserTable({ users }: { users: AppUserRow[] }) {
   const [adding, setAdding] = useState(false)
   const [addError, setAddError] = useState("")
 
+  // Numeric login IDs (the student teams) sort by value, not lexically, so
+  // 2 comes before 10. Non-numeric IDs (admin accounts) sort alphabetically
+  // and sit ahead of the numbered rows.
+  const sortedUsers = useMemo(() => {
+    return [...users].sort((a, b) => {
+      const na = Number(a.login_id)
+      const nb = Number(b.login_id)
+      const aNum = a.login_id.trim() !== "" && Number.isFinite(na)
+      const bNum = b.login_id.trim() !== "" && Number.isFinite(nb)
+      if (aNum && bNum) return na - nb
+      if (aNum) return 1
+      if (bNum) return -1
+      return a.login_id.localeCompare(b.login_id)
+    })
+  }, [users])
+
   const filteredUsers = useMemo(() => {
     const q = query.trim().toLowerCase()
-    if (!q) return users
-    return users.filter(
+    if (!q) return sortedUsers
+    return sortedUsers.filter(
       (u) =>
         u.login_id.toLowerCase().includes(q) ||
         u.role.toLowerCase().includes(q) ||
@@ -70,7 +86,7 @@ export function AdminUserTable({ users }: { users: AppUserRow[] }) {
         (u.phone ?? "").toLowerCase().includes(q) ||
         (u.email ?? "").toLowerCase().includes(q),
     )
-  }, [users, query])
+  }, [sortedUsers, query])
 
   const deletableFiltered = filteredUsers.filter((u) => u.role !== "admin")
   const allFilteredSelected =

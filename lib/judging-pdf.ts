@@ -18,7 +18,7 @@ export interface PdfTeamDetails {
   teamName: string
   teamLeadName: string
   mentorName: string
-  allocationVenue: string
+  waitingVenue: string
 }
 
 export interface PdfDetailsGroup {
@@ -198,7 +198,7 @@ export async function downloadTeamDetailsPdf(opts: {
     autoTable(doc, {
       startY: 104,
       margin: { top: 104, left: marginX, right: marginX },
-      head: [["Team #", "Team Name", "Team Leader", "Mentor", "Current Venue"]],
+      head: [["Team #", "Team Name", "Team Leader", "Mentor", "Waiting Venue"]],
       body:
         group.teams.length > 0
           ? group.teams.map((t) => [
@@ -206,7 +206,7 @@ export async function downloadTeamDetailsPdf(opts: {
               t.teamName || "—",
               t.teamLeadName || "—",
               t.mentorName || "—",
-              t.allocationVenue || "—",
+              t.waitingVenue || "—",
             ])
           : [["", "No teams assigned to this venue.", "", "", ""]],
       theme: "grid",

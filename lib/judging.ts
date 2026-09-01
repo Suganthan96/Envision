@@ -8,7 +8,11 @@ export interface JudgingVenue {
 
 export type JudgingScope = "team" | "mentor" | "theme"
 
+/** 'judging' = the room a team presents in; 'waiting' = where it waits. */
+export type VenueKind = "judging" | "waiting"
+
 export interface JudgingAssignment {
+  kind: VenueKind
   scope: JudgingScope
   refId: string
   venueId: string
@@ -34,9 +38,15 @@ export const DEFAULT_RUBRIC: RubricRow[] = [
   { label: "Team work and presentation", max: 10 },
 ]
 
-export async function getJudgingVenues(adminUserId: string): Promise<JudgingVenue[]> {
+export async function getJudgingVenues(
+  adminUserId: string,
+  kind: VenueKind = "judging",
+): Promise<JudgingVenue[]> {
   const supabase = getSupabaseServerClient()
-  const { data } = await supabase.rpc("admin_list_judging_venues", { p_admin_user_id: adminUserId })
+  const { data } = await supabase.rpc("admin_list_judging_venues", {
+    p_admin_user_id: adminUserId,
+    p_kind: kind,
+  })
   return ((data ?? []) as { id: string; name: string; sort_order: number }[]).map((r) => ({
     id: r.id,
     name: r.name,
@@ -47,7 +57,15 @@ export async function getJudgingVenues(adminUserId: string): Promise<JudgingVenu
 export async function getJudgingAssignments(adminUserId: string): Promise<JudgingAssignment[]> {
   const supabase = getSupabaseServerClient()
   const { data } = await supabase.rpc("admin_list_judging_assignments", { p_admin_user_id: adminUserId })
-  return ((data ?? []) as { scope: JudgingScope; ref_id: string; judging_venue_id: string }[]).map((r) => ({
+  return (
+    (data ?? []) as {
+      kind: VenueKind
+      scope: JudgingScope
+      ref_id: string
+      judging_venue_id: string
+    }[]
+  ).map((r) => ({
+    kind: r.kind ?? "judging",
     scope: r.scope,
     refId: r.ref_id,
     venueId: r.judging_venue_id,
@@ -76,8 +94,11 @@ export async function getJudgingSettings(adminUserId: string): Promise<JudgingSe
 export function resolveJudgingVenue(
   assignments: JudgingAssignment[],
   team: { studentUserId: string; mentorUserId: string | null; domainId: string | null },
+  kind: VenueKind = "judging",
 ): { venueId: string | null; source: JudgingScope | null } {
-  const byKey = new Map(assignments.map((a) => [`${a.scope}:${a.refId}`, a.venueId]))
+  const byKey = new Map(
+    assignments.filter((a) => a.kind === kind).map((a) => [`${a.scope}:${a.refId}`, a.venueId]),
+  )
   const team_ = byKey.get(`team:${team.studentUserId}`)
   if (team_) return { venueId: team_, source: "team" }
   if (team.mentorUserId) {

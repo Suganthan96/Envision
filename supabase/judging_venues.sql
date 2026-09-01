@@ -168,3 +168,73 @@ grant execute on function public.admin_set_judging_settings(uuid, text, jsonb, t
 
 -- admin_list_submissions also gained team_lead_name, project_title,
 -- mentor_user_id here (canonical body in team_submission.sql).
+
+-- ==========================================================================
+-- ADDENDUM: two venue kinds — 'judging' (present in) and 'waiting' (wait in).
+-- Existing rows default to 'judging'. Applied via Supabase MCP.
+-- ==========================================================================
+
+alter table public.judging_venues
+  add column if not exists kind text not null default 'judging'
+  check (kind in ('judging', 'waiting'));
+alter table public.judging_venues drop constraint if exists judging_venues_name_key;
+alter table public.judging_venues add constraint judging_venues_kind_name_key unique (kind, name);
+
+alter table public.judging_venue_assignments
+  add column if not exists kind text not null default 'judging'
+  check (kind in ('judging', 'waiting'));
+alter table public.judging_venue_assignments drop constraint if exists judging_venue_assignments_pkey;
+alter table public.judging_venue_assignments
+  add constraint judging_venue_assignments_pkey primary key (kind, scope, ref_id);
+
+create or replace function public.admin_list_judging_venues(p_admin_user_id uuid, p_kind text default 'judging')
+returns setof public.judging_venues
+language plpgsql security definer set search_path = public as $$
+begin
+  perform public._require_admin(p_admin_user_id);
+  return query select * from public.judging_venues where kind = p_kind order by sort_order, name;
+end;
+$$;
+
+drop function if exists public.admin_add_judging_venue(uuid, text);
+create function public.admin_add_judging_venue(p_admin_user_id uuid, p_name text, p_kind text default 'judging')
+returns public.judging_venues
+language plpgsql security definer set search_path = public as $$
+declare v_row public.judging_venues;
+begin
+  perform public._require_admin(p_admin_user_id);
+  if p_kind not in ('judging', 'waiting') then raise exception 'Invalid kind'; end if;
+  if coalesce(btrim(p_name), '') = '' then raise exception 'Venue name is required'; end if;
+  insert into public.judging_venues (name, kind, sort_order)
+  values (btrim(p_name), p_kind,
+          coalesce((select max(sort_order) + 1 from public.judging_venues where kind = p_kind), 0))
+  returning * into v_row;
+  return v_row;
+end;
+$$;
+
+drop function if exists public.admin_set_judging_assignment(uuid, text, text, uuid);
+create function public.admin_set_judging_assignment(
+  p_admin_user_id uuid, p_scope text, p_ref_id text, p_venue_id uuid, p_kind text default 'judging'
+)
+returns boolean language plpgsql security definer set search_path = public as $$
+begin
+  perform public._require_admin(p_admin_user_id);
+  if p_scope not in ('team', 'mentor', 'theme') then raise exception 'Invalid scope'; end if;
+  if p_kind not in ('judging', 'waiting') then raise exception 'Invalid kind'; end if;
+  if p_venue_id is null then
+    delete from public.judging_venue_assignments
+    where kind = p_kind and scope = p_scope and ref_id = p_ref_id;
+  else
+    insert into public.judging_venue_assignments (kind, scope, ref_id, judging_venue_id, updated_at)
+    values (p_kind, p_scope, p_ref_id, p_venue_id, now())
+    on conflict (kind, scope, ref_id)
+    do update set judging_venue_id = excluded.judging_venue_id, updated_at = now();
+  end if;
+  return true;
+end;
+$$;
+
+grant execute on function public.admin_list_judging_venues(uuid, text) to anon;
+grant execute on function public.admin_add_judging_venue(uuid, text, text) to anon;
+grant execute on function public.admin_set_judging_assignment(uuid, text, text, uuid, text) to anon;

@@ -23,10 +23,12 @@ export async function POST(request: NextRequest) {
     switch (action) {
       case "add-venue": {
         const name = String(body?.name ?? "").trim()
+        const kind = body?.kind === "waiting" ? "waiting" : "judging"
         if (!name) return NextResponse.json({ error: "Venue name is required." }, { status: 400 })
         const { data, error } = await supabase.rpc("admin_add_judging_venue", {
           p_admin_user_id: admin,
           p_name: name,
+          p_kind: kind,
         })
         if (error) throw error
         return NextResponse.json({ venue: data })
@@ -56,6 +58,7 @@ export async function POST(request: NextRequest) {
       case "set-assignment": {
         const scope = String(body?.scope ?? "")
         const refId = String(body?.refId ?? "")
+        const kind = body?.kind === "waiting" ? "waiting" : "judging"
         const venueId = body?.venueId == null ? null : String(body.venueId)
         if (!["team", "mentor", "theme"].includes(scope) || !refId) {
           return NextResponse.json({ error: "scope and refId are required." }, { status: 400 })
@@ -65,6 +68,7 @@ export async function POST(request: NextRequest) {
           p_scope: scope,
           p_ref_id: refId,
           p_venue_id: venueId,
+          p_kind: kind,
         })
         if (error) throw error
         return NextResponse.json({ ok: true })
