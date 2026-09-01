@@ -13,6 +13,18 @@ export interface PdfVenueGroup {
   teams: PdfTeam[]
 }
 
+export interface PdfTeamDetails {
+  loginId: string
+  teamName: string
+  mentorName: string
+  allocationVenue: string
+}
+
+export interface PdfDetailsGroup {
+  venueName: string
+  teams: PdfTeamDetails[]
+}
+
 /**
  * Judging packet: one page (or more) per venue, a running header on every
  * page carrying the customisable heading + that venue's name, and a
@@ -128,4 +140,74 @@ export async function downloadJudgingSheetsPdf(opts: {
   })
 
   doc.save("envision-judging-sheets.pdf")
+}
+
+/**
+ * Team-details packet: one page (or more) per presentation venue, a running
+ * header carrying the customisable heading + that venue's name, and a plain
+ * table of Team #, Team Name, Mentor, Current (allocation) Venue. No rubric.
+ */
+export async function downloadTeamDetailsPdf(opts: {
+  heading: string
+  groups: PdfDetailsGroup[]
+}) {
+  const [{ default: jsPDF }, autoTableModule] = await Promise.all([
+    import("jspdf"),
+    import("jspdf-autotable"),
+  ])
+  const autoTable = autoTableModule.default
+
+  const doc = new jsPDF({ unit: "pt", format: "a4" })
+  const pageW = doc.internal.pageSize.getWidth()
+  const marginX = 42
+
+  let currentVenue = ""
+  const drawHeader = () => {
+    let y = 46
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(15)
+    doc.setTextColor(20)
+    doc.text(opts.heading, pageW / 2, y, { align: "center" })
+    y += 18
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(11)
+    doc.setTextColor(60)
+    doc.text(`Venue: ${currentVenue}`, pageW / 2, y, { align: "center" })
+    y += 10
+    doc.setDrawColor(20)
+    doc.setLineWidth(1)
+    doc.line(marginX, y, pageW - marginX, y)
+  }
+
+  opts.groups.forEach((group, gi) => {
+    if (gi > 0) doc.addPage()
+    currentVenue = group.venueName
+
+    autoTable(doc, {
+      startY: 96,
+      margin: { top: 96, left: marginX, right: marginX },
+      head: [["Team #", "Team Name", "Mentor", "Current Venue"]],
+      body:
+        group.teams.length > 0
+          ? group.teams.map((t) => [
+              t.loginId,
+              t.teamName || "—",
+              t.mentorName || "—",
+              t.allocationVenue || "—",
+            ])
+          : [["", "No teams assigned to this venue.", "", ""]],
+      theme: "grid",
+      styles: { fontSize: 10, cellPadding: 6, lineColor: [20, 20, 20], lineWidth: 0.5, textColor: 20 },
+      headStyles: { fillColor: [235, 235, 235], textColor: 20, fontStyle: "bold" },
+      columnStyles: {
+        0: { cellWidth: 55 },
+        1: { cellWidth: "auto" },
+        2: { cellWidth: 150 },
+        3: { cellWidth: 90 },
+      },
+      didDrawPage: drawHeader,
+    })
+  })
+
+  doc.save("envision-team-details.pdf")
 }

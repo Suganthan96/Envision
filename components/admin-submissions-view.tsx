@@ -25,7 +25,7 @@ import {
   type JudgingVenue,
   type RubricRow,
 } from "@/lib/judging"
-import { downloadJudgingSheetsPdf, type PdfVenueGroup } from "@/lib/judging-pdf"
+import { downloadJudgingSheetsPdf, downloadTeamDetailsPdf } from "@/lib/judging-pdf"
 import type { AdminSubmissionRow } from "@/lib/admin-directories"
 import type { Domain } from "@/lib/domains"
 
@@ -159,55 +159,76 @@ export function AdminSubmissionsView({
 
   const submittedCount = rows.filter((r) => r.driveUrl).length
 
-  async function handleDownloadPdf() {
+  /** Groups rows by resolved presentation venue, venues in their own order,
+   *  an "Unassigned" bucket last. `map` turns each row into the PDF shape. */
+  function groupByVenue<T>(map: (r: AdminSubmissionRow) => T): { venueName: string; teams: T[] }[] {
+    const byId = new Map<string, { venueName: string; teams: T[] }>()
+    const unassigned: { venueName: string; teams: T[] } = { venueName: "Unassigned", teams: [] }
+    const sorted = [...rows].sort(
+      (a, b) => Number(a.loginId) - Number(b.loginId) || a.loginId.localeCompare(b.loginId),
+    )
+    for (const r of sorted) {
+      const vid = resolvedByTeam.get(r.studentUserId)?.venueId ?? null
+      if (!vid) {
+        unassigned.teams.push(map(r))
+        continue
+      }
+      if (!byId.has(vid)) byId.set(vid, { venueName: venueName(vid) ?? "Venue", teams: [] })
+      byId.get(vid)!.teams.push(map(r))
+    }
+    const ordered = venues
+      .map((v) => byId.get(v.id))
+      .filter((g): g is { venueName: string; teams: T[] } => Boolean(g && g.teams.length))
+    if (unassigned.teams.length) ordered.push(unassigned)
+    return ordered
+  }
+
+  async function withPdf(fn: () => Promise<void>) {
     setError("")
     setPdfBusy(true)
     try {
-      const groupsMap = new Map<string, PdfVenueGroup>()
-      const unassigned: PdfVenueGroup = { venueName: "Unassigned", teams: [] }
-
-      const sorted = [...rows].sort(
-        (a, b) => Number(a.loginId) - Number(b.loginId) || a.loginId.localeCompare(b.loginId),
-      )
-      for (const r of sorted) {
-        const vid = resolvedByTeam.get(r.studentUserId)?.venueId ?? null
-        const team = {
-          loginId: r.loginId,
-          teamName: r.teamName ?? "",
-          teamLeadName: r.teamLeadName ?? "",
-          projectTitle: r.projectTitle ?? "",
-          domainTitle: domainTitle(r.domainId) ?? "",
-        }
-        if (!vid) {
-          unassigned.teams.push(team)
-          continue
-        }
-        const name = venueName(vid) ?? "Venue"
-        if (!groupsMap.has(vid)) groupsMap.set(vid, { venueName: name, teams: [] })
-        groupsMap.get(vid)!.teams.push(team)
-      }
-
-      const ordered: PdfVenueGroup[] = venues
-        .map((v) => groupsMap.get(v.id))
-        .filter((g): g is PdfVenueGroup => Boolean(g && g.teams.length))
-      if (unassigned.teams.length) ordered.push(unassigned)
-
-      if (ordered.length === 0) {
-        setError("No teams to include. Add venues and assign them first.")
-        return
-      }
-
-      await downloadJudgingSheetsPdf({
-        heading: liveSettings.reportHeading,
-        rubric: liveSettings.rubric,
-        groups: ordered,
-      })
+      await fn()
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not build the PDF.")
     } finally {
       setPdfBusy(false)
     }
   }
+
+  const handleDownloadPdf = () =>
+    withPdf(async () => {
+      const groups = groupByVenue((r) => ({
+        loginId: r.loginId,
+        teamName: r.teamName ?? "",
+        teamLeadName: r.teamLeadName ?? "",
+        projectTitle: r.projectTitle ?? "",
+        domainTitle: domainTitle(r.domainId) ?? "",
+      }))
+      if (groups.length === 0) {
+        setError("No teams to include. Add venues and assign them first.")
+        return
+      }
+      await downloadJudgingSheetsPdf({
+        heading: liveSettings.reportHeading,
+        rubric: liveSettings.rubric,
+        groups,
+      })
+    })
+
+  const handleDownloadDetailsPdf = () =>
+    withPdf(async () => {
+      const groups = groupByVenue((r) => ({
+        loginId: r.loginId,
+        teamName: r.teamName ?? "",
+        mentorName: r.mentorName ?? "",
+        allocationVenue: r.venue ?? "",
+      }))
+      if (groups.length === 0) {
+        setError("No teams to include. Add venues and assign them first.")
+        return
+      }
+      await downloadTeamDetailsPdf({ heading: liveSettings.reportHeading, groups })
+    })
 
   return (
     <div className="flex flex-col gap-8">
@@ -216,15 +237,27 @@ export function AdminSubmissionsView({
           <span className="text-foreground font-medium">{submittedCount}</span> of {rows.length} teams
           have submitted.
         </p>
-        <Button
-          type="button"
-          onClick={handleDownloadPdf}
-          disabled={pdfBusy}
-          className="bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-xs h-10 gap-2"
-        >
-          <Download className="w-4 h-4" />
-          {pdfBusy ? "Preparing…" : "Download Judging Sheets PDF"}
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            onClick={handleDownloadDetailsPdf}
+            disabled={pdfBusy}
+            variant="outline"
+            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground dark:bg-transparent dark:border-primary dark:hover:bg-primary dark:hover:text-primary-foreground uppercase tracking-wider text-xs h-10 gap-2 bg-transparent"
+          >
+            <Download className="w-4 h-4" />
+            {pdfBusy ? "Preparing…" : "Team Details PDF"}
+          </Button>
+          <Button
+            type="button"
+            onClick={handleDownloadPdf}
+            disabled={pdfBusy}
+            className="bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-xs h-10 gap-2"
+          >
+            <Download className="w-4 h-4" />
+            {pdfBusy ? "Preparing…" : "Judging Sheets PDF"}
+          </Button>
+        </div>
       </div>
 
       {error && <p className="text-destructive text-sm">{error}</p>}
@@ -487,7 +520,7 @@ function JudgingVenuesCard({
           onClick={add}
           disabled={busy || !newName.trim()}
           variant="outline"
-          className="border-primary text-primary hover:bg-primary hover:text-primary-foreground h-10 gap-1.5 bg-transparent"
+          className="border-primary text-primary hover:bg-primary hover:text-primary-foreground dark:bg-transparent dark:border-primary dark:hover:bg-primary dark:hover:text-primary-foreground h-10 gap-1.5 bg-transparent"
         >
           <Plus className="w-4 h-4" /> Add
         </Button>
@@ -693,7 +726,7 @@ function RubricCard({
               setRubric((cur) => [...cur, { label: "", max: 10 }])
               setSaved(false)
             }}
-            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground h-8 gap-1.5 bg-transparent text-xs"
+            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground dark:bg-transparent dark:border-primary dark:hover:bg-primary dark:hover:text-primary-foreground h-8 gap-1.5 bg-transparent text-xs"
           >
             <Plus className="w-3.5 h-3.5" /> Add row
           </Button>
