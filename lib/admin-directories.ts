@@ -59,8 +59,11 @@ export interface AdminSubmissionRow {
   studentUserId: string
   loginId: string
   teamName: string | null
+  teamLeadName: string | null
+  projectTitle: string | null
   venue: string | null
   domainId: string | null
+  mentorUserId: string | null
   mentorName: string | null
   driveUrl: string | null
   canvaUrl: string | null
@@ -75,8 +78,11 @@ export async function getSubmissionsForAdmin(adminUserId: string): Promise<Admin
       student_user_id: string
       login_id: string
       team_name: string | null
+      team_lead_name: string | null
+      project_title: string | null
       venue: string | null
       domain_id: string | null
+      mentor_user_id: string | null
       mentor_name: string | null
       submission_canva_url: string | null
       submission_file_url: string | null
@@ -86,8 +92,11 @@ export async function getSubmissionsForAdmin(adminUserId: string): Promise<Admin
     studentUserId: row.student_user_id,
     loginId: row.login_id,
     teamName: row.team_name,
+    teamLeadName: row.team_lead_name,
+    projectTitle: row.project_title,
     venue: row.venue,
     domainId: row.domain_id,
+    mentorUserId: row.mentor_user_id,
     mentorName: row.mentor_name,
     driveUrl: row.submission_file_url,
     canvaUrl: row.submission_canva_url,
