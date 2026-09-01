@@ -1,10 +1,13 @@
 import { cn } from "@/lib/utils"
 import type { TimelineEntry, TimelinePhase } from "@/lib/timeline"
 
+// Uses the LAST date in the string so a multi-day entry (e.g.
+// "31.08.2026 & 01.09.2026") only counts as done once its final day has
+// passed, not on the morning of its second day.
 function parseDdMmYyyy(date: string | undefined) {
-  const match = date?.match(/(\d{2})\.(\d{2})\.(\d{4})/)
-  if (!match) return null
-  const [, day, month, year] = match
+  const matches = date?.match(/\d{2}\.\d{2}\.\d{4}/g)
+  if (!matches || matches.length === 0) return null
+  const [day, month, year] = matches[matches.length - 1].split(".")
   return new Date(Number(year), Number(month) - 1, Number(day))
 }
 

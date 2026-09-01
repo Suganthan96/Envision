@@ -77,7 +77,7 @@ export const DEFAULT_TIMELINE_PHASES: TimelinePhase[] = [
       {
         id: "day-7",
         label: "Day 7",
-        date: "31.08.2026 (AN)",
+        date: "31.08.2026 & 01.09.2026 (AN)",
         title: "Solutioning — PPT Preparation",
         resource: "IIC Team",
         venue: "G01, C30, F11, Fab Lab",
@@ -85,7 +85,7 @@ export const DEFAULT_TIMELINE_PHASES: TimelinePhase[] = [
       {
         id: "day-8",
         label: "Day 8",
-        date: "01.09.2026 (AN)",
+        date: "02.09.2026 (AN)",
         title: "Pitch Your Idea",
         resource: "External Juries, IIC Team, HoDs",
         venue: "G01, C30, F11, Fab Lab",
