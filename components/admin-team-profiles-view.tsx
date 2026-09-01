@@ -114,6 +114,7 @@ export function AdminTeamProfilesView({ teams, domains }: { teams: AdminTeamProf
               href={`/admin/team-profiles/${team.studentUserId}`}
               mentorName={team.mentorName}
               venue={team.venue}
+              submitted={Boolean(team.submissionDriveUrl || team.submissionCanvaUrl)}
             />
           ))}
         </div>

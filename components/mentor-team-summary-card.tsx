@@ -18,12 +18,16 @@ export function MentorTeamSummaryCard({
   href,
   mentorName,
   venue,
+  submitted,
 }: {
   team: TeamSummaryData
   domainTitle: string | null
   href: string
   mentorName?: string | null
   venue?: string | null
+  /** Final submission state. Omit where it isn't known — the 5th bar then
+   *  shows as pending instead of done/not-done. */
+  submitted?: boolean
 }) {
   const displayName = team.teamName?.trim() || team.loginId
 
@@ -87,7 +91,9 @@ export function MentorTeamSummaryCard({
           { label: "Problem Statement", done: !!team.problemStatement?.trim() },
           { label: "Solution", done: !!team.solutionShort?.trim() },
           { label: "Full Solution", done: !!team.solutionLong?.trim() },
-          { label: "PPT Upload", done: false, pending: true },
+          submitted === undefined
+            ? { label: "Submission", done: false, pending: true }
+            : { label: "Submission", done: submitted },
         ]}
       />
     </Link>
