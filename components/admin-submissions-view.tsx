@@ -135,9 +135,26 @@ export function AdminSubmissionsView({
     return map
   }, [rows, assignments])
 
+  const teamCountByVenue = useMemo(() => {
+    const m = new Map<string, number>()
+    let unassigned = 0
+    for (const r of rows) {
+      const vid = resolvedByTeam.get(r.studentUserId)?.venueId ?? null
+      if (vid) m.set(vid, (m.get(vid) ?? 0) + 1)
+      else unassigned += 1
+    }
+    return { byVenue: m, unassigned }
+  }, [rows, resolvedByTeam])
+
   const presVenueFilterOptions = useMemo(
-    () => [...venues.map((v) => ({ value: v.id, label: v.name })), { value: "__none", label: "Unassigned" }],
-    [venues],
+    () => [
+      ...venues.map((v) => ({
+        value: v.id,
+        label: `${v.name} (${teamCountByVenue.byVenue.get(v.id) ?? 0})`,
+      })),
+      { value: "__none", label: `Unassigned (${teamCountByVenue.unassigned})` },
+    ],
+    [venues, teamCountByVenue],
   )
 
   const filtered = useMemo(() => {
@@ -295,7 +312,13 @@ export function AdminSubmissionsView({
 
       {error && <p className="text-destructive text-sm">{error}</p>}
 
-      <JudgingVenuesCard venues={venues} setVenues={setVenues} setAssignments={setAssignments} setError={setError} />
+      <JudgingVenuesCard
+        venues={venues}
+        countByVenue={teamCountByVenue.byVenue}
+        setVenues={setVenues}
+        setAssignments={setAssignments}
+        setError={setError}
+      />
 
       <AssignmentsCard
         themeOptions={themeOptions}
@@ -473,11 +496,13 @@ export function AdminSubmissionsView({
 
 function JudgingVenuesCard({
   venues,
+  countByVenue,
   setVenues,
   setAssignments,
   setError,
 }: {
   venues: JudgingVenue[]
+  countByVenue: Map<string, number>
   setVenues: React.Dispatch<React.SetStateAction<JudgingVenue[]>>
   setAssignments: React.Dispatch<React.SetStateAction<JudgingAssignment[]>>
   setError: (v: string) => void
@@ -532,7 +557,14 @@ function JudgingVenuesCard({
       {venues.length > 0 && (
         <div className="flex flex-col gap-2">
           {venues.map((v) => (
-            <VenueRow key={v.id} venue={v} onRename={rename} onRemove={remove} setVenues={setVenues} />
+            <VenueRow
+              key={v.id}
+              venue={v}
+              teamCount={countByVenue.get(v.id) ?? 0}
+              onRename={rename}
+              onRemove={remove}
+              setVenues={setVenues}
+            />
           ))}
         </div>
       )}
@@ -564,18 +596,20 @@ function JudgingVenuesCard({
 
 function VenueRow({
   venue,
+  teamCount,
   onRename,
   onRemove,
   setVenues,
 }: {
   venue: JudgingVenue
+  teamCount: number
   onRename: (id: string, name: string) => void
   onRemove: (id: string) => void
   setVenues: React.Dispatch<React.SetStateAction<JudgingVenue[]>>
 }) {
   const [name, setName] = useState(venue.name)
   return (
-    <div className="flex items-center gap-2">
+    <div className="flex items-center gap-3">
       <Input
         value={name}
         onChange={(e) => {
@@ -585,6 +619,9 @@ function VenueRow({
         onBlur={() => name.trim() && name.trim() !== venue.name && onRename(venue.id, name.trim())}
         className="bg-card border-border text-foreground h-9 max-w-xs"
       />
+      <span className="text-sm text-muted-foreground whitespace-nowrap tabular-nums">
+        {teamCount} {teamCount === 1 ? "team" : "teams"}
+      </span>
       <button
         type="button"
         onClick={() => onRemove(venue.id)}
