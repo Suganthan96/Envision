@@ -1,9 +1,8 @@
-import Link from "next/link"
-import { LogoutButton } from "@/components/logout-button"
-import { ThemeToggle } from "@/components/theme-toggle"
+import { AdminNav } from "@/components/admin-nav"
 import { TimelineEditor } from "@/components/timeline-editor"
 import { getTimelinePhases } from "@/lib/timeline"
 import { getFeedbackLinks } from "@/lib/feedback-links"
+import { AdminHeader } from "@/components/admin-header"
 
 export const dynamic = "force-dynamic"
 
@@ -13,58 +12,14 @@ export default async function AdminTimelinePage() {
   return (
     <main className="min-h-screen bg-background px-6 py-12">
       <div className="relative z-10 max-w-5xl mx-auto">
-        <div className="flex items-center justify-between mb-16">
-          <div className="flex items-center gap-4">
-            <div className="w-8 h-px bg-primary" />
-            <span className="font-serif text-xl text-foreground">Envision</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <ThemeToggle variant="inline" />
-            <LogoutButton />
-          </div>
-        </div>
+        <AdminHeader />
 
-        <div className="flex items-center gap-6 mb-8 flex-wrap">
-          <Link href="/admin" className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider">
-            User Management
-          </Link>
-          <Link
-            href="/admin/mentors"
-            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
-          >
-            Mentor Selections
-          </Link>
-          <Link
-            href="/admin/students"
-            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
-          >
-            Student Selections
-          </Link>
-          <Link
-            href="/admin/matching"
-            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
-          >
-            Mentor Matching
-          </Link>
-          <span className="text-primary text-sm uppercase tracking-wider border-b border-primary pb-1">
-            Timeline
-          </span>
-          <Link
-            href="/admin/domains"
-            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
-          >
-            Domains
-          </Link>
-        </div>
+        <AdminNav active="/admin/timeline" />
 
         <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Admin Portal</p>
         <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-4">
           Program <span className="text-gold-gradient">Timeline</span>
         </h1>
-        <p className="text-muted-foreground text-lg mb-12">
-          Edit every phase and session — labels, dates, titles, resources, venues, and feedback form links. This is
-          what students and mentors see when domain selection is closed.
-        </p>
 
         <TimelineEditor initialPhases={phases} initialFeedbackLinks={feedbackLinks} />
       </div>

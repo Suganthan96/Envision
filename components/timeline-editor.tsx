@@ -282,7 +282,7 @@ export function TimelineEditor({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between flex-wrap gap-3 sticky top-0 z-10 bg-background/95 backdrop-blur-sm py-3 -my-3">
+      <div className="flex items-center justify-between flex-wrap gap-3 sticky top-0 z-10 py-3 -my-3">
         <p className="text-muted-foreground text-sm">
           Edit phases, session entries, and feedback form links below, then save. Nothing is applied until you click
           Save.

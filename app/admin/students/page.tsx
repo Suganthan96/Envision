@@ -1,6 +1,5 @@
-import Link from "next/link"
-import { LogoutButton } from "@/components/logout-button"
-import { ThemeToggle } from "@/components/theme-toggle"
+import { AdminNav } from "@/components/admin-nav"
+import { BackLink } from "@/components/back-link"
 import { RoleSelectionsView, type RoleRow } from "@/components/role-selections-view"
 import { AdminSettingToggle } from "@/components/admin-setting-toggle"
 import { PendingSelections, type PendingPerson } from "@/components/pending-selections"
@@ -9,6 +8,8 @@ import { getSession } from "@/lib/get-session"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { getAppSettings } from "@/lib/app-settings"
 import { getDomains, type Domain } from "@/lib/domains"
+import { getDomainCapacities } from "@/lib/domain-capacities"
+import { AdminHeader } from "@/components/admin-header"
 
 export default async function AdminStudentsPage() {
   const session = await getSession()
@@ -20,19 +21,15 @@ export default async function AdminStudentsPage() {
   let domains: Domain[] = []
   if (session) {
     const supabase = getSupabaseServerClient()
-    const [{ data }, { data: pendingData }, { data: capacityData }, domainsResult] = await Promise.all([
+    const [{ data }, { data: pendingData }, capacityData, domainsResult] = await Promise.all([
       supabase.rpc("admin_list_domain_selections", { p_admin_user_id: session.userId }),
       supabase.rpc("admin_list_pending_domain_selections", { p_admin_user_id: session.userId, p_role: "member" }),
-      supabase.rpc("get_domain_capacities"),
+      getDomainCapacities(),
       getDomains(),
     ])
     domains = domainsResult
 
-    const capacityData2 = (capacityData ?? []) as {
-      domain_id: string
-      student_capacity: number
-      mentor_capacity: number
-    }[]
+    const capacityData2 = capacityData
     capacityRows = domains.map((d) => ({
       domainId: d.id,
       title: d.title,
@@ -82,49 +79,11 @@ export default async function AdminStudentsPage() {
   return (
     <main className="min-h-screen bg-background px-6 py-12">
       <div className="relative z-10 max-w-5xl mx-auto">
-        <div className="flex items-center justify-between mb-16">
-          <div className="flex items-center gap-4">
-            <div className="w-8 h-px bg-primary" />
-            <span className="font-serif text-xl text-foreground">Envision</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <ThemeToggle variant="inline" />
-            <LogoutButton />
-          </div>
-        </div>
+        <AdminHeader />
 
-        <div className="flex items-center gap-6 mb-8">
-          <Link href="/admin" className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider">
-            User Management
-          </Link>
-          <Link
-            href="/admin/mentors"
-            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
-          >
-            Mentor Selections
-          </Link>
-          <span className="text-primary text-sm uppercase tracking-wider border-b border-primary pb-1">
-            Student Selections
-          </span>
-          <Link
-            href="/admin/matching"
-            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
-          >
-            Mentor Matching
-          </Link>
-          <Link
-            href="/admin/timeline"
-            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
-          >
-            Timeline
-          </Link>
-          <Link
-            href="/admin/domains"
-            className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
-          >
-            Domains
-          </Link>
-        </div>
+        <AdminNav active="/admin/students" />
+
+        <BackLink label="Back to Domain Selection" fallbackHref="/admin/domain-selection" />
 
         <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Admin Portal</p>
         <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-4">

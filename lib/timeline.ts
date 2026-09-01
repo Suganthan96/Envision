@@ -184,16 +184,32 @@ export const DEFAULT_TIMELINE_PHASES: TimelinePhase[] = [
   },
 ]
 
-export async function getTimelinePhases(): Promise<TimelinePhase[]> {
-  // Imported lazily to keep this module safe to import from client
-  // components too (getTimelinePhases itself is only ever called
-  // server-side, but the DEFAULT_TIMELINE_PHASES/types above are shared).
-  const { getSupabaseServerClient } = await import("@/lib/supabase-server")
-  const supabase = getSupabaseServerClient()
-  const { data } = await supabase.rpc("get_timeline")
+// Cached until an admin saves the timeline (/api/admin/timeline invalidates
+// CACHE_TAGS.timeline). Everything server-side is still imported lazily to
+// keep this module safe to import from client components (the
+// DEFAULT_TIMELINE_PHASES/types above are shared).
+let cachedGetTimelinePhases: (() => Promise<TimelinePhase[]>) | null = null
 
-  if (Array.isArray(data) && data.length > 0) {
-    return data as TimelinePhase[]
+export async function getTimelinePhases(): Promise<TimelinePhase[]> {
+  if (!cachedGetTimelinePhases) {
+    const [{ unstable_cache }, { CACHE_TAGS }] = await Promise.all([
+      import("next/cache"),
+      import("@/lib/cache-tags"),
+    ])
+    cachedGetTimelinePhases = unstable_cache(
+      async () => {
+        const { getSupabaseServerClient } = await import("@/lib/supabase-server")
+        const supabase = getSupabaseServerClient()
+        const { data } = await supabase.rpc("get_timeline")
+
+        if (Array.isArray(data) && data.length > 0) {
+          return data as TimelinePhase[]
+        }
+        return DEFAULT_TIMELINE_PHASES
+      },
+      ["timeline"],
+      { tags: [CACHE_TAGS.timeline] },
+    )
   }
-  return DEFAULT_TIMELINE_PHASES
+  return cachedGetTimelinePhases()
 }

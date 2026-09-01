@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { verifySessionToken, SESSION_COOKIE } from "@/lib/session"
+import { CACHE_TAGS, revalidateSharedData } from "@/lib/cache-tags"
 
 const VALID_ICONS = [
   "water-energy",
@@ -46,6 +47,7 @@ export async function POST(request: NextRequest) {
     if (error || data !== true) {
       return NextResponse.json({ error: error?.message ?? "Unable to delete theme." }, { status: 400 })
     }
+    revalidateSharedData(CACHE_TAGS.domains)
     return NextResponse.json({ ok: true })
   }
 
@@ -78,6 +80,7 @@ export async function POST(request: NextRequest) {
     if (error || data !== true) {
       return NextResponse.json({ error: error?.message ?? "Unable to update theme." }, { status: 400 })
     }
+    revalidateSharedData(CACHE_TAGS.domains)
     return NextResponse.json({ ok: true })
   }
 
@@ -92,6 +95,7 @@ export async function POST(request: NextRequest) {
     if (error || !data) {
       return NextResponse.json({ error: error?.message ?? "Unable to add theme." }, { status: 400 })
     }
+    revalidateSharedData(CACHE_TAGS.domains)
     return NextResponse.json({ ok: true, id: data })
   }
 

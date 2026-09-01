@@ -1,12 +1,13 @@
 -- Already applied to the project via the Supabase MCP. Kept here for
 -- reference / reruns elsewhere. Reflects the CURRENT deployed state.
 --
--- Lets a signed-in member rename their team from the dashboard at any
--- time, without going through the password-change flow again. Reuses the
--- same `app_users.name` column mentors use for their personal name — for
--- a member, that column just holds the team's name instead. Restricted to
--- role = 'member'; mentors already have their own name-capture flow (see
--- mentor_self_registration.sql) and don't need this.
+-- Lets a signed-in member rename their team, or a signed-in mentor edit
+-- their own display name, from their dashboard at any time. Both roles
+-- share the same `app_users.name` column — for a member it holds the
+-- team's name, for a mentor their personal name. Mentor names used to be
+-- set once at self-registration with no way to fix a typo afterward (see
+-- mentor_self_registration.sql, since closed); this reopens that as an
+-- explicit, ongoing self-service edit instead.
 
 create or replace function public.update_name(p_user_id uuid, p_name text)
 returns boolean
@@ -24,7 +25,7 @@ begin
   update public.app_users
   set name = v_name,
       updated_at = now()
-  where id = p_user_id and role = 'member';
+  where id = p_user_id and role in ('member', 'mentor');
 
   return found;
 end;

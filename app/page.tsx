@@ -1,19 +1,37 @@
-import Link from "next/link"
 import { ArtDecoDivider } from "@/components/art-deco-divider"
 import { ServiceCard } from "@/components/service-card"
 import DomeGallery from "@/components/dome-gallery"
-import { Button } from "@/components/ui/button"
-import { ThemeToggle } from "@/components/theme-toggle"
+import { PublicNav } from "@/components/public-nav"
+import { ScrollDots } from "@/components/scroll-dots"
+import { LandingSnapScroll } from "@/components/landing-snap-scroll"
 import { SHOWCASE_PHOTOS } from "@/lib/showcase-photos"
+import { getSession } from "@/lib/get-session"
+import { roleHome } from "@/lib/session"
 
-export default function Home() {
+export default async function Home() {
+  const session = await getSession()
+
   return (
-    <main className="min-h-screen bg-background overflow-x-hidden">
-      <ThemeToggle />
-      {/* Hero Section */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center px-6 overflow-hidden">
+    <main className="bg-background overflow-x-clip">
+      <LandingSnapScroll />
+      <PublicNav isAuthenticated={!!session} dashboardHref={session ? roleHome(session.role) : undefined} />
+      <ScrollDots
+        sections={[
+          { id: "hero", label: "Envision" },
+          { id: "philosophy", label: "Objective" },
+          { id: "pillars", label: "Pillars" },
+          { id: "showcase-gallery", label: "Showcase" },
+          { id: "testimonial", label: "Wishes" },
+        ]}
+      />
+
+      {/* Hero Section — exactly one viewport tall so it lands as a clean
+          snap stop instead of leaving a sliver of the next section visible. */}
+      <section
+        id="hero"
+        className="relative h-screen flex flex-col items-center justify-center px-6 overflow-hidden snap-start scroll-mt-24"
+      >
         <div className="relative z-10 text-center max-w-4xl mx-auto">
-          {/* Decorative top element */}
           <div className="flex justify-center mb-8">
             <div className="flex items-center gap-4">
               <div className="w-16 h-px bg-primary" />
@@ -37,18 +55,6 @@ export default function Home() {
             through teamwork, problem solving, and hands-on implementation.
           </p>
 
-          <div className="mb-12">
-            <Link href="/login">
-              <Button
-                variant="outline"
-                className="border-primary text-primary hover:bg-primary hover:text-primary-foreground dark:hover:bg-primary dark:hover:text-primary-foreground dark:bg-transparent dark:border-primary uppercase tracking-wider text-sm px-10 h-12 bg-transparent"
-              >
-                Login
-              </Button>
-            </Link>
-          </div>
-
-          {/* Decorative bottom element */}
           <div className="flex justify-center">
             <div className="flex flex-col items-center gap-2">
               <div className="w-px h-16 bg-gradient-to-b from-transparent via-primary to-primary" />
@@ -56,24 +62,12 @@ export default function Home() {
             </div>
           </div>
         </div>
-
-        {/* Scroll indicator */}
-        <div className="absolute bottom-8 left-1/2 -translate-x-1/2 animate-bounce">
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" className="text-primary">
-            <path
-              d="M12 5v14M5 12l7 7 7-7"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </div>
       </section>
 
-      {/* Philosophy Section */}
-      <section className="py-24 px-6">
-        <div className="max-w-6xl mx-auto">
+      {/* Philosophy Section — flex-centered within a fixed viewport height
+          instead of content-driven py-24, so it always lands as one screen. */}
+      <section id="philosophy" className="h-screen flex items-center px-6 snap-start scroll-mt-24">
+        <div className="max-w-6xl mx-auto w-full">
           <ArtDecoDivider variant="stepped" />
 
           <div className="grid md:grid-cols-2 gap-16 items-center">
@@ -98,10 +92,10 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Services Section */}
-      <section className="py-24 px-6 bg-card/50">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
+      {/* Pillars Section */}
+      <section id="pillars" className="h-screen flex items-center px-6 bg-card/50 snap-start scroll-mt-24">
+        <div className="max-w-6xl mx-auto w-full">
+          <div className="text-center mb-12">
             <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Program Pillars</p>
             <h2 className="font-serif text-4xl md:text-5xl text-foreground text-balance">Learn By Building</h2>
           </div>
@@ -142,46 +136,49 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Showcase Section */}
-      <section className="py-24">
-        <div className="max-w-6xl mx-auto px-6">
-          <ArtDecoDivider variant="chevron" />
+      {/* Showcase Section — the dome fills the entire viewport-height
+          section and the heading floats over it, instead of stacking above
+          it, so the section stays exactly one screen tall for a clean snap. */}
+      <section id="showcase-gallery" className="relative h-screen overflow-hidden snap-start scroll-mt-24">
+        <DomeGallery
+          images={SHOWCASE_PHOTOS.map((photo) => ({ src: photo.src, alt: photo.alt }))}
+          fit={1.06}
+          fitBasis="cover"
+          minRadius={600}
+          maxVerticalRotationDeg={0}
+          segments={34}
+          autoRotate
+          autoRotateSpeed={3}
+          overlayBlurColor="#08080a"
+          grayscale={false}
+        />
 
-          <div className="text-center mb-16">
+        <div className="pointer-events-none absolute inset-x-0 top-0 z-20 pt-16 pb-24 bg-gradient-to-b from-background via-background/70 to-transparent">
+          <div className="max-w-6xl mx-auto px-6 text-center">
+            <ArtDecoDivider variant="chevron" />
             <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Showcase</p>
             <h2 className="font-serif text-4xl md:text-5xl text-foreground text-balance">Moments From Envision</h2>
-            <p className="text-muted-foreground text-sm mt-4">Drag to explore</p>
+            <p className="text-muted-foreground text-sm mt-4">Drag to explore &middot; tap a photo for a closer look</p>
           </div>
         </div>
 
-        <div className="relative w-screen left-1/2 -translate-x-1/2 h-screen overflow-hidden">
-          <DomeGallery
-              images={SHOWCASE_PHOTOS.map((photo) => ({ src: photo.src, alt: photo.alt }))}
-              fit={0.8}
-              minRadius={600}
-              maxVerticalRotationDeg={0}
-              segments={34}
-              dragDampening={2}
-              overlayBlurColor="#08080a"
-              grayscale={false}
-            />
-        </div>
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 h-24 md:h-32 bg-gradient-to-t from-background to-transparent" />
       </section>
 
       {/* Testimonial Section */}
-      <section className="py-24 px-6">
-        <div className="max-w-4xl mx-auto">
+      <section id="testimonial" className="h-screen flex items-center px-6 snap-start scroll-mt-24">
+        <div className="max-w-4xl mx-auto w-full">
           <ArtDecoDivider variant="fan" />
 
           <div className="relative text-center py-12">
-            {/* Quote decorations */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 text-primary/20 font-serif text-9xl leading-none">
               &ldquo;
             </div>
 
             <blockquote className="relative z-10">
               <p className="font-serif text-2xl md:text-3xl text-foreground leading-relaxed italic mb-8">
-                This will be a new learning experience for all of you. All the best. Let your light shine.
+                Your first step into solving real-world problems. All the best!
+                <span className="block mt-3">Let your light shine.</span>
               </p>
               <footer className="text-muted-foreground">
                 <span className="text-primary">—</span> Institution&apos;s Innovation Council,{" "}
@@ -192,7 +189,8 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Footer */}
+      {/* Footer — outside the snap flow; scrolling past the last section
+          reaches it normally rather than snapping. */}
       <footer className="py-12 px-6 border-t border-border">
         <div className="max-w-6xl mx-auto">
           <div className="flex flex-col items-center gap-6">

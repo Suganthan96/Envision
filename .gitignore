@@ -26,3 +26,5 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 regno.txt
+
+envision-507207-ce238af972c0.json
