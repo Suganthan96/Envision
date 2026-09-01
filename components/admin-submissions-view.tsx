@@ -194,28 +194,23 @@ export function AdminSubmissionsView({
 
   const submittedCount = rows.filter((r) => r.driveUrl).length
 
-  /** Groups rows by resolved presentation venue, venues in their own order,
-   *  an "Unassigned" bucket last. `map` turns each row into the PDF shape. */
+  /** Groups rows by resolved presentation venue, venues in their own order.
+   *  Teams with no presentation venue are left out of the PDFs entirely.
+   *  `map` turns each row into the PDF shape. */
   function groupByVenue<T>(map: (r: AdminSubmissionRow) => T): { venueName: string; teams: T[] }[] {
     const byId = new Map<string, { venueName: string; teams: T[] }>()
-    const unassigned: { venueName: string; teams: T[] } = { venueName: "Unassigned", teams: [] }
     const sorted = [...rows].sort(
       (a, b) => Number(a.loginId) - Number(b.loginId) || a.loginId.localeCompare(b.loginId),
     )
     for (const r of sorted) {
       const vid = resolvedByTeam.get(r.studentUserId)?.venueId ?? null
-      if (!vid) {
-        unassigned.teams.push(map(r))
-        continue
-      }
+      if (!vid) continue
       if (!byId.has(vid)) byId.set(vid, { venueName: venueName(vid) ?? "Venue", teams: [] })
       byId.get(vid)!.teams.push(map(r))
     }
-    const ordered = venues
+    return venues
       .map((v) => byId.get(v.id))
       .filter((g): g is { venueName: string; teams: T[] } => Boolean(g && g.teams.length))
-    if (unassigned.teams.length) ordered.push(unassigned)
-    return ordered
   }
 
   async function withPdf(fn: () => Promise<void>) {
