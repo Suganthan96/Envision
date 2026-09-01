@@ -589,9 +589,12 @@ function AssignmentsCard({
         </p>
       </div>
 
-      <div className="flex flex-col gap-2">
-        <h3 className="text-primary tracking-[0.1em] uppercase text-[11px]">By Theme</h3>
-        <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2">
+      <details className="group">
+        <summary className="flex items-center gap-2 cursor-pointer text-primary tracking-[0.1em] uppercase text-[11px] list-none">
+          <ChevronDown className="w-4 h-4 transition-transform group-open:rotate-180" />
+          By Theme ({themeOptions.length})
+        </summary>
+        <div className="grid sm:grid-cols-2 gap-x-6 gap-y-2 mt-3">
           {themeOptions.map((t) => (
             <div key={t.value} className="flex items-center gap-3">
               <span className="text-sm text-foreground flex-1 truncate">{t.label}</span>
@@ -606,7 +609,7 @@ function AssignmentsCard({
             </div>
           ))}
         </div>
-      </div>
+      </details>
 
       <details className="group">
         <summary className="flex items-center gap-2 cursor-pointer text-primary tracking-[0.1em] uppercase text-[11px] list-none">
