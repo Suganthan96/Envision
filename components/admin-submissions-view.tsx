@@ -231,7 +231,7 @@ export function AdminSubmissionsView({
         loginId: r.loginId,
         teamName: r.teamName ?? "",
         teamLeadName: r.teamLeadName ?? "",
-        projectTitle: r.projectTitle ?? "",
+        projectTitle: r.projectTitle?.trim() || (r.teamName ?? ""),
         domainTitle: domainTitle(r.domainId) ?? "",
       }))
       if (groups.length === 0) {
@@ -266,7 +266,7 @@ export function AdminSubmissionsView({
       const groups = groupByVenue((r) => ({
         loginId: r.loginId,
         domainTitle: domainTitle(r.domainId) ?? "",
-        projectTitle: r.projectTitle ?? "",
+        projectTitle: r.projectTitle?.trim() || (r.teamName ?? ""),
       }))
       if (groups.length === 0) {
         setError("No teams to include. Add venues and assign them first.")

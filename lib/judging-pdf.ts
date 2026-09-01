@@ -1,5 +1,17 @@
 import type { RubricRow } from "@/lib/judging"
 
+/**
+ * jsPDF's built-in fonts are Latin-1 only — emoji and other characters
+ * outside U+00FF render as garbage ("+P" tofu). Drop them and tidy the
+ * leftover whitespace so names/titles at least read cleanly.
+ */
+function pdfSafe(s: string | null | undefined): string {
+  return (s ?? "")
+    .replace(/[^\x00-\xFF]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+}
+
 export interface PdfTeam {
   loginId: string
   teamName: string
@@ -64,12 +76,12 @@ export async function downloadJudgingSheetsPdf(opts: {
     doc.setFont("helvetica", "bold")
     doc.setFontSize(15)
     doc.setTextColor(20)
-    doc.text(opts.heading, pageW / 2, y, { align: "center" })
+    doc.text(pdfSafe(opts.heading), pageW / 2, y, { align: "center" })
     y += 18
     doc.setFont("helvetica", "normal")
     doc.setFontSize(11)
     doc.setTextColor(60)
-    doc.text(`Venue: ${venueName}`, pageW / 2, y, { align: "center" })
+    doc.text(`Venue: ${pdfSafe(venueName)}`, pageW / 2, y, { align: "center" })
     y += 10
     doc.setDrawColor(20)
     doc.setLineWidth(1)
@@ -87,15 +99,15 @@ export async function downloadJudgingSheetsPdf(opts: {
     doc.setFont("helvetica", "bold")
     doc.setFontSize(11)
     doc.setTextColor(20)
-    doc.text(`Team ${team.loginId} — ${team.teamName || "—"}`, marginX, y)
+    doc.text(`Team ${team.loginId} — ${pdfSafe(team.teamName) || "—"}`, marginX, y)
     y += 15
     doc.setFont("helvetica", "normal")
     doc.setFontSize(10)
     doc.setTextColor(45)
-    doc.text(`Team Lead: ${team.teamLeadName || "—"}`, marginX, y)
-    doc.text(`Domain: ${team.domainTitle || "—"}`, marginX + contentW / 2, y)
+    doc.text(`Team Lead: ${pdfSafe(team.teamLeadName) || "—"}`, marginX, y)
+    doc.text(`Domain: ${pdfSafe(team.domainTitle) || "—"}`, marginX + contentW / 2, y)
     y += 15
-    doc.text(`Project: ${team.projectTitle || "—"}`, marginX, y)
+    doc.text(`Project: ${pdfSafe(team.projectTitle) || "—"}`, marginX, y)
     y += 16
 
     // Rubric grid: Criterion | Max | Score
@@ -179,12 +191,12 @@ export async function downloadTeamDetailsPdf(opts: {
     doc.setFont("helvetica", "bold")
     doc.setFontSize(15)
     doc.setTextColor(20)
-    doc.text(opts.heading, pageW / 2, y, { align: "center" })
+    doc.text(pdfSafe(opts.heading), pageW / 2, y, { align: "center" })
     y += 22
     doc.setFont("helvetica", "bold")
     doc.setFontSize(16)
     doc.setTextColor(20)
-    doc.text(`Venue: ${currentVenue}`, pageW / 2, y, { align: "center" })
+    doc.text(`Venue: ${pdfSafe(currentVenue)}`, pageW / 2, y, { align: "center" })
     y += 12
     doc.setDrawColor(20)
     doc.setLineWidth(1)
@@ -203,10 +215,10 @@ export async function downloadTeamDetailsPdf(opts: {
         group.teams.length > 0
           ? group.teams.map((t) => [
               t.loginId,
-              t.teamName || "—",
-              t.teamLeadName || "—",
-              t.mentorName || "—",
-              t.waitingVenue || "—",
+              pdfSafe(t.teamName) || "—",
+              pdfSafe(t.teamLeadName) || "—",
+              pdfSafe(t.mentorName) || "—",
+              pdfSafe(t.waitingVenue) || "—",
             ])
           : [["", "No teams assigned to this venue.", "", "", ""]],
       theme: "grid",
@@ -252,16 +264,16 @@ export async function downloadFacultyPdf(opts: {
     doc.setFont("helvetica", "bold")
     doc.setFontSize(15)
     doc.setTextColor(20)
-    doc.text(opts.heading, pageW / 2, y, { align: "center" })
+    doc.text(pdfSafe(opts.heading), pageW / 2, y, { align: "center" })
     y += 24
     doc.setFont("helvetica", "bold")
     doc.setFontSize(16)
-    doc.text(`Venue: ${currentVenue}`, pageW / 2, y, { align: "center" })
+    doc.text(`Venue: ${pdfSafe(currentVenue)}`, pageW / 2, y, { align: "center" })
     y += 16
     doc.setFont("helvetica", "normal")
     doc.setFontSize(11)
     doc.setTextColor(50)
-    doc.text(`Time: ${opts.timing}`, pageW / 2, y, { align: "center" })
+    doc.text(`Time: ${pdfSafe(opts.timing)}`, pageW / 2, y, { align: "center" })
     y += 12
     doc.setDrawColor(20)
     doc.setLineWidth(1)
@@ -278,7 +290,7 @@ export async function downloadFacultyPdf(opts: {
       head: [["Team #", "Domain", "Project Title"]],
       body:
         group.teams.length > 0
-          ? group.teams.map((t) => [t.loginId, t.domainTitle || "—", t.projectTitle || "—"])
+          ? group.teams.map((t) => [t.loginId, pdfSafe(t.domainTitle) || "—", pdfSafe(t.projectTitle) || "—"])
           : [["", "No teams assigned to this venue.", ""]],
       theme: "grid",
       styles: { fontSize: 10, cellPadding: 6, lineColor: [20, 20, 20], lineWidth: 0.5, textColor: 20 },
