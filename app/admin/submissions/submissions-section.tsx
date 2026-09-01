@@ -20,7 +20,12 @@ export async function SubmissionsSection() {
     admin ? getJudgingAssignments(admin) : Promise.resolve([]),
     admin
       ? getJudgingSettings(admin)
-      : Promise.resolve({ reportHeading: "EnVision 2026 - Judging Sheet", rubric: DEFAULT_RUBRIC }),
+      : Promise.resolve({
+          reportHeading: "EnVision 2026 - Judging Sheet",
+          rubric: DEFAULT_RUBRIC,
+          facultyHeading: "EnVision 2026 - Faculty Schedule",
+          facultyTiming: "2:00 PM - 4:00 PM",
+        }),
   ])
 
   return (

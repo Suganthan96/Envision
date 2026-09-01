@@ -71,8 +71,12 @@ export async function POST(request: NextRequest) {
       }
       case "save-settings": {
         const heading = String(body?.heading ?? "").trim()
+        const facultyHeading = String(body?.facultyHeading ?? "").trim()
+        const facultyTiming = String(body?.facultyTiming ?? "").trim()
         const rubric = Array.isArray(body?.rubric) ? body.rubric : null
         if (!heading) return NextResponse.json({ error: "Report heading is required." }, { status: 400 })
+        if (!facultyHeading) return NextResponse.json({ error: "Faculty PDF title is required." }, { status: 400 })
+        if (!facultyTiming) return NextResponse.json({ error: "Timing is required." }, { status: 400 })
         if (!rubric || rubric.length === 0) {
           return NextResponse.json({ error: "Add at least one rubric row." }, { status: 400 })
         }
@@ -87,6 +91,8 @@ export async function POST(request: NextRequest) {
           p_admin_user_id: admin,
           p_heading: heading,
           p_rubric: clean,
+          p_faculty_heading: facultyHeading,
+          p_faculty_timing: facultyTiming,
         })
         if (error) throw error
         return NextResponse.json({ ok: true })

@@ -39,6 +39,8 @@ create table if not exists public.judging_settings (
     {"label": "Solution", "max": 5},
     {"label": "Team work and presentation", "max": 10}
   ]'::jsonb,
+  faculty_heading text not null default 'EnVision 2026 - Faculty Schedule',
+  faculty_timing text not null default '2:00 PM - 4:00 PM',
   updated_at timestamptz not null default now()
 );
 alter table public.judging_settings enable row level security;
@@ -134,8 +136,10 @@ begin
 end;
 $$;
 
-create or replace function public.admin_set_judging_settings(
-  p_admin_user_id uuid, p_heading text, p_rubric jsonb
+drop function if exists public.admin_set_judging_settings(uuid, text, jsonb);
+create function public.admin_set_judging_settings(
+  p_admin_user_id uuid, p_heading text, p_rubric jsonb,
+  p_faculty_heading text, p_faculty_timing text
 )
 returns boolean language plpgsql security definer set search_path = public as $$
 begin
@@ -143,7 +147,11 @@ begin
   if coalesce(btrim(p_heading), '') = '' then raise exception 'Report heading is required'; end if;
   if jsonb_typeof(p_rubric) <> 'array' then raise exception 'Rubric must be an array'; end if;
   update public.judging_settings
-  set report_heading = btrim(p_heading), rubric = p_rubric, updated_at = now()
+  set report_heading = btrim(p_heading),
+      rubric = p_rubric,
+      faculty_heading = coalesce(nullif(btrim(p_faculty_heading), ''), faculty_heading),
+      faculty_timing = coalesce(nullif(btrim(p_faculty_timing), ''), faculty_timing),
+      updated_at = now()
   where id = 1;
   return true;
 end;
@@ -156,7 +164,7 @@ grant execute on function public.admin_delete_judging_venue(uuid, uuid) to anon;
 grant execute on function public.admin_list_judging_assignments(uuid) to anon;
 grant execute on function public.admin_set_judging_assignment(uuid, text, text, uuid) to anon;
 grant execute on function public.admin_get_judging_settings(uuid) to anon;
-grant execute on function public.admin_set_judging_settings(uuid, text, jsonb) to anon;
+grant execute on function public.admin_set_judging_settings(uuid, text, jsonb, text, text) to anon;
 
 -- admin_list_submissions also gained team_lead_name, project_title,
 -- mentor_user_id here (canonical body in team_submission.sql).

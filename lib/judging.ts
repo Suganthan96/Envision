@@ -22,6 +22,8 @@ export interface RubricRow {
 export interface JudgingSettings {
   reportHeading: string
   rubric: RubricRow[]
+  facultyHeading: string
+  facultyTiming: string
 }
 
 export const DEFAULT_RUBRIC: RubricRow[] = [
@@ -56,11 +58,13 @@ export async function getJudgingSettings(adminUserId: string): Promise<JudgingSe
   const supabase = getSupabaseServerClient()
   const { data } = await supabase.rpc("admin_get_judging_settings", { p_admin_user_id: adminUserId })
   const row = (Array.isArray(data) ? data[0] : data) as
-    | { report_heading: string; rubric: RubricRow[] }
+    | { report_heading: string; rubric: RubricRow[]; faculty_heading?: string; faculty_timing?: string }
     | null
   return {
     reportHeading: row?.report_heading ?? "EnVision 2026 - Judging Sheet",
     rubric: Array.isArray(row?.rubric) && row.rubric.length > 0 ? row.rubric : DEFAULT_RUBRIC,
+    facultyHeading: row?.faculty_heading ?? "EnVision 2026 - Faculty Schedule",
+    facultyTiming: row?.faculty_timing ?? "2:00 PM - 4:00 PM",
   }
 }
 

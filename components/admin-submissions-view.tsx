@@ -25,7 +25,11 @@ import {
   type JudgingVenue,
   type RubricRow,
 } from "@/lib/judging"
-import { downloadJudgingSheetsPdf, downloadTeamDetailsPdf } from "@/lib/judging-pdf"
+import {
+  downloadJudgingSheetsPdf,
+  downloadTeamDetailsPdf,
+  downloadFacultyPdf,
+} from "@/lib/judging-pdf"
 import type { AdminSubmissionRow } from "@/lib/admin-directories"
 import type { Domain } from "@/lib/domains"
 
@@ -220,6 +224,7 @@ export function AdminSubmissionsView({
       const groups = groupByVenue((r) => ({
         loginId: r.loginId,
         teamName: r.teamName ?? "",
+        teamLeadName: r.teamLeadName ?? "",
         mentorName: r.mentorName ?? "",
         allocationVenue: r.venue ?? "",
       }))
@@ -230,6 +235,24 @@ export function AdminSubmissionsView({
       await downloadTeamDetailsPdf({ heading: liveSettings.reportHeading, groups })
     })
 
+  const handleDownloadFacultyPdf = () =>
+    withPdf(async () => {
+      const groups = groupByVenue((r) => ({
+        loginId: r.loginId,
+        domainTitle: domainTitle(r.domainId) ?? "",
+        projectTitle: r.projectTitle ?? "",
+      }))
+      if (groups.length === 0) {
+        setError("No teams to include. Add venues and assign them first.")
+        return
+      }
+      await downloadFacultyPdf({
+        heading: liveSettings.facultyHeading,
+        timing: liveSettings.facultyTiming,
+        groups,
+      })
+    })
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -238,6 +261,16 @@ export function AdminSubmissionsView({
           have submitted.
         </p>
         <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            onClick={handleDownloadFacultyPdf}
+            disabled={pdfBusy}
+            variant="outline"
+            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground dark:bg-transparent dark:border-primary dark:hover:bg-primary dark:hover:text-primary-foreground uppercase tracking-wider text-xs h-10 gap-2 bg-transparent"
+          >
+            <Download className="w-4 h-4" />
+            {pdfBusy ? "Preparing…" : "Faculty PDF"}
+          </Button>
           <Button
             type="button"
             onClick={handleDownloadDetailsPdf}
@@ -649,6 +682,8 @@ function RubricCard({
 }) {
   const [heading, setHeading] = useState(settings.reportHeading)
   const [rubric, setRubric] = useState<RubricRow[]>(settings.rubric)
+  const [facultyHeading, setFacultyHeading] = useState(settings.facultyHeading)
+  const [facultyTiming, setFacultyTiming] = useState(settings.facultyTiming)
   const [busy, setBusy] = useState(false)
   const [saved, setSaved] = useState(false)
 
@@ -665,9 +700,19 @@ function RubricCard({
     setSaved(false)
     try {
       const cleanRubric = rubric.map((r) => ({ label: r.label.trim(), max: Number(r.max) }))
-      await callJudging("save-settings", { heading: heading.trim(), rubric: cleanRubric })
+      await callJudging("save-settings", {
+        heading: heading.trim(),
+        rubric: cleanRubric,
+        facultyHeading: facultyHeading.trim(),
+        facultyTiming: facultyTiming.trim(),
+      })
       setSaved(true)
-      onSaved({ reportHeading: heading.trim(), rubric: cleanRubric })
+      onSaved({
+        reportHeading: heading.trim(),
+        rubric: cleanRubric,
+        facultyHeading: facultyHeading.trim(),
+        facultyTiming: facultyTiming.trim(),
+      })
     } catch (e) {
       setError(e instanceof Error ? e.message : "Could not save.")
     } finally {
@@ -677,10 +722,12 @@ function RubricCard({
 
   return (
     <section className="border border-border rounded-lg bg-card/40 p-5 flex flex-col gap-4">
-      <h2 className="font-serif text-2xl text-foreground">Rubric &amp; Report Heading</h2>
+      <h2 className="font-serif text-2xl text-foreground">Report Settings</h2>
 
       <div className="flex flex-col gap-1.5 max-w-lg">
-        <Label className="text-primary tracking-[0.1em] uppercase text-[10px]">PDF Heading</Label>
+        <Label className="text-primary tracking-[0.1em] uppercase text-[10px]">
+          Judging Sheets PDF Heading
+        </Label>
         <Input
           value={heading}
           onChange={(e) => {
@@ -689,6 +736,32 @@ function RubricCard({
           }}
           className="bg-card border-border text-foreground h-10"
         />
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-4 max-w-lg">
+        <div className="flex flex-col gap-1.5 flex-1">
+          <Label className="text-primary tracking-[0.1em] uppercase text-[10px]">Faculty PDF Title</Label>
+          <Input
+            value={facultyHeading}
+            onChange={(e) => {
+              setFacultyHeading(e.target.value)
+              setSaved(false)
+            }}
+            className="bg-card border-border text-foreground h-10"
+          />
+        </div>
+        <div className="flex flex-col gap-1.5 w-full sm:w-52">
+          <Label className="text-primary tracking-[0.1em] uppercase text-[10px]">Faculty PDF Timing</Label>
+          <Input
+            value={facultyTiming}
+            onChange={(e) => {
+              setFacultyTiming(e.target.value)
+              setSaved(false)
+            }}
+            placeholder="e.g. 2:00 PM - 4:00 PM"
+            className="bg-card border-border text-foreground h-10"
+          />
+        </div>
       </div>
 
       <div className="flex flex-col gap-2 max-w-lg">
@@ -745,7 +818,7 @@ function RubricCard({
         disabled={busy}
         className="bg-primary text-primary-foreground hover:bg-primary/90 uppercase tracking-wider text-xs h-10 self-start px-6"
       >
-        {busy ? "Saving…" : saved ? "Saved" : "Save Rubric & Heading"}
+        {busy ? "Saving…" : saved ? "Saved" : "Save Report Settings"}
       </Button>
     </section>
   )

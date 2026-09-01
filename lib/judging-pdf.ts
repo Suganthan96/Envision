@@ -16,6 +16,7 @@ export interface PdfVenueGroup {
 export interface PdfTeamDetails {
   loginId: string
   teamName: string
+  teamLeadName: string
   mentorName: string
   allocationVenue: string
 }
@@ -23,6 +24,17 @@ export interface PdfTeamDetails {
 export interface PdfDetailsGroup {
   venueName: string
   teams: PdfTeamDetails[]
+}
+
+export interface PdfFacultyTeam {
+  loginId: string
+  domainTitle: string
+  projectTitle: string
+}
+
+export interface PdfFacultyGroup {
+  venueName: string
+  teams: PdfFacultyTeam[]
 }
 
 /**
@@ -168,12 +180,12 @@ export async function downloadTeamDetailsPdf(opts: {
     doc.setFontSize(15)
     doc.setTextColor(20)
     doc.text(opts.heading, pageW / 2, y, { align: "center" })
-    y += 18
-    doc.setFont("helvetica", "normal")
-    doc.setFontSize(11)
-    doc.setTextColor(60)
+    y += 22
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(16)
+    doc.setTextColor(20)
     doc.text(`Venue: ${currentVenue}`, pageW / 2, y, { align: "center" })
-    y += 10
+    y += 12
     doc.setDrawColor(20)
     doc.setLineWidth(1)
     doc.line(marginX, y, pageW - marginX, y)
@@ -184,30 +196,101 @@ export async function downloadTeamDetailsPdf(opts: {
     currentVenue = group.venueName
 
     autoTable(doc, {
-      startY: 96,
-      margin: { top: 96, left: marginX, right: marginX },
-      head: [["Team #", "Team Name", "Mentor", "Current Venue"]],
+      startY: 104,
+      margin: { top: 104, left: marginX, right: marginX },
+      head: [["Team #", "Team Name", "Team Leader", "Mentor", "Current Venue"]],
       body:
         group.teams.length > 0
           ? group.teams.map((t) => [
               t.loginId,
               t.teamName || "—",
+              t.teamLeadName || "—",
               t.mentorName || "—",
               t.allocationVenue || "—",
             ])
-          : [["", "No teams assigned to this venue.", "", ""]],
+          : [["", "No teams assigned to this venue.", "", "", ""]],
       theme: "grid",
       styles: { fontSize: 10, cellPadding: 6, lineColor: [20, 20, 20], lineWidth: 0.5, textColor: 20 },
       headStyles: { fillColor: [235, 235, 235], textColor: 20, fontStyle: "bold" },
       columnStyles: {
-        0: { cellWidth: 55 },
+        0: { cellWidth: 50 },
         1: { cellWidth: "auto" },
-        2: { cellWidth: 150 },
-        3: { cellWidth: 90 },
+        2: { cellWidth: 130 },
+        3: { cellWidth: 130 },
+        4: { cellWidth: 80 },
       },
       didDrawPage: drawHeader,
     })
   })
 
   doc.save("envision-team-details.pdf")
+}
+
+/**
+ * Faculty schedule: one page per presentation venue, header carries the
+ * customisable title, the venue name (large + bold) and the customisable
+ * timing. Table is just Team #, Domain, Project Title.
+ */
+export async function downloadFacultyPdf(opts: {
+  heading: string
+  timing: string
+  groups: PdfFacultyGroup[]
+}) {
+  const [{ default: jsPDF }, autoTableModule] = await Promise.all([
+    import("jspdf"),
+    import("jspdf-autotable"),
+  ])
+  const autoTable = autoTableModule.default
+
+  const doc = new jsPDF({ unit: "pt", format: "a4" })
+  const pageW = doc.internal.pageSize.getWidth()
+  const marginX = 42
+
+  let currentVenue = ""
+  const drawHeader = () => {
+    let y = 46
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(15)
+    doc.setTextColor(20)
+    doc.text(opts.heading, pageW / 2, y, { align: "center" })
+    y += 24
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(16)
+    doc.text(`Venue: ${currentVenue}`, pageW / 2, y, { align: "center" })
+    y += 16
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(11)
+    doc.setTextColor(50)
+    doc.text(`Time: ${opts.timing}`, pageW / 2, y, { align: "center" })
+    y += 12
+    doc.setDrawColor(20)
+    doc.setLineWidth(1)
+    doc.line(marginX, y, pageW - marginX, y)
+  }
+
+  opts.groups.forEach((group, gi) => {
+    if (gi > 0) doc.addPage()
+    currentVenue = group.venueName
+
+    autoTable(doc, {
+      startY: 120,
+      margin: { top: 120, left: marginX, right: marginX },
+      head: [["Team #", "Domain", "Project Title"]],
+      body:
+        group.teams.length > 0
+          ? group.teams.map((t) => [t.loginId, t.domainTitle || "—", t.projectTitle || "—"])
+          : [["", "No teams assigned to this venue.", ""]],
+      theme: "grid",
+      styles: { fontSize: 10, cellPadding: 6, lineColor: [20, 20, 20], lineWidth: 0.5, textColor: 20 },
+      headStyles: { fillColor: [235, 235, 235], textColor: 20, fontStyle: "bold" },
+      columnStyles: {
+        0: { cellWidth: 55 },
+        1: { cellWidth: 190 },
+        2: { cellWidth: "auto" },
+      },
+      didDrawPage: drawHeader,
+    })
+  })
+
+  doc.save("envision-faculty-schedule.pdf")
 }
