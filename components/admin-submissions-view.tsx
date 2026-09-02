@@ -172,9 +172,25 @@ export function AdminSubmissionsView({
     [venues, teamCountByVenue],
   )
 
+  // Numeric login-ID order (2 before 10), non-numeric IDs first.
+  const sortedRows = useMemo(
+    () =>
+      [...rows].sort((a, b) => {
+        const na = Number(a.loginId)
+        const nb = Number(b.loginId)
+        const aNum = a.loginId.trim() !== "" && Number.isFinite(na)
+        const bNum = b.loginId.trim() !== "" && Number.isFinite(nb)
+        if (aNum && bNum) return na - nb
+        if (aNum) return 1
+        if (bNum) return -1
+        return a.loginId.localeCompare(b.loginId)
+      }),
+    [rows],
+  )
+
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return rows.filter((r) => {
+    return sortedRows.filter((r) => {
       if (themeFilter && r.domainId !== themeFilter) return false
       if (venueFilter) {
         const resolved = resolvedByTeam.get(r.studentUserId)?.venueId ?? null
@@ -191,7 +207,7 @@ export function AdminSubmissionsView({
         (r.venue ?? "").toLowerCase().includes(q)
       )
     })
-  }, [rows, query, themeFilter, venueFilter, statusFilter, resolvedByTeam])
+  }, [sortedRows, query, themeFilter, venueFilter, statusFilter, resolvedByTeam])
 
   const submittedCount = rows.filter((r) => r.driveUrl).length
 
