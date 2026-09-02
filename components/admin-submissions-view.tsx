@@ -31,6 +31,7 @@ import {
   downloadTeamDetailsPdf,
   downloadFacultyPdf,
 } from "@/lib/judging-pdf"
+import { downloadSubmissionsXlsx } from "@/lib/submissions-xlsx"
 import type { AdminSubmissionRow } from "@/lib/admin-directories"
 import type { Domain } from "@/lib/domains"
 
@@ -279,6 +280,34 @@ export function AdminSubmissionsView({
       })
     })
 
+  const handleDownloadXlsx = () =>
+    withPdf(async () => {
+      const xlsxRows = [...rows]
+        .map((r) => {
+          const pres = venueName(resolvedByTeam.get(r.studentUserId)?.venueId ?? null) ?? ""
+          const wait = venueName(resolvedWaitingByTeam.get(r.studentUserId)?.venueId ?? null) ?? ""
+          return {
+            presentationVenue: pres,
+            loginId: r.loginId,
+            teamName: r.teamName ?? "",
+            teamLeadName: r.teamLeadName ?? "",
+            mentorName: r.mentorName ?? "",
+            waitingVenue: wait,
+            domain: domainTitle(r.domainId) ?? "",
+            projectTitle: r.projectTitle?.trim() || (r.teamName ?? ""),
+          }
+        })
+        .sort(
+          (a, b) =>
+            // teams with a venue first, then by venue name, then by team number
+            (a.presentationVenue ? 0 : 1) - (b.presentationVenue ? 0 : 1) ||
+            a.presentationVenue.localeCompare(b.presentationVenue) ||
+            Number(a.loginId) - Number(b.loginId) ||
+            a.loginId.localeCompare(b.loginId),
+        )
+      await downloadSubmissionsXlsx(xlsxRows)
+    })
+
   return (
     <div className="flex flex-col gap-8">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -287,6 +316,16 @@ export function AdminSubmissionsView({
           have submitted.
         </p>
         <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            onClick={handleDownloadXlsx}
+            disabled={pdfBusy}
+            variant="outline"
+            className="border-primary text-primary hover:bg-primary hover:text-primary-foreground dark:bg-transparent dark:border-primary dark:hover:bg-primary dark:hover:text-primary-foreground uppercase tracking-wider text-xs h-10 gap-2 bg-transparent"
+          >
+            <Download className="w-4 h-4" />
+            {pdfBusy ? "Preparing…" : "Excel"}
+          </Button>
           <Button
             type="button"
             onClick={handleDownloadFacultyPdf}
