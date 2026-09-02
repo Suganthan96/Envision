@@ -3,7 +3,7 @@ import { BackLink } from "@/components/back-link"
 import { AdminMentorProfileCard } from "@/components/admin-mentor-profile-card"
 import { MentorTeamSummaryCard } from "@/components/mentor-team-summary-card"
 import { getSession } from "@/lib/get-session"
-import { getMentorProfilesForAdmin } from "@/lib/admin-directories"
+import { getMentorProfileForAdmin } from "@/lib/admin-directories"
 import { getMyTeams } from "@/lib/mentor-teams"
 import { getDomains } from "@/lib/domains"
 import { AdminHeader } from "@/components/admin-header"
@@ -18,15 +18,14 @@ export default async function AdminMentorProfileDetailPage({
   const { mentorUserId } = await params
   const session = await getSession()
 
-  // This mentor's teams don't depend on the directory fetch, so all three
+  // This mentor's teams don't depend on the profile fetch, so all three
   // run as one batch instead of two sequential rounds.
-  const [mentors, domains, teams] = await Promise.all([
-    session ? getMentorProfilesForAdmin(session.userId) : Promise.resolve([]),
+  const [mentor, domains, teams] = await Promise.all([
+    session ? getMentorProfileForAdmin(session.userId, mentorUserId) : Promise.resolve(null),
     getDomains(),
     getMyTeams(mentorUserId),
   ])
 
-  const mentor = mentors.find((m) => m.mentorUserId === mentorUserId)
   if (!mentor) notFound()
 
   return (

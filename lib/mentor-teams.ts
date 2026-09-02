@@ -1,4 +1,5 @@
 import { getSupabaseServerClient } from "@/lib/supabase-server"
+import { teamLogoUrl } from "@/lib/image-url"
 
 export interface MentorTeam {
   studentUserId: string
@@ -27,7 +28,7 @@ export async function getMyTeams(mentorUserId: string): Promise<MentorTeam[]> {
       login_id: string
       team_name: string | null
       team_lead_name: string | null
-      team_logo_url: string | null
+      team_logo_version: string | null
       domain_id: string | null
       venue: string | null
       project_title: string | null
@@ -44,7 +45,7 @@ export async function getMyTeams(mentorUserId: string): Promise<MentorTeam[]> {
     loginId: row.login_id,
     teamName: row.team_name,
     teamLeadName: row.team_lead_name,
-    teamLogoUrl: row.team_logo_url,
+    teamLogoUrl: teamLogoUrl(row.login_id, row.team_logo_version),
     domainId: row.domain_id,
     venue: row.venue,
     projectTitle: row.project_title,

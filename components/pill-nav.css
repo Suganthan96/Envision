@@ -94,6 +94,11 @@
   display: block;
   pointer-events: none;
   will-change: transform;
+  /* Resting state. GSAP used to set this on mount, which meant the circle
+     rendered full-size (covering the pill) until the animation library had
+     loaded. Declaring it here keeps the nav correct before/without JS —
+     GSAP still owns the animation from this state onward. */
+  transform: translateX(-50%) scale(0);
 }
 
 .pill .label-stack {
@@ -119,6 +124,9 @@
   z-index: 3;
   display: inline-block;
   will-change: transform, opacity;
+  /* Resting state — see .hover-circle above. Without this the hover label sat
+     on top of the normal one until GSAP loaded. */
+  opacity: 0;
 }
 
 .pill.is-active::after {

@@ -1,6 +1,6 @@
 import { ArtDecoDivider } from "@/components/art-deco-divider"
 import { ServiceCard } from "@/components/service-card"
-import DomeGallery from "@/components/dome-gallery"
+import { DomeGalleryLazy } from "@/components/dome-gallery-lazy"
 import { PublicNav } from "@/components/public-nav"
 import { ScrollDots } from "@/components/scroll-dots"
 import { LandingSnapScroll } from "@/components/landing-snap-scroll"
@@ -140,7 +140,7 @@ export default async function Home() {
           section and the heading floats over it, instead of stacking above
           it, so the section stays exactly one screen tall for a clean snap. */}
       <section id="showcase-gallery" className="relative h-screen overflow-hidden snap-start scroll-mt-24">
-        <DomeGallery
+        <DomeGalleryLazy
           images={SHOWCASE_PHOTOS.map((photo) => ({ src: photo.src, alt: photo.alt }))}
           fit={1.06}
           fitBasis="cover"

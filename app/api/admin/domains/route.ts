@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { verifySessionToken, SESSION_COOKIE } from "@/lib/session"
-import { CACHE_TAGS, revalidateSharedData } from "@/lib/cache-tags"
+import { CACHE_TAGS } from "@/lib/cache-tags"
+import { revalidateSharedData } from "@/lib/revalidate"
 
 const VALID_ICONS = [
   "water-energy",

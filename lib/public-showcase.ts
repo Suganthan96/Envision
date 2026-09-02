@@ -1,6 +1,12 @@
 import { unstable_cache } from "next/cache"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
+import { mentorAvatarUrl, teamLogoUrl } from "@/lib/image-url"
+import { CACHE_TAGS } from "@/lib/cache-tags"
 
+/**
+ * `teamLogoUrl` / `avatarUrl` are URLs into /api/img/*, not the raw base64
+ * data URIs stored in the database — see lib/image-response.ts for why.
+ */
 export interface PublicShowcaseTeam {
   studentUserId: string
   loginId: string
@@ -9,11 +15,16 @@ export interface PublicShowcaseTeam {
   teamLogoUrl: string | null
   domainId: string | null
   projectTitle: string | null
-  problemStatement: string | null
   solutionShort: string | null
-  solutionLong: string | null
   memberNames: string[]
   mentorName: string | null
+}
+
+/** The detail page additionally shows the long-form write-up, which the grid
+ *  never renders — so only the single-row RPC returns these. */
+export interface PublicShowcaseTeamDetail extends PublicShowcaseTeam {
+  problemStatement: string | null
+  solutionLong: string | null
 }
 
 export interface PublicShowcaseMentor {
@@ -30,12 +41,10 @@ type TeamRow = {
   login_id: string
   team_name: string | null
   team_lead_name: string | null
-  team_logo_url: string | null
+  team_logo_version: string | null
   domain_id: string | null
   project_title: string | null
-  problem_statement: string | null
   solution_short: string | null
-  solution_long: string | null
   member_names: string[] | null
   mentor_name: string | null
 }
@@ -46,12 +55,10 @@ function mapTeam(row: TeamRow): PublicShowcaseTeam {
     loginId: row.login_id,
     teamName: row.team_name,
     teamLeadName: row.team_lead_name,
-    teamLogoUrl: row.team_logo_url,
+    teamLogoUrl: teamLogoUrl(row.login_id, row.team_logo_version),
     domainId: row.domain_id,
     projectTitle: row.project_title,
-    problemStatement: row.problem_statement,
     solutionShort: row.solution_short,
-    solutionLong: row.solution_long,
     memberNames: row.member_names ?? [],
     mentorName: row.mentor_name,
   }
@@ -69,18 +76,26 @@ export const getPublicShowcaseTeams = unstable_cache(
     return ((data ?? []) as TeamRow[]).map(mapTeam)
   },
   ["public-showcase-teams"],
-  { revalidate: 20 },
+  { revalidate: 20, tags: [CACHE_TAGS.publicShowcase] },
 )
 
 export const getPublicShowcaseTeam = unstable_cache(
-  async (loginId: string): Promise<PublicShowcaseTeam | null> => {
+  async (loginId: string): Promise<PublicShowcaseTeamDetail | null> => {
     const supabase = getSupabaseServerClient()
     const { data } = await supabase.rpc("get_public_showcase_team", { p_login_id: loginId })
-    const row = (data as TeamRow[] | null)?.[0]
-    return row ? mapTeam(row) : null
+    const row = (data as (TeamRow & {
+      problem_statement: string | null
+      solution_long: string | null
+    })[] | null)?.[0]
+    if (!row) return null
+    return {
+      ...mapTeam(row),
+      problemStatement: row.problem_statement,
+      solutionLong: row.solution_long,
+    }
   },
   ["public-showcase-team"],
-  { revalidate: 20 },
+  { revalidate: 20, tags: [CACHE_TAGS.publicShowcase] },
 )
 
 export const getPublicMentorShowcase = unstable_cache(
@@ -92,7 +107,7 @@ export const getPublicMentorShowcase = unstable_cache(
         mentor_user_id: string
         login_id: string
         name: string | null
-        avatar_url: string | null
+        avatar_version: string | null
         bio: string | null
         domain_ids: string[]
       }[]
@@ -100,11 +115,11 @@ export const getPublicMentorShowcase = unstable_cache(
       mentorUserId: row.mentor_user_id,
       loginId: row.login_id,
       name: row.name,
-      avatarUrl: row.avatar_url,
+      avatarUrl: mentorAvatarUrl(row.login_id, row.avatar_version),
       bio: row.bio,
       domainIds: row.domain_ids ?? [],
     }))
   },
   ["public-mentor-showcase"],
-  { revalidate: 60 },
+  { revalidate: 60, tags: [CACHE_TAGS.publicShowcase] },
 )

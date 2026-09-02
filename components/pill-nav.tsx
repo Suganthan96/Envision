@@ -2,8 +2,21 @@
 
 import { useEffect, useRef, type ReactNode } from "react"
 import Link from "next/link"
-import { gsap } from "gsap"
 import "./pill-nav.css"
+
+/**
+ * GSAP is loaded lazily. This nav renders on essentially every page (public
+ * pages via PublicNav, every signed-in page via PortalHeader/AdminHeader), so
+ * a static `import { gsap } from "gsap"` put the whole library in the shared
+ * client bundle just for pill hover tweens. Importing it inside the effect
+ * moves it to its own chunk fetched after the page is interactive.
+ *
+ * The pills' resting appearance is declared in pill-nav.css, so the nav looks
+ * correct before the library arrives — only the animation is deferred.
+ */
+type Gsap = (typeof import("gsap"))["gsap"]
+type GsapTimeline = ReturnType<Gsap["timeline"]>
+type GsapTween = ReturnType<Gsap["to"]>
 
 export interface PillNavItem {
   label: string
@@ -54,81 +67,104 @@ export default function PillNav({
 }: PillNavProps) {
   const resolvedPillTextColor = pillTextColor ?? baseColor
   const circleRefs = useRef<(HTMLSpanElement | null)[]>([])
-  const tlRefs = useRef<(gsap.core.Timeline | null)[]>([])
-  const activeTweenRefs = useRef<(gsap.core.Tween | null)[]>([])
+  const tlRefs = useRef<(GsapTimeline | null)[]>([])
+  const activeTweenRefs = useRef<(GsapTween | null)[]>([])
   const logoImgRef = useRef<HTMLImageElement | null>(null)
-  const logoTweenRef = useRef<gsap.core.Tween | null>(null)
+  const logoTweenRef = useRef<GsapTween | null>(null)
   const navItemsRef = useRef<HTMLDivElement | null>(null)
   const logoRef = useRef<HTMLAnchorElement | null>(null)
+  const gsapRef = useRef<Gsap | null>(null)
 
   useEffect(() => {
-    const layout = () => {
-      circleRefs.current.forEach((circle) => {
-        if (!circle?.parentElement) return
+    let cancelled = false
+    let teardown: (() => void) | undefined
 
-        const pill = circle.parentElement
-        const rect = pill.getBoundingClientRect()
-        const { width: w, height: h } = rect
-        if (w === 0 || h === 0) return
-        const R = ((w * w) / 4 + h * h) / (2 * h)
-        const D = Math.ceil(2 * R) + 2
-        const delta = Math.ceil(R - Math.sqrt(Math.max(0, R * R - (w * w) / 4))) + 1
-        const originY = D - delta
+    const setup = (gsap: Gsap) => {
+      const layout = () => {
+        circleRefs.current.forEach((circle) => {
+          if (!circle?.parentElement) return
 
-        circle.style.width = `${D}px`
-        circle.style.height = `${D}px`
-        circle.style.bottom = `-${delta}px`
+          const pill = circle.parentElement
+          const rect = pill.getBoundingClientRect()
+          const { width: w, height: h } = rect
+          if (w === 0 || h === 0) return
+          const R = ((w * w) / 4 + h * h) / (2 * h)
+          const D = Math.ceil(2 * R) + 2
+          const delta = Math.ceil(R - Math.sqrt(Math.max(0, R * R - (w * w) / 4))) + 1
+          const originY = D - delta
 
-        gsap.set(circle, { xPercent: -50, scale: 0, transformOrigin: `50% ${originY}px` })
+          circle.style.width = `${D}px`
+          circle.style.height = `${D}px`
+          circle.style.bottom = `-${delta}px`
 
-        const label = pill.querySelector<HTMLElement>(".pill-label")
-        const white = pill.querySelector<HTMLElement>(".pill-label-hover")
+          gsap.set(circle, { xPercent: -50, scale: 0, transformOrigin: `50% ${originY}px` })
 
-        if (label) gsap.set(label, { y: 0 })
-        if (white) gsap.set(white, { y: h + 12, opacity: 0 })
+          const label = pill.querySelector<HTMLElement>(".pill-label")
+          const white = pill.querySelector<HTMLElement>(".pill-label-hover")
 
-        const index = circleRefs.current.indexOf(circle)
-        if (index === -1) return
+          if (label) gsap.set(label, { y: 0 })
+          if (white) gsap.set(white, { y: h + 12, opacity: 0 })
 
-        tlRefs.current[index]?.kill()
-        const tl = gsap.timeline({ paused: true })
+          const index = circleRefs.current.indexOf(circle)
+          if (index === -1) return
 
-        tl.to(circle, { scale: 1.2, xPercent: -50, duration: 2, ease, overwrite: "auto" }, 0)
-        if (label) tl.to(label, { y: -(h + 8), duration: 2, ease, overwrite: "auto" }, 0)
-        if (white) {
-          gsap.set(white, { y: Math.ceil(h + 100), opacity: 0 })
-          tl.to(white, { y: 0, opacity: 1, duration: 2, ease, overwrite: "auto" }, 0)
+          tlRefs.current[index]?.kill()
+          const tl = gsap.timeline({ paused: true })
+
+          tl.to(circle, { scale: 1.2, xPercent: -50, duration: 2, ease, overwrite: "auto" }, 0)
+          if (label) tl.to(label, { y: -(h + 8), duration: 2, ease, overwrite: "auto" }, 0)
+          if (white) {
+            gsap.set(white, { y: Math.ceil(h + 100), opacity: 0 })
+            tl.to(white, { y: 0, opacity: 1, duration: 2, ease, overwrite: "auto" }, 0)
+          }
+
+          tlRefs.current[index] = tl
+        })
+      }
+
+      layout()
+
+      const onResize = () => layout()
+      window.addEventListener("resize", onResize)
+
+      if (document.fonts?.ready) {
+        document.fonts.ready.then(layout).catch(() => {})
+      }
+
+      if (initialLoadAnimation) {
+        const logoEl = logoRef.current
+        const navItems = navItemsRef.current
+
+        if (logoEl) {
+          gsap.set(logoEl, { scale: 0 })
+          gsap.to(logoEl, { scale: 1, duration: 0.6, ease })
         }
 
-        tlRefs.current[index] = tl
+        if (navItems) {
+          gsap.set(navItems, { width: 0, overflow: "hidden" })
+          gsap.to(navItems, { width: "auto", duration: 0.6, ease })
+        }
+      }
+
+      return () => window.removeEventListener("resize", onResize)
+    }
+
+    import("gsap")
+      .then(({ gsap }) => {
+        if (cancelled) return
+        gsapRef.current = gsap
+        teardown = setup(gsap)
       })
+      .catch(() => {
+        // Animation is decorative — the nav stays fully usable without it.
+      })
+
+    return () => {
+      cancelled = true
+      teardown?.()
+      tlRefs.current.forEach((tl) => tl?.kill())
+      tlRefs.current = []
     }
-
-    layout()
-
-    const onResize = () => layout()
-    window.addEventListener("resize", onResize)
-
-    if (document.fonts?.ready) {
-      document.fonts.ready.then(layout).catch(() => {})
-    }
-
-    if (initialLoadAnimation) {
-      const logoEl = logoRef.current
-      const navItems = navItemsRef.current
-
-      if (logoEl) {
-        gsap.set(logoEl, { scale: 0 })
-        gsap.to(logoEl, { scale: 1, duration: 0.6, ease })
-      }
-
-      if (navItems) {
-        gsap.set(navItems, { width: 0, overflow: "hidden" })
-        gsap.to(navItems, { width: "auto", duration: 0.6, ease })
-      }
-    }
-
-    return () => window.removeEventListener("resize", onResize)
   }, [items, ease, initialLoadAnimation])
 
   const handleEnter = (i: number) => {
@@ -147,7 +183,8 @@ export default function PillNav({
 
   const handleLogoEnter = () => {
     const img = logoImgRef.current
-    if (!img) return
+    const gsap = gsapRef.current
+    if (!img || !gsap) return
     logoTweenRef.current?.kill()
     gsap.set(img, { rotate: 0 })
     logoTweenRef.current = gsap.to(img, { rotate: 360, duration: 0.4, ease, overwrite: "auto" })

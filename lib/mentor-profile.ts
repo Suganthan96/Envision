@@ -1,4 +1,5 @@
 import { getSupabaseServerClient } from "@/lib/supabase-server"
+import { mentorAvatarUrl } from "@/lib/image-url"
 
 export interface MentorProfile {
   avatarUrl: string | null
@@ -29,7 +30,7 @@ export async function getMyMentor(studentUserId: string): Promise<AssignedMentor
     mentorUserId: row.mentor_user_id,
     name: row.name,
     loginId: row.login_id,
-    avatarUrl: row.avatar_url,
+    avatarUrl: mentorAvatarUrl(row.login_id, row.avatar_version),
     bio: row.bio,
   }
 }

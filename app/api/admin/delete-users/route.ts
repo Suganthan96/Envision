@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { verifySessionToken, SESSION_COOKIE } from "@/lib/session"
+import { CACHE_TAGS } from "@/lib/cache-tags"
+import { revalidateSharedData } from "@/lib/revalidate"
 
 export async function POST(request: NextRequest) {
   const token = request.cookies.get(SESSION_COOKIE)?.value
@@ -28,6 +30,9 @@ export async function POST(request: NextRequest) {
   if (error) {
     return NextResponse.json({ error: "Unable to delete accounts." }, { status: 400 })
   }
+
+  // A deleted team or mentor must disappear from the public listings at once.
+  revalidateSharedData(CACHE_TAGS.publicShowcase)
 
   return NextResponse.json({ ok: true, deletedCount: data ?? 0 })
 }

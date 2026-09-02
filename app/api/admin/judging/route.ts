@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { verifySessionToken, SESSION_COOKIE } from "@/lib/session"
+import { CACHE_TAGS } from "@/lib/cache-tags"
+import { revalidateSharedData } from "@/lib/revalidate"
 
 /**
  * One endpoint for every Submissions-page judging mutation, keyed by
@@ -16,6 +18,10 @@ export async function POST(request: NextRequest) {
 
   const body = await request.json().catch(() => null)
   const action = typeof body?.action === "string" ? body.action : ""
+
+  // Every branch below mutates judging venues, assignments or settings, all
+  // of which are cached under the `judging` tag and read on /admin/submissions.
+  const purge = () => revalidateSharedData(CACHE_TAGS.judging)
   const supabase = getSupabaseServerClient()
   const admin = session.userId
 
@@ -31,6 +37,7 @@ export async function POST(request: NextRequest) {
           p_kind: kind,
         })
         if (error) throw error
+        purge()
         return NextResponse.json({ venue: data })
       }
       case "rename-venue": {
@@ -43,6 +50,7 @@ export async function POST(request: NextRequest) {
           p_name: name,
         })
         if (error) throw error
+        purge()
         return NextResponse.json({ ok: true })
       }
       case "delete-venue": {
@@ -53,6 +61,7 @@ export async function POST(request: NextRequest) {
           p_id: id,
         })
         if (error) throw error
+        purge()
         return NextResponse.json({ ok: true })
       }
       case "set-assignment": {
@@ -71,6 +80,7 @@ export async function POST(request: NextRequest) {
           p_kind: kind,
         })
         if (error) throw error
+        purge()
         return NextResponse.json({ ok: true })
       }
       case "save-settings": {
@@ -99,6 +109,7 @@ export async function POST(request: NextRequest) {
           p_faculty_timing: facultyTiming,
         })
         if (error) throw error
+        purge()
         return NextResponse.json({ ok: true })
       }
       default:

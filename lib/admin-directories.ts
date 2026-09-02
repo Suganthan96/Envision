@@ -1,4 +1,5 @@
 import { getSupabaseServerClient } from "@/lib/supabase-server"
+import { mentorAvatarUrl, teamLogoUrl } from "@/lib/image-url"
 
 export interface AdminMentorProfile {
   mentorUserId: string
@@ -39,7 +40,7 @@ export async function getMentorProfilesForAdmin(adminUserId: string): Promise<Ad
       mentor_user_id: string
       login_id: string
       name: string | null
-      avatar_url: string | null
+      avatar_version: string | null
       bio: string | null
       venue: string | null
       domain_ids: string[]
@@ -48,7 +49,7 @@ export async function getMentorProfilesForAdmin(adminUserId: string): Promise<Ad
     mentorUserId: row.mentor_user_id,
     loginId: row.login_id,
     name: row.name,
-    avatarUrl: row.avatar_url,
+    avatarUrl: mentorAvatarUrl(row.login_id, row.avatar_version),
     bio: row.bio,
     venue: row.venue,
     domainIds: row.domain_ids ?? [],
@@ -104,36 +105,34 @@ export async function getSubmissionsForAdmin(adminUserId: string): Promise<Admin
   }))
 }
 
-export async function getTeamProfilesForAdmin(adminUserId: string): Promise<AdminTeamProfile[]> {
-  const supabase = getSupabaseServerClient()
-  const { data } = await supabase.rpc("admin_list_team_profiles", { p_admin_user_id: adminUserId })
-  return (
-    (data ?? []) as {
-      student_user_id: string
-      login_id: string
-      team_name: string | null
-      team_lead_name: string | null
-      team_logo_url: string | null
-      venue: string | null
-      domain_id: string | null
-      project_title: string | null
-      problem_statement: string | null
-      solution_short: string | null
-      solution_long: string | null
-      member_count: number
-      mentor_user_id: string | null
-      mentor_name: string | null
-      mentor_login_id: string | null
-      submission_canva_url: string | null
-      submission_file_url: string | null
-      submission_updated_at: string | null
-    }[]
-  ).map((row) => ({
+type TeamProfileRow = {
+  student_user_id: string
+  login_id: string
+  team_name: string | null
+  team_lead_name: string | null
+  team_logo_version: string | null
+  venue: string | null
+  domain_id: string | null
+  project_title: string | null
+  problem_statement: string | null
+  solution_short: string | null
+  solution_long: string | null
+  member_count: number
+  mentor_user_id: string | null
+  mentor_name: string | null
+  mentor_login_id: string | null
+  submission_canva_url: string | null
+  submission_file_url: string | null
+  submission_updated_at: string | null
+}
+
+function mapTeamProfile(row: TeamProfileRow): AdminTeamProfile {
+  return {
     studentUserId: row.student_user_id,
     loginId: row.login_id,
     teamName: row.team_name,
     teamLeadName: row.team_lead_name,
-    teamLogoUrl: row.team_logo_url,
+    teamLogoUrl: teamLogoUrl(row.login_id, row.team_logo_version),
     venue: row.venue,
     domainId: row.domain_id,
     projectTitle: row.project_title,
@@ -147,5 +146,57 @@ export async function getTeamProfilesForAdmin(adminUserId: string): Promise<Admi
     submissionDriveUrl: row.submission_file_url,
     submissionCanvaUrl: row.submission_canva_url,
     submissionUpdatedAt: row.submission_updated_at,
-  }))
+  }
+}
+
+export async function getTeamProfilesForAdmin(adminUserId: string): Promise<AdminTeamProfile[]> {
+  const supabase = getSupabaseServerClient()
+  const { data } = await supabase.rpc("admin_list_team_profiles", { p_admin_user_id: adminUserId })
+  return ((data ?? []) as TeamProfileRow[]).map(mapTeamProfile)
+}
+
+/** Single-row equivalent for the team detail page — avoids pulling the whole
+ *  directory just to pick one record out of it in JS. */
+export async function getTeamProfileForAdmin(
+  adminUserId: string,
+  studentUserId: string,
+): Promise<AdminTeamProfile | null> {
+  const supabase = getSupabaseServerClient()
+  const { data } = await supabase.rpc("admin_get_team_profile", {
+    p_admin_user_id: adminUserId,
+    p_student_user_id: studentUserId,
+  })
+  const row = (data as TeamProfileRow[] | null)?.[0]
+  return row ? mapTeamProfile(row) : null
+}
+
+/** Single-row equivalent for the mentor detail page. */
+export async function getMentorProfileForAdmin(
+  adminUserId: string,
+  mentorUserId: string,
+): Promise<AdminMentorProfile | null> {
+  const supabase = getSupabaseServerClient()
+  const { data } = await supabase.rpc("admin_get_mentor_profile", {
+    p_admin_user_id: adminUserId,
+    p_mentor_user_id: mentorUserId,
+  })
+  const row = (data as {
+    mentor_user_id: string
+    login_id: string
+    name: string | null
+    avatar_version: string | null
+    bio: string | null
+    venue: string | null
+    domain_ids: string[]
+  }[] | null)?.[0]
+  if (!row) return null
+  return {
+    mentorUserId: row.mentor_user_id,
+    loginId: row.login_id,
+    name: row.name,
+    avatarUrl: mentorAvatarUrl(row.login_id, row.avatar_version),
+    bio: row.bio,
+    venue: row.venue,
+    domainIds: row.domain_ids ?? [],
+  }
 }

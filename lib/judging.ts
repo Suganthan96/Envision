@@ -1,4 +1,6 @@
+import { unstable_cache } from "next/cache"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
+import { CACHE_TAGS } from "@/lib/cache-tags"
 
 export interface JudgingVenue {
   id: string
@@ -38,39 +40,49 @@ export const DEFAULT_RUBRIC: RubricRow[] = [
   { label: "Team work and presentation", max: 10 },
 ]
 
-export async function getJudgingVenues(
-  adminUserId: string,
-  kind: VenueKind = "judging",
-): Promise<JudgingVenue[]> {
-  const supabase = getSupabaseServerClient()
-  const { data } = await supabase.rpc("admin_list_judging_venues", {
-    p_admin_user_id: adminUserId,
-    p_kind: kind,
-  })
-  return ((data ?? []) as { id: string; name: string; sort_order: number }[]).map((r) => ({
-    id: r.id,
-    name: r.name,
-    sortOrder: r.sort_order,
-  }))
-}
+// Judging venues, assignments and settings are admin-managed and change only
+// via /api/admin/judging, which purges the `judging` tag. Caching them keeps
+// /admin/submissions — which loads six datasets at once — off the database on
+// every view. The admin id is part of the cache key (it is an argument), so
+// the authorization check inside each RPC still runs on a cache miss.
+export const getJudgingVenues = unstable_cache(
+  async (adminUserId: string, kind: VenueKind = "judging"): Promise<JudgingVenue[]> => {
+    const supabase = getSupabaseServerClient()
+    const { data } = await supabase.rpc("admin_list_judging_venues", {
+      p_admin_user_id: adminUserId,
+      p_kind: kind,
+    })
+    return ((data ?? []) as { id: string; name: string; sort_order: number }[]).map((r) => ({
+      id: r.id,
+      name: r.name,
+      sortOrder: r.sort_order,
+    }))
+  },
+  ["judging-venues"],
+  { tags: [CACHE_TAGS.judging] },
+)
 
-export async function getJudgingAssignments(adminUserId: string): Promise<JudgingAssignment[]> {
-  const supabase = getSupabaseServerClient()
-  const { data } = await supabase.rpc("admin_list_judging_assignments", { p_admin_user_id: adminUserId })
-  return (
-    (data ?? []) as {
-      kind: VenueKind
-      scope: JudgingScope
-      ref_id: string
-      judging_venue_id: string
-    }[]
-  ).map((r) => ({
-    kind: r.kind ?? "judging",
-    scope: r.scope,
-    refId: r.ref_id,
-    venueId: r.judging_venue_id,
-  }))
-}
+export const getJudgingAssignments = unstable_cache(
+  async (adminUserId: string): Promise<JudgingAssignment[]> => {
+    const supabase = getSupabaseServerClient()
+    const { data } = await supabase.rpc("admin_list_judging_assignments", { p_admin_user_id: adminUserId })
+    return (
+      (data ?? []) as {
+        kind: VenueKind
+        scope: JudgingScope
+        ref_id: string
+        judging_venue_id: string
+      }[]
+    ).map((r) => ({
+      kind: r.kind ?? "judging",
+      scope: r.scope,
+      refId: r.ref_id,
+      venueId: r.judging_venue_id,
+    }))
+  },
+  ["judging-assignments"],
+  { tags: [CACHE_TAGS.judging] },
+)
 
 export async function getJudgingSettings(adminUserId: string): Promise<JudgingSettings> {
   const supabase = getSupabaseServerClient()
@@ -91,18 +103,19 @@ export async function getJudgingSettings(adminUserId: string): Promise<JudgingSe
  * required (the RPC is granted to anon). Returns null if the criteria
  * haven't been set up.
  */
-export async function getPublicJudgingRubric(): Promise<{
-  heading: string
-  rubric: RubricRow[]
-} | null> {
-  const supabase = getSupabaseServerClient()
-  const { data } = await supabase.rpc("get_judging_rubric")
-  const row = (Array.isArray(data) ? data[0] : data) as
-    | { report_heading: string; rubric: RubricRow[] }
-    | null
-  if (!row || !Array.isArray(row.rubric) || row.rubric.length === 0) return null
-  return { heading: row.report_heading ?? "Judging Sheet", rubric: row.rubric }
-}
+export const getPublicJudgingRubric = unstable_cache(
+  async (): Promise<{ heading: string; rubric: RubricRow[] } | null> => {
+    const supabase = getSupabaseServerClient()
+    const { data } = await supabase.rpc("get_judging_rubric")
+    const row = (Array.isArray(data) ? data[0] : data) as
+      | { report_heading: string; rubric: RubricRow[] }
+      | null
+    if (!row || !Array.isArray(row.rubric) || row.rubric.length === 0) return null
+    return { heading: row.report_heading ?? "Judging Sheet", rubric: row.rubric }
+  },
+  ["judging-rubric"],
+  { tags: [CACHE_TAGS.judging] },
+)
 
 /**
  * A team's presentation venue is layered: its own assignment wins, then its

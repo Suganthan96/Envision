@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { verifySessionToken, SESSION_COOKIE } from "@/lib/session"
+import { CACHE_TAGS } from "@/lib/cache-tags"
+import { revalidateSharedData } from "@/lib/revalidate"
 
 export async function POST(request: NextRequest) {
   const token = request.cookies.get(SESSION_COOKIE)?.value
@@ -26,5 +28,10 @@ export async function POST(request: NextRequest) {
   if (error || data !== true) {
     return NextResponse.json({ error: error?.message ?? "Could not update visibility." }, { status: 400 })
   }
+  // Hiding someone is a visibility decision — it must take effect on the
+  // public /showcase and /mentors listings immediately, not after their
+  // 20–60s time-based cache happens to expire.
+  revalidateSharedData(CACHE_TAGS.publicShowcase)
+
   return NextResponse.json({ ok: true, hidden })
 }
