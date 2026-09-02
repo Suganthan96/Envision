@@ -370,8 +370,9 @@ export function AdminSubmissionsView({
         setError={setError}
       />
 
-      {/* ---- submissions table ---- */}
-      <div className="flex flex-col gap-4">
+      {/* ---- submissions table (breaks out to near-full viewport width so
+              the wide table fits without a horizontal scrollbar) ---- */}
+      <div className="flex flex-col gap-4 relative w-[92vw] max-w-[1700px] left-1/2 -translate-x-1/2">
         <h2 className="font-serif text-2xl text-foreground">Teams</h2>
         <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4">
           <div className="flex flex-col gap-1.5 w-full sm:max-w-xs">
@@ -428,15 +429,15 @@ export function AdminSubmissionsView({
             <table className="w-full text-sm">
               <thead>
                 <tr className="border-b border-border text-primary uppercase tracking-[0.1em] text-[10px]">
-                  <th className="text-left font-medium px-4 py-3">Team</th>
-                  <th className="text-left font-medium px-4 py-3">Mentor</th>
-                  <th className="text-left font-medium px-4 py-3">Theme</th>
-                  <th className="text-left font-medium px-4 py-3 min-w-[170px]">Presentation Venue</th>
-                  <th className="text-left font-medium px-4 py-3 min-w-[170px]">Waiting Venue</th>
-                  <th className="text-left font-medium px-4 py-3">Drive</th>
-                  <th className="text-left font-medium px-4 py-3">Canva</th>
-                  <th className="text-left font-medium px-4 py-3">Status</th>
-                  <th className="text-left font-medium px-4 py-3">Updated</th>
+                  <th className="text-left font-medium px-3 py-3">Team</th>
+                  <th className="text-left font-medium px-3 py-3">Mentor</th>
+                  <th className="text-left font-medium px-3 py-3">Theme</th>
+                  <th className="text-left font-medium px-3 py-3">Presentation Venue</th>
+                  <th className="text-left font-medium px-3 py-3">Waiting Venue</th>
+                  <th className="text-left font-medium px-3 py-3">Drive</th>
+                  <th className="text-left font-medium px-3 py-3">Canva</th>
+                  <th className="text-left font-medium px-3 py-3">Status</th>
+                  <th className="text-left font-medium px-3 py-3">Updated</th>
                 </tr>
               </thead>
               <tbody>
@@ -449,7 +450,7 @@ export function AdminSubmissionsView({
                   }
                   return (
                     <tr key={r.studentUserId} className="border-b border-border last:border-0 align-top">
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3">
                         <Link
                           href={`/admin/team-profiles/${r.studentUserId}`}
                           className="text-foreground hover:text-primary"
@@ -458,9 +459,13 @@ export function AdminSubmissionsView({
                         </Link>
                         <span className="text-muted-foreground font-mono text-xs ml-2">#{r.loginId}</span>
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground">{r.mentorName ?? "—"}</td>
-                      <td className="px-4 py-3 text-muted-foreground">{domainTitle(r.domainId) ?? "—"}</td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3 text-muted-foreground whitespace-nowrap">{r.mentorName ?? "—"}</td>
+                      <td className="px-3 py-3 text-muted-foreground max-w-[150px]">
+                        <span className="block truncate" title={domainTitle(r.domainId) ?? undefined}>
+                          {domainTitle(r.domainId) ?? "—"}
+                        </span>
+                      </td>
+                      <td className="px-3 py-3 w-[190px]">
                         <SearchableSelect
                           value={assignmentValue("judging", "team", r.studentUserId)}
                           onChange={(v) => setAssignment("judging", "team", r.studentUserId, v)}
@@ -474,7 +479,7 @@ export function AdminSubmissionsView({
                           className="h-9 text-xs"
                         />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3 w-[190px]">
                         <SearchableSelect
                           value={assignmentValue("waiting", "team", r.studentUserId)}
                           onChange={(v) => setAssignment("waiting", "team", r.studentUserId, v)}
@@ -488,7 +493,7 @@ export function AdminSubmissionsView({
                           className="h-9 text-xs"
                         />
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3">
                         {r.driveUrl ? (
                           <a
                             href={r.driveUrl}
@@ -503,7 +508,7 @@ export function AdminSubmissionsView({
                           <span className="text-muted-foreground">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3">
                         {r.canvaUrl ? (
                           <a
                             href={r.canvaUrl}
@@ -518,7 +523,7 @@ export function AdminSubmissionsView({
                           <span className="text-muted-foreground">—</span>
                         )}
                       </td>
-                      <td className="px-4 py-3">
+                      <td className="px-3 py-3">
                         {submitted ? (
                           <span className="inline-flex items-center gap-1 text-primary">
                             <CheckCircle2 className="w-4 h-4" /> Submitted
@@ -529,7 +534,7 @@ export function AdminSubmissionsView({
                           </span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">
+                      <td className="px-3 py-3 text-muted-foreground whitespace-nowrap">
                         {formatDate(r.updatedAt)}
                       </td>
                     </tr>

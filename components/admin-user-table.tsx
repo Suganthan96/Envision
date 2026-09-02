@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react"
 import { useRouter } from "next/navigation"
-import { Search, Trash2, UserPlus } from "lucide-react"
+import { Eye, EyeOff, Search, Trash2, UserPlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -38,6 +38,7 @@ export type AppUserRow = {
   name: string | null
   phone: string | null
   email: string | null
+  hidden?: boolean
 }
 
 const DEFAULT_PASSWORD = "licet@123"
@@ -131,6 +132,27 @@ export function AdminUserTable({ users }: { users: AppUserRow[] }) {
 
       setFeedback((f) => ({ ...f, [loginId]: "Password reset. They must set a new one at next sign-in." }))
       setCustomPasswords((c) => ({ ...c, [loginId]: "" }))
+      router.refresh()
+    } catch {
+      setFeedback((f) => ({ ...f, [loginId]: "Something went wrong." }))
+    } finally {
+      setPending(null)
+    }
+  }
+
+  const toggleHidden = async (loginId: string, hidden: boolean) => {
+    setPending(loginId)
+    try {
+      const res = await fetch("/api/admin/set-user-hidden", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ loginId, hidden }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setFeedback((f) => ({ ...f, [loginId]: data.error ?? "Could not update visibility." }))
+        return
+      }
       router.refresh()
     } catch {
       setFeedback((f) => ({ ...f, [loginId]: "Something went wrong." }))
@@ -260,12 +282,16 @@ export function AdminUserTable({ users }: { users: AppUserRow[] }) {
                 <TableHead className="text-primary tracking-[0.1em] uppercase text-xs">Role</TableHead>
                 <TableHead className="text-primary tracking-[0.1em] uppercase text-xs">Status</TableHead>
                 <TableHead className="text-primary tracking-[0.1em] uppercase text-xs">Reset Password</TableHead>
+                <TableHead className="text-primary tracking-[0.1em] uppercase text-xs">Visible</TableHead>
                 <TableHead className="text-primary tracking-[0.1em] uppercase text-xs">Delete</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredUsers.map((u) => (
-                <TableRow key={u.login_id} className="border-border align-top">
+                <TableRow
+                  key={u.login_id}
+                  className={`border-border align-top ${u.hidden ? "opacity-45" : ""}`}
+                >
                   <TableCell>
                     {u.role !== "admin" && (
                       <Checkbox
@@ -307,6 +333,21 @@ export function AdminUserTable({ users }: { users: AppUserRow[] }) {
                         <p className="text-xs text-muted-foreground">{feedback[u.login_id]}</p>
                       )}
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    {u.role !== "admin" && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        disabled={pending === u.login_id}
+                        onClick={() => toggleHidden(u.login_id, !u.hidden)}
+                        className="border-border text-muted-foreground hover:text-primary hover:border-primary dark:bg-transparent h-8 w-8 p-0"
+                        aria-label={u.hidden ? `Show ${u.login_id}` : `Hide ${u.login_id}`}
+                        title={u.hidden ? "Hidden from lists — click to show" : "Visible — click to hide"}
+                      >
+                        {u.hidden ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </Button>
+                    )}
                   </TableCell>
                   <TableCell>
                     {u.role !== "admin" && (
