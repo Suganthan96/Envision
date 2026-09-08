@@ -25,15 +25,33 @@ export default async function ShowcasePage() {
             </div>
           </div>
           <p className="text-primary tracking-[0.3em] uppercase text-sm mb-4">EnVision 2026</p>
-          <h1 className="font-serif text-5xl md:text-6xl text-foreground mb-6 text-balance">
+          <h1 className="font-serif text-5xl md:text-6xl text-foreground text-balance">
             Project <span className="text-gold-gradient">Showcase</span>
           </h1>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto leading-relaxed">
-            Every team&apos;s prototype from this cycle — what they set out to solve, and how.
-          </p>
         </div>
 
         <ArtDecoDivider variant="chevron" />
+
+        {/* Framing quote for the gallery, in the same treatment as the
+            testimonial on the landing page. It replaces the old subtitle,
+            which said the same thing a line above the fold. */}
+        <div className="relative text-center max-w-3xl mx-auto pt-10 pb-12">
+          <div
+            aria-hidden
+            className="absolute top-0 left-1/2 -translate-x-1/2 text-primary/20 font-serif text-8xl leading-none select-none"
+          >
+            &ldquo;
+          </div>
+
+          <blockquote className="relative z-10">
+            <p className="font-serif text-2xl md:text-3xl text-foreground leading-relaxed italic text-balance">
+              Every Team Began With a Question
+            </p>
+            <p className="text-muted-foreground text-base md:text-lg leading-relaxed mt-4 text-balance">
+              What they chose to solve, and the shape their answer finally took.
+            </p>
+          </blockquote>
+        </div>
 
         <Suspense fallback={<CardGridSkeleton />}>
           <ShowcaseGrid />
