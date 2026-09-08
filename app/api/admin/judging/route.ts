@@ -83,6 +83,32 @@ export async function POST(request: NextRequest) {
         purge()
         return NextResponse.json({ ok: true })
       }
+      case "set-score": {
+        const studentUserId = String(body?.studentUserId ?? "")
+        if (!studentUserId) {
+          return NextResponse.json({ error: "studentUserId is required." }, { status: 400 })
+        }
+        // An empty value clears the score back to "not scored yet", which is
+        // not the same as a score of 0.
+        const raw = body?.score
+        let score: number | null = null
+        if (raw !== null && raw !== undefined && String(raw).trim() !== "") {
+          score = Number(raw)
+          if (!Number.isFinite(score) || score < 0 || score > 1000) {
+            return NextResponse.json({ error: "Score must be between 0 and 1000." }, { status: 400 })
+          }
+          score = Math.round(score * 100) / 100
+        }
+        const { error } = await supabase.rpc("admin_set_submission_score", {
+          p_admin_user_id: admin,
+          p_student_user_id: studentUserId,
+          p_score: score,
+        })
+        if (error) throw error
+        // Scores are read through getSubmissionsForAdmin, which is uncached on
+        // a force-dynamic page, so there is nothing to purge here.
+        return NextResponse.json({ ok: true })
+      }
       case "save-settings": {
         const heading = String(body?.heading ?? "").trim()
         const facultyHeading = String(body?.facultyHeading ?? "").trim()
