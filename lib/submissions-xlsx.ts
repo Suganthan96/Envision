@@ -13,6 +13,8 @@ export interface SubmissionsXlsxRow {
   waitingVenue: string
   domain: string
   projectTitle: string
+  /** Blank when the team has not been scored yet. */
+  score: number | null
 }
 
 const HEADERS = [
@@ -24,6 +26,7 @@ const HEADERS = [
   "Waiting Venue",
   "Domain",
   "Project Title",
+  "Score",
 ]
 
 export async function downloadSubmissionsXlsx(rows: SubmissionsXlsxRow[]) {
@@ -40,6 +43,7 @@ export async function downloadSubmissionsXlsx(rows: SubmissionsXlsxRow[]) {
       r.waitingVenue,
       r.domain,
       r.projectTitle,
+      r.score ?? "",
     ]),
   ]
 
@@ -53,6 +57,7 @@ export async function downloadSubmissionsXlsx(rows: SubmissionsXlsxRow[]) {
     { wch: 16 },
     { wch: 30 },
     { wch: 44 },
+    { wch: 8 },
   ]
   ws["!freeze"] = { xSplit: 0, ySplit: 1 }
 

@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -16,6 +16,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SearchableSelect } from "@/components/searchable-select"
+import { cn } from "@/lib/utils"
 import { formatDate } from "@/lib/format-date"
 import {
   resolveJudgingVenue,
@@ -105,6 +106,46 @@ export function AdminSubmissionsView({
       setError(e instanceof Error ? e.message : "Could not save.")
     }
   }
+
+  // ---- scores ----
+  // Held locally so typing a score updates the row (and the scored count)
+  // immediately; a failed save rolls the row back to its previous value.
+  const [scores, setScores] = useState<Record<string, number | null>>(() =>
+    Object.fromEntries(rows.map((r) => [r.studentUserId, r.score])),
+  )
+
+  /** Marks available per the current rubric — shown as "/ 50" beside each
+   *  input so a typo like 420 is obvious. */
+  const rubricTotal = useMemo(
+    () => liveSettings.rubric.reduce((sum, row) => sum + (Number(row.max) || 0), 0),
+    [liveSettings.rubric],
+  )
+
+  async function saveScore(studentUserId: string, value: string) {
+    setError("")
+    const prev = scores[studentUserId] ?? null
+    const trimmed = value.trim()
+    const next = trimmed === "" ? null : Number(trimmed)
+
+    if (next !== null && (!Number.isFinite(next) || next < 0)) {
+      setError("Score must be a number of 0 or more.")
+      return
+    }
+    if (next === prev) return
+
+    setScores((cur) => ({ ...cur, [studentUserId]: next }))
+    try {
+      await callJudging("set-score", { studentUserId, score: next })
+    } catch (e) {
+      setScores((cur) => ({ ...cur, [studentUserId]: prev }))
+      setError(e instanceof Error ? e.message : "Could not save the score.")
+    }
+  }
+
+  const scoredCount = useMemo(
+    () => rows.filter((r) => scores[r.studentUserId] != null).length,
+    [rows, scores],
+  )
 
   // ---- filters / search ----
   const [query, setQuery] = useState("")
@@ -311,6 +352,7 @@ export function AdminSubmissionsView({
             waitingVenue: wait,
             domain: domainTitle(r.domainId) ?? "",
             projectTitle: r.projectTitle?.trim() || (r.teamName ?? ""),
+            score: scores[r.studentUserId] ?? null,
           }
         })
         .sort(
@@ -329,7 +371,7 @@ export function AdminSubmissionsView({
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
           <span className="text-foreground font-medium">{submittedCount}</span> of {rows.length} teams
-          have submitted.
+          have submitted &middot; <span className="text-foreground font-medium">{scoredCount}</span> scored.
         </p>
         <div className="flex flex-wrap gap-2">
           <Button
@@ -487,6 +529,7 @@ export function AdminSubmissionsView({
                   <th className="text-left font-medium px-3 py-3">Team</th>
                   <th className="text-left font-medium px-3 py-3">Mentor</th>
                   <th className="text-left font-medium px-3 py-3">Theme</th>
+                  <th className="text-left font-medium px-3 py-3">Score</th>
                   <th className="text-left font-medium px-3 py-3">Presentation Venue</th>
                   <th className="text-left font-medium px-3 py-3">Waiting Venue</th>
                   <th className="text-left font-medium px-3 py-3">Drive</th>
@@ -519,6 +562,13 @@ export function AdminSubmissionsView({
                         <span className="block truncate" title={domainTitle(r.domainId) ?? undefined}>
                           {domainTitle(r.domainId) ?? "—"}
                         </span>
+                      </td>
+                      <td className="px-3 py-3">
+                        <ScoreCell
+                          value={scores[r.studentUserId] ?? null}
+                          max={rubricTotal}
+                          onSave={(v) => saveScore(r.studentUserId, v)}
+                        />
                       </td>
                       <td className="px-3 py-3 w-[190px]">
                         <SearchableSelect
@@ -600,6 +650,70 @@ export function AdminSubmissionsView({
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+
+/**
+ * One team's total score. Keeps its own text while being typed and commits on
+ * blur or Enter, so a half-typed "4" on the way to "42" is never saved. Blank
+ * clears the score back to unscored.
+ */
+function ScoreCell({
+  value,
+  max,
+  onSave,
+}: {
+  value: number | null
+  max: number
+  onSave: (value: string) => Promise<void>
+}) {
+  const saved = value == null ? "" : String(value)
+  const [text, setText] = useState(saved)
+  const [busy, setBusy] = useState(false)
+
+  // Re-sync when the stored value changes underneath — notably when a failed
+  // save rolls the row back.
+  useEffect(() => setText(saved), [saved])
+
+  async function commit() {
+    if (text.trim() === saved) return
+    setBusy(true)
+    try {
+      await onSave(text)
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const typed = Number(text)
+  const overMax = text.trim() !== "" && Number.isFinite(typed) && max > 0 && typed > max
+
+  return (
+    <div className="flex items-center gap-1.5">
+      <Input
+        type="number"
+        inputMode="decimal"
+        min={0}
+        step="0.5"
+        value={text}
+        disabled={busy}
+        onChange={(e) => setText(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") e.currentTarget.blur()
+        }}
+        placeholder="—"
+        aria-label="Score"
+        title={overMax ? `Above the rubric total of ${max}` : undefined}
+        className={cn(
+          "h-9 w-[74px] bg-card border-border text-foreground text-center tabular-nums",
+          overMax && "border-destructive text-destructive",
+        )}
+      />
+      {max > 0 && <span className="text-muted-foreground text-xs whitespace-nowrap">/ {max}</span>}
     </div>
   )
 }
