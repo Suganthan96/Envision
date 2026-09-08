@@ -69,10 +69,12 @@ export interface AdminSubmissionRow {
   driveUrl: string | null
   canvaUrl: string | null
   updatedAt: string | null
-  /** Total score awarded by the judges, entered by an admin on
-   *  /admin/submissions. null means "not scored yet", which is deliberately
-   *  distinct from a real score of 0. */
+  /** Total score, always derived server-side from `scoreBreakdown`. null
+   *  means "not scored yet", which is deliberately distinct from a real 0. */
   score: number | null
+  /** Per-criterion marks keyed by rubric label. Entered one at a time by an
+   *  admin; only the total is shown in the teams list. */
+  scoreBreakdown: Record<string, number> | null
 }
 
 export async function getSubmissionsForAdmin(adminUserId: string): Promise<AdminSubmissionRow[]> {
@@ -93,6 +95,7 @@ export async function getSubmissionsForAdmin(adminUserId: string): Promise<Admin
       submission_file_url: string | null
       submission_updated_at: string | null
       submission_score: number | string | null
+      submission_score_breakdown: Record<string, number> | null
     }[]
   ).map((row) => ({
     studentUserId: row.student_user_id,
@@ -110,6 +113,7 @@ export async function getSubmissionsForAdmin(adminUserId: string): Promise<Admin
     // Postgres `numeric` can arrive as a string, so normalise it here rather
     // than leaving every caller to guess.
     score: row.submission_score == null ? null : Number(row.submission_score),
+    scoreBreakdown: row.submission_score_breakdown ?? null,
   }))
 }
 
