@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { Fragment, useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -108,43 +108,46 @@ export function AdminSubmissionsView({
   }
 
   // ---- scores ----
-  // Held locally so typing a score updates the row (and the scored count)
-  // immediately; a failed save rolls the row back to its previous value.
-  const [scores, setScores] = useState<Record<string, number | null>>(() =>
-    Object.fromEntries(rows.map((r) => [r.studentUserId, r.score])),
+  // Marks are entered one criterion at a time and held locally, so the total
+  // and the scored count update as they are typed. A failed save rolls the
+  // team back to its previous marks.
+  const [breakdowns, setBreakdowns] = useState<Record<string, Record<string, number>>>(() =>
+    Object.fromEntries(rows.map((r) => [r.studentUserId, r.scoreBreakdown ?? {}])),
   )
+  /** Which team's mark-entry panel is open. Only one at a time. */
+  const [openScoreFor, setOpenScoreFor] = useState<string | null>(null)
 
-  /** Marks available per the current rubric — shown as "/ 50" beside each
-   *  input so a typo like 420 is obvious. */
+  /** Marks available per the current rubric — the "/ 50" beside each total. */
   const rubricTotal = useMemo(
     () => liveSettings.rubric.reduce((sum, row) => sum + (Number(row.max) || 0), 0),
     [liveSettings.rubric],
   )
 
-  async function saveScore(studentUserId: string, value: string) {
+  /** A team's total, summed from whatever criteria have been filled in.
+   *  null (not 0) while nothing has been entered at all. */
+  function totalFor(studentUserId: string): number | null {
+    const marks = breakdowns[studentUserId]
+    if (!marks) return null
+    const values = Object.values(marks)
+    if (values.length === 0) return null
+    return values.reduce((sum, v) => sum + v, 0)
+  }
+
+  async function saveMarks(studentUserId: string, next: Record<string, number>) {
     setError("")
-    const prev = scores[studentUserId] ?? null
-    const trimmed = value.trim()
-    const next = trimmed === "" ? null : Number(trimmed)
-
-    if (next !== null && (!Number.isFinite(next) || next < 0)) {
-      setError("Score must be a number of 0 or more.")
-      return
-    }
-    if (next === prev) return
-
-    setScores((cur) => ({ ...cur, [studentUserId]: next }))
+    const prev = breakdowns[studentUserId] ?? {}
+    setBreakdowns((cur) => ({ ...cur, [studentUserId]: next }))
     try {
-      await callJudging("set-score", { studentUserId, score: next })
+      await callJudging("set-scores", { studentUserId, marks: next })
     } catch (e) {
-      setScores((cur) => ({ ...cur, [studentUserId]: prev }))
-      setError(e instanceof Error ? e.message : "Could not save the score.")
+      setBreakdowns((cur) => ({ ...cur, [studentUserId]: prev }))
+      setError(e instanceof Error ? e.message : "Could not save the marks.")
     }
   }
 
   const scoredCount = useMemo(
-    () => rows.filter((r) => scores[r.studentUserId] != null).length,
-    [rows, scores],
+    () => rows.filter((r) => totalFor(r.studentUserId) != null).length,
+    [rows, breakdowns],
   )
 
   // ---- filters / search ----
@@ -352,7 +355,8 @@ export function AdminSubmissionsView({
             waitingVenue: wait,
             domain: domainTitle(r.domainId) ?? "",
             projectTitle: r.projectTitle?.trim() || (r.teamName ?? ""),
-            score: scores[r.studentUserId] ?? null,
+            // Only the total goes into the sheet, matching the teams table.
+            score: totalFor(r.studentUserId),
           }
         })
         .sort(
@@ -547,7 +551,8 @@ export function AdminSubmissionsView({
                     source: null,
                   }
                   return (
-                    <tr key={r.studentUserId} className="border-b border-border last:border-0 align-top">
+                    <Fragment key={r.studentUserId}>
+                    <tr className="border-b border-border last:border-0 align-top">
                       <td className="px-3 py-3">
                         <Link
                           href={`/admin/team-profiles/${r.studentUserId}`}
@@ -565,9 +570,14 @@ export function AdminSubmissionsView({
                       </td>
                       <td className="px-3 py-3">
                         <ScoreCell
-                          value={scores[r.studentUserId] ?? null}
+                          total={totalFor(r.studentUserId)}
                           max={rubricTotal}
-                          onSave={(v) => saveScore(r.studentUserId, v)}
+                          open={openScoreFor === r.studentUserId}
+                          onToggle={() =>
+                            setOpenScoreFor((cur) =>
+                              cur === r.studentUserId ? null : r.studentUserId,
+                            )
+                          }
                         />
                       </td>
                       <td className="px-3 py-3 w-[190px]">
@@ -643,6 +653,20 @@ export function AdminSubmissionsView({
                         {formatDate(r.updatedAt)}
                       </td>
                     </tr>
+                    {openScoreFor === r.studentUserId && (
+                      <tr className="border-b border-border bg-card/40">
+                        <td colSpan={10} className="px-3 py-4">
+                          <ScoreBreakdownEditor
+                            teamLabel={r.teamName?.trim() || r.loginId}
+                            rubric={liveSettings.rubric}
+                            marks={breakdowns[r.studentUserId] ?? EMPTY_MARKS}
+                            onSave={(next) => saveMarks(r.studentUserId, next)}
+                            onClose={() => setOpenScoreFor(null)}
+                          />
+                        </td>
+                      </tr>
+                    )}
+                    </Fragment>
                   )
                 })}
               </tbody>
@@ -656,64 +680,202 @@ export function AdminSubmissionsView({
 
 /* ------------------------------------------------------------------ */
 
+/** Stable identity so the editor's re-sync effect doesn't fire every render. */
+const EMPTY_MARKS: Record<string, number> = {}
+
 /**
- * One team's total score. Keeps its own text while being typed and commits on
- * blur or Enter, so a half-typed "4" on the way to "42" is never saved. Blank
- * clears the score back to unscored.
+ * The teams table shows only the total. Clicking it opens the panel where the
+ * individual criteria are entered.
  */
 function ScoreCell({
-  value,
+  total,
   max,
-  onSave,
+  open,
+  onToggle,
 }: {
-  value: number | null
+  total: number | null
   max: number
-  onSave: (value: string) => Promise<void>
+  open: boolean
+  onToggle: () => void
 }) {
-  const saved = value == null ? "" : String(value)
-  const [text, setText] = useState(saved)
+  return (
+    <button
+      type="button"
+      onClick={onToggle}
+      aria-expanded={open}
+      title={total == null ? "Enter marks" : "Edit marks"}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded border border-border px-2 py-1.5",
+        "hover:border-primary hover:text-primary transition-colors",
+        open && "border-primary text-primary",
+      )}
+    >
+      <span className="tabular-nums font-medium">{total == null ? "—" : total}</span>
+      {max > 0 && <span className="text-muted-foreground text-xs">/ {max}</span>}
+      <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", open && "rotate-180")} />
+    </button>
+  )
+}
+
+/**
+ * Mark entry for one team: one input per rubric criterion, totalled live as
+ * they are filled in. Each input commits on blur, so marks can be typed
+ * straight down the list with Tab. Criteria left blank are simply not counted,
+ * so a partly-judged team still totals correctly.
+ */
+function ScoreBreakdownEditor({
+  teamLabel,
+  rubric,
+  marks,
+  onSave,
+  onClose,
+}: {
+  teamLabel: string
+  rubric: RubricRow[]
+  marks: Record<string, number>
+  onSave: (marks: Record<string, number>) => Promise<void>
+  onClose: () => void
+}) {
+  const toDraft = (source: Record<string, number>) =>
+    Object.fromEntries(
+      rubric.map((row) => [row.label, source[row.label] == null ? "" : String(source[row.label])]),
+    ) as Record<string, string>
+
+  const [draft, setDraft] = useState(() => toDraft(marks))
   const [busy, setBusy] = useState(false)
 
-  // Re-sync when the stored value changes underneath — notably when a failed
-  // save rolls the row back.
-  useEffect(() => setText(saved), [saved])
+  // Re-sync when the saved marks change underneath — notably when a failed
+  // save rolls them back. Keyed on the serialised value rather than object
+  // identity, so typing isn't interrupted on every re-render.
+  const marksKey = JSON.stringify(marks)
+  useEffect(() => setDraft(toDraft(marks)), [marksKey])
 
-  async function commit() {
-    if (text.trim() === saved) return
+  const rubricTotal = rubric.reduce((sum, row) => sum + (Number(row.max) || 0), 0)
+
+  /** Live total of whatever has been typed so far. */
+  const liveTotal = rubric.reduce((sum, row) => {
+    const raw = (draft[row.label] ?? "").trim()
+    if (raw === "") return sum
+    const n = Number(raw)
+    return Number.isFinite(n) ? sum + n : sum
+  }, 0)
+  const anyFilled = rubric.some((row) => (draft[row.label] ?? "").trim() !== "")
+  const filledCount = rubric.filter((row) => (draft[row.label] ?? "").trim() !== "").length
+
+  function draftToMarks(source: Record<string, string>) {
+    const next: Record<string, number> = {}
+    for (const row of rubric) {
+      const raw = (source[row.label] ?? "").trim()
+      if (raw === "") continue
+      const n = Number(raw)
+      if (Number.isFinite(n) && n >= 0) next[row.label] = n
+    }
+    return next
+  }
+
+  async function commit(source = draft) {
+    const next = draftToMarks(source)
+    if (JSON.stringify(next) === JSON.stringify(marks)) return
     setBusy(true)
     try {
-      await onSave(text)
+      await onSave(next)
     } finally {
       setBusy(false)
     }
   }
 
-  const typed = Number(text)
-  const overMax = text.trim() !== "" && Number.isFinite(typed) && max > 0 && typed > max
+  async function clearAll() {
+    const blank = Object.fromEntries(rubric.map((row) => [row.label, ""])) as Record<string, string>
+    setDraft(blank)
+    setBusy(true)
+    try {
+      await onSave({})
+    } finally {
+      setBusy(false)
+    }
+  }
 
   return (
-    <div className="flex items-center gap-1.5">
-      <Input
-        type="number"
-        inputMode="decimal"
-        min={0}
-        step="0.5"
-        value={text}
-        disabled={busy}
-        onChange={(e) => setText(e.target.value)}
-        onBlur={commit}
-        onKeyDown={(e) => {
-          if (e.key === "Enter") e.currentTarget.blur()
-        }}
-        placeholder="—"
-        aria-label="Score"
-        title={overMax ? `Above the rubric total of ${max}` : undefined}
-        className={cn(
-          "h-9 w-[74px] bg-card border-border text-foreground text-center tabular-nums",
-          overMax && "border-destructive text-destructive",
-        )}
-      />
-      {max > 0 && <span className="text-muted-foreground text-xs whitespace-nowrap">/ {max}</span>}
+    <div className="flex flex-col gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-primary tracking-[0.1em] uppercase text-[10px]">
+          Marks &middot; <span className="text-foreground normal-case tracking-normal">{teamLabel}</span>
+        </p>
+        <p className="text-muted-foreground text-xs">
+          {filledCount} of {rubric.length} criteria entered
+        </p>
+      </div>
+
+      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {rubric.map((row) => {
+          const raw = (draft[row.label] ?? "").trim()
+          const n = Number(raw)
+          const overMax = raw !== "" && Number.isFinite(n) && n > row.max
+          return (
+            <div key={row.label} className="flex items-center justify-between gap-3 min-w-0">
+              <span className="text-muted-foreground text-sm truncate" title={row.label}>
+                {row.label}
+              </span>
+              <div className="flex items-center gap-1.5 shrink-0">
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  min={0}
+                  max={row.max}
+                  step="0.5"
+                  value={draft[row.label] ?? ""}
+                  disabled={busy}
+                  onChange={(e) => setDraft((cur) => ({ ...cur, [row.label]: e.target.value }))}
+                  onBlur={() => commit()}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") e.currentTarget.blur()
+                  }}
+                  placeholder="—"
+                  aria-label={row.label}
+                  title={overMax ? `Above the maximum of ${row.max}` : undefined}
+                  className={cn(
+                    "h-9 w-[70px] bg-card border-border text-foreground text-center tabular-nums",
+                    overMax && "border-destructive text-destructive",
+                  )}
+                />
+                <span className="text-muted-foreground text-xs w-8">/ {row.max}</span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
+        <p className="text-sm">
+          <span className="text-primary tracking-[0.1em] uppercase text-[10px] mr-2">Total</span>
+          <span className="text-foreground font-medium text-lg tabular-nums">
+            {anyFilled ? liveTotal : "—"}
+          </span>
+          {rubricTotal > 0 && <span className="text-muted-foreground text-xs ml-1">/ {rubricTotal}</span>}
+        </p>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={clearAll}
+            disabled={busy || !anyFilled}
+            className="border-border text-muted-foreground hover:text-foreground hover:bg-transparent dark:hover:bg-transparent"
+          >
+            Clear
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={onClose}
+            disabled={busy}
+            className="border-border text-foreground hover:text-primary hover:bg-transparent dark:hover:bg-transparent"
+          >
+            Done
+          </Button>
+        </div>
+      </div>
     </div>
   )
 }
