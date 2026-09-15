@@ -124,7 +124,7 @@ $$;
 -- Clamp every mark to its criterion's maximum and reject anything that isn't a
 -- number, so a total can never exceed the rubric no matter what posts to it.
 create or replace function public._clean_marks(p_rubric jsonb, p_marks jsonb)
-returns jsonb language plpgsql immutable as $$
+returns jsonb language plpgsql immutable set search_path = public as $$
 declare
   v_out jsonb := '{}'::jsonb;
   v_row jsonb;
@@ -679,3 +679,21 @@ $$;
 
 grant execute on function public.admin_update_user(uuid, text, text, text, text, text, text) to anon;
 drop function if exists public.admin_update_user(uuid, text, text, text, text, text);
+
+-- app_users has RLS on with no policies, so the anon key the server client
+-- uses cannot read the table directly — a `.from("app_users")` select comes
+-- back empty rather than erroring, which is the worst kind of silent failure.
+-- Everything privileged goes through a security-definer RPC; this is the
+-- lookup the User Management route needs (a login's uuid and role).
+-- (Applied separately as `admin_lookup_user_rpc`.)
+create or replace function public.admin_lookup_user(p_admin_user_id uuid, p_login_id text)
+returns table (user_id uuid, role text)
+language plpgsql security definer set search_path = public as $$
+begin
+  perform public._require_admin(p_admin_user_id);
+  return query
+  select u.id, u.role from public.app_users u where u.login_id = trim(p_login_id);
+end;
+$$;
+
+grant execute on function public.admin_lookup_user(uuid, text) to anon;

@@ -33,16 +33,29 @@ export async function POST(request: NextRequest) {
 
   const supabase = getSupabaseServerClient()
 
+  // app_users is behind RLS with no policies, so the anon key cannot select
+  // from it — every read goes through a security-definer RPC.
+  const lookup = async (id: string) => {
+    const { data } = await supabase.rpc("admin_lookup_user", {
+      p_admin_user_id: session.userId,
+      p_login_id: id,
+    })
+    const row = (Array.isArray(data) ? data[0] : data) as
+      | { user_id: string; role: string }
+      | undefined
+    return row ?? null
+  }
+
+  const target = await lookup(loginId)
+  if (!target) {
+    return NextResponse.json({ error: "That login no longer exists." }, { status: 400 })
+  }
+
   // Mentors sign in with their registration number, and the login route
   // rejects a malformed one — so refuse to write a mentor into that state.
   if (newLoginId && newLoginId !== loginId) {
-    const { data: target } = await supabase
-      .from("app_users")
-      .select("role")
-      .eq("login_id", loginId)
-      .maybeSingle()
     if (
-      (target?.role === "mentor" || looksLikeMentorId(newLoginId)) &&
+      (target.role === "mentor" || looksLikeMentorId(newLoginId)) &&
       !isValidMentorId(newLoginId)
     ) {
       return NextResponse.json({ error: MENTOR_ID_ERROR }, { status: 400 })
@@ -63,21 +76,16 @@ export async function POST(request: NextRequest) {
 
   // Judging venues only mean anything for an evaluator. An empty array is a
   // real value here — it clears their rooms.
-  if (Array.isArray(body?.venueIds)) {
-    const { data: target } = await supabase
-      .from("app_users")
-      .select("id, role")
-      .eq("login_id", newLoginId || loginId)
-      .maybeSingle()
-    if (target && (target.role === "faculty" || target.role === "jury")) {
-      const { error: venueError } = await supabase.rpc("admin_set_evaluator_venues", {
-        p_admin_user_id: session.userId,
-        p_evaluator_user_id: target.id,
-        p_venue_ids: body.venueIds.map(String),
-      })
-      if (venueError) {
-        return NextResponse.json({ error: venueError.message }, { status: 400 })
-      }
+  // The role may have just been swapped, so decide from what was requested.
+  const finalRole = role ?? target.role
+  if (Array.isArray(body?.venueIds) && (finalRole === "faculty" || finalRole === "jury")) {
+    const { error: venueError } = await supabase.rpc("admin_set_evaluator_venues", {
+      p_admin_user_id: session.userId,
+      p_evaluator_user_id: target.user_id,
+      p_venue_ids: body.venueIds.map(String),
+    })
+    if (venueError) {
+      return NextResponse.json({ error: venueError.message }, { status: 400 })
     }
   }
 
