@@ -4,6 +4,7 @@ import { Inter, Playfair_Display } from "next/font/google"
 import { Analytics } from "@vercel/analytics/next"
 import { WebThreadsLazy } from "@/components/web-threads-lazy"
 import { ThemeProvider } from "@/components/theme-provider"
+import { AutoRefresh } from "@/components/auto-refresh"
 import "./globals.css"
 
 const _inter = Inter({ subsets: ["latin"] })
@@ -25,6 +26,8 @@ export default function RootLayout({
       <body className={`font-sans antialiased`}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
           <WebThreadsLazy fixed />
+          {/* Every page keeps itself up to date — see components/auto-refresh. */}
+          <AutoRefresh />
           {children}
           <Analytics />
         </ThemeProvider>

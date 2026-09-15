@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Check, ChevronDown, Plus, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -11,15 +11,30 @@ import { cn } from "@/lib/utils"
 import type { JudgingVenue, RubricRow } from "@/lib/judging"
 import { averageMarks, type EvaluationRow, type Evaluator, type RubricPreset } from "@/lib/evaluation"
 
+
+// A refresh that lands while a change is still saving — or moments after —
+// would hand back the server's pre-save copy and briefly revert what was just
+// clicked. Every mutation in this file funnels through callJudging, so
+// counting them here is enough to hold the sync back until things settle.
+let inFlight = 0
+let lastWriteAt = 0
+const writesSettled = () => inFlight === 0 && Date.now() - lastWriteAt > 3_000
+
 async function callJudging(action: string, payload: Record<string, unknown>) {
-  const res = await fetch("/api/admin/judging", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, ...payload }),
-  })
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(data.error ?? "Something went wrong.")
-  return data
+  inFlight += 1
+  try {
+    const res = await fetch("/api/admin/judging", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, ...payload }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(data.error ?? "Something went wrong.")
+    return data
+  } finally {
+    inFlight -= 1
+    lastWriteAt = Date.now()
+  }
 }
 
 interface TeamRef {
@@ -52,6 +67,29 @@ export function AdminEvaluationView({
   const [evaluations, setEvaluations] = useState(initialEvaluations)
   const [error, setError] = useState("")
 
+  // The page refreshes itself on a timer, so the server's rounds and evaluator
+  // scope always win — neither is edited in place. Filed sheets follow too,
+  // except for the team currently expanded, whose inputs may be mid-edit.
+  const openTeamRef = useRef<string | null>(null)
+  useEffect(() => {
+    if (!writesSettled()) return
+    setPresets(initialPresets)
+    setEvaluators(initialEvaluators)
+  }, [initialPresets, initialEvaluators])
+  useEffect(() => {
+    if (!writesSettled()) return
+    setEvaluations((cur) => {
+      const open = openTeamRef.current
+      if (!open) return initialEvaluations
+      const merged: Record<string, EvaluationRow[]> = {}
+      for (const [presetId, rows] of Object.entries(initialEvaluations)) {
+        const mine = (cur[presetId] ?? []).filter((r) => r.studentUserId === open)
+        merged[presetId] = [...rows.filter((r) => r.studentUserId !== open), ...mine]
+      }
+      return merged
+    })
+  }, [initialEvaluations])
+
   const activePreset = presets.find((p) => p.isActive) ?? null
   const [resultsPreset, setResultsPreset] = useState(activePreset?.id ?? presets[0]?.id ?? "")
 
@@ -75,6 +113,7 @@ export function AdminEvaluationView({
       />
 
       <ResultsCard
+        openTeamRef={openTeamRef}
         teams={teams}
         presets={presets}
         presetId={resultsPreset}
@@ -574,6 +613,7 @@ function EvaluatorsCard({
  * criterion is visible — and any individual mark can be corrected in place.
  */
 function ResultsCard({
+  openTeamRef,
   teams,
   presets,
   presetId,
@@ -582,6 +622,8 @@ function ResultsCard({
   setEvaluations,
   setError,
 }: {
+  /** Tells the page-level refresh which team's sheets not to overwrite. */
+  openTeamRef: React.MutableRefObject<string | null>
   teams: TeamRef[]
   presets: RubricPreset[]
   presetId: string
@@ -591,6 +633,9 @@ function ResultsCard({
   setError: (v: string) => void
 }) {
   const [openTeam, setOpenTeam] = useState<string | null>(null)
+  useEffect(() => {
+    openTeamRef.current = openTeam
+  }, [openTeam, openTeamRef])
   const preset = presets.find((p) => p.id === presetId) ?? null
   const rows = evaluations[presetId] ?? []
 

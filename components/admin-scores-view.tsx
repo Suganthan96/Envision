@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Check } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -16,15 +16,27 @@ import {
 } from "@/lib/judging"
 import type { AdminSubmissionRow } from "@/lib/admin-directories"
 
+// A refresh landing mid-save would hand back the server's pre-save marks, so
+// the sync below waits until saving has settled.
+let inFlight = 0
+let lastWriteAt = 0
+const writesSettled = () => inFlight === 0 && Date.now() - lastWriteAt > 3_000
+
 async function saveScores(studentUserId: string, marks: Record<string, number>) {
-  const res = await fetch("/api/admin/judging", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "set-scores", studentUserId, marks }),
-  })
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(data.error ?? "Something went wrong.")
-  return data
+  inFlight += 1
+  try {
+    const res = await fetch("/api/admin/judging", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "set-scores", studentUserId, marks }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(data.error ?? "Something went wrong.")
+    return data
+  } finally {
+    inFlight -= 1
+    lastWriteAt = Date.now()
+  }
 }
 
 /** Stable identity so the editor's re-sync effect doesn't fire every render. */
@@ -54,6 +66,29 @@ export function AdminScoresView({
   const [error, setError] = useState("")
   const [query, setQuery] = useState("")
   const [venueFilter, setVenueFilter] = useState("")
+
+  // Read through a ref so the refresh-sync below doesn't re-run on selection.
+  const selectedRef = useRef(selected)
+  useEffect(() => {
+    selectedRef.current = selected
+  }, [selected])
+
+  // The page refreshes itself on a timer. Adopt the server's marks for every
+  // team except the one open in the sheet, which would wipe an entry in
+  // progress.
+  const serverKey = JSON.stringify(rows.map((r) => [r.studentUserId, r.scoreBreakdown ?? {}]))
+  useEffect(() => {
+    if (!writesSettled()) return
+    setBreakdowns((cur) => {
+      const next = { ...cur }
+      for (const r of rows) {
+        if (r.studentUserId === selectedRef.current) continue
+        next[r.studentUserId] = r.scoreBreakdown ?? {}
+      }
+      return next
+    })
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverKey])
 
   /** Marks available per the current rubric — the "/ 50" beside each total. */
   const rubricTotal = useMemo(

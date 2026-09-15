@@ -1,6 +1,6 @@
 "use client"
 
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
@@ -36,15 +36,30 @@ import { downloadSubmissionsXlsx } from "@/lib/submissions-xlsx"
 import type { AdminSubmissionRow } from "@/lib/admin-directories"
 import type { Domain } from "@/lib/domains"
 
+
+// A refresh that lands while a change is still saving — or moments after —
+// would hand back the server's pre-save copy and briefly revert what was just
+// clicked. Every mutation in this file funnels through callJudging, so
+// counting them here is enough to hold the sync back until things settle.
+let inFlight = 0
+let lastWriteAt = 0
+const writesSettled = () => inFlight === 0 && Date.now() - lastWriteAt > 3_000
+
 async function callJudging(action: string, payload: Record<string, unknown>) {
-  const res = await fetch("/api/admin/judging", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action, ...payload }),
-  })
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(data.error ?? "Something went wrong.")
-  return data
+  inFlight += 1
+  try {
+    const res = await fetch("/api/admin/judging", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action, ...payload }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(data.error ?? "Something went wrong.")
+    return data
+  } finally {
+    inFlight -= 1
+    lastWriteAt = Date.now()
+  }
 }
 
 export function AdminSubmissionsView({
@@ -69,6 +84,17 @@ export function AdminSubmissionsView({
   const [assignments, setAssignments] = useState(initialAssignments)
   const [liveSettings, setLiveSettings] = useState(initialSettings)
   const [error, setError] = useState("")
+
+  // The page refreshes itself on a timer. None of these are edited in place —
+  // every change round-trips through the API first — so the server's copy
+  // always wins, and a venue added in another tab shows up here on its own.
+  useEffect(() => {
+    if (!writesSettled()) return
+    setVenues(initialVenues)
+    setWaitingVenues(initialWaitingVenues)
+    setAssignments(initialAssignments)
+    setLiveSettings(initialSettings)
+  }, [initialVenues, initialWaitingVenues, initialAssignments, initialSettings])
 
   const domainTitle = useMemo(() => {
     const m = new Map(domains.map((d) => [d.id, d.title]))

@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Check } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -10,15 +10,27 @@ import { cn } from "@/lib/utils"
 import type { RubricRow } from "@/lib/judging"
 import type { EvaluatorTeam } from "@/lib/evaluation"
 
+// A refresh landing mid-save would hand back the server's pre-save marks, so
+// the sync below waits until saving has settled.
+let inFlight = 0
+let lastWriteAt = 0
+const writesSettled = () => inFlight === 0 && Date.now() - lastWriteAt > 3_000
+
 async function saveMarksRequest(studentUserId: string, marks: Record<string, number>) {
-  const res = await fetch("/api/evaluate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ studentUserId, marks }),
-  })
-  const data = await res.json().catch(() => ({}))
-  if (!res.ok) throw new Error(data.error ?? "Something went wrong.")
-  return data
+  inFlight += 1
+  try {
+    const res = await fetch("/api/evaluate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ studentUserId, marks }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (!res.ok) throw new Error(data.error ?? "Something went wrong.")
+    return data
+  } finally {
+    inFlight -= 1
+    lastWriteAt = Date.now()
+  }
 }
 
 const EMPTY_MARKS: Record<string, number> = {}
@@ -47,8 +59,34 @@ export function EvaluatorConsole({
   )
   const [selected, setSelected] = useState("")
   const [error, setError] = useState("")
+
   const [query, setQuery] = useState("")
   const [venueFilter, setVenueFilter] = useState("")
+
+  // Kept in a ref so the refresh-sync effect below can read the current
+  // selection without re-running every time it changes.
+  const selectedRef = useRef(selected)
+  useEffect(() => {
+    selectedRef.current = selected
+  }, [selected])
+
+  // The page refreshes itself on a timer, so take the server's marks for every
+  // team EXCEPT the one open in the sheet — overwriting that one would wipe a
+  // criterion mid-entry.
+  const serverKey = JSON.stringify(teams.map((t) => [t.studentUserId, t.marks]))
+  useEffect(() => {
+    if (!writesSettled()) return
+    setMarksByTeam((cur) => {
+      const next = { ...cur }
+      for (const t of teams) {
+        if (t.studentUserId === selectedRef.current) continue
+        next[t.studentUserId] = t.marks
+      }
+      return next
+    })
+    // selected is read through a ref so a refresh doesn't fight the selection
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverKey])
 
   const rubricTotal = useMemo(
     () => rubric.reduce((sum, row) => sum + (Number(row.max) || 0), 0),
@@ -83,13 +121,19 @@ export function EvaluatorConsole({
 
   const list = useMemo(() => {
     const q = query.trim().toLowerCase()
-    return teams.filter((t) => {
-      if (venueFilter && t.venueName !== venueFilter) return false
-      if (!q) return true
-      return [t.loginId, t.teamName, t.projectTitle]
-        .filter(Boolean)
-        .some((v) => String(v).toLowerCase().includes(q))
-    })
+    return teams
+      .filter((t) => {
+        if (venueFilter && t.venueName !== venueFilter) return false
+        if (!q) return true
+        return [t.loginId, t.teamName, t.projectTitle]
+          .filter(Boolean)
+          .some((v) => String(v).toLowerCase().includes(q))
+      })
+      // Team numbers are text in the database, so sorting there puts #3 after
+      // #23. The running order has to read the way the room does.
+      .sort(
+        (a, b) => Number(a.loginId) - Number(b.loginId) || a.loginId.localeCompare(b.loginId),
+      )
   }, [teams, query, venueFilter])
 
   useEffect(() => {
