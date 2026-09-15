@@ -27,6 +27,9 @@ export const CACHE_TAGS = {
    *  settings — read on every /admin/submissions load, written only from
    *  /api/admin/judging. */
   judging: "judging",
+  /** Rubric presets — the evaluation rounds. The active one drives the
+   *  student-facing rubric, the judging PDFs and every evaluator's sheet. */
+  rubricPresets: "rubric-presets",
   /** The public /showcase and /mentors listings. These are also on a short
    *  time-based revalidate (students edit their projects continuously), but
    *  admin actions that change *visibility* — hiding or deleting a user —

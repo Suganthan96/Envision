@@ -22,6 +22,12 @@ export async function POST(request: NextRequest) {
   // Every branch below mutates judging venues, assignments or settings, all
   // of which are cached under the `judging` tag and read on /admin/submissions.
   const purge = () => revalidateSharedData(CACHE_TAGS.judging)
+  // Switching or editing a round changes what students, mentors and evaluators
+  // see, all of which read through the presets tag as well.
+  const purgePresets = () => {
+    revalidateSharedData(CACHE_TAGS.judging)
+    revalidateSharedData(CACHE_TAGS.rubricPresets)
+  }
   const supabase = getSupabaseServerClient()
   const admin = session.userId
 
@@ -146,8 +152,115 @@ export async function POST(request: NextRequest) {
           p_faculty_timing: facultyTiming,
         })
         if (error) throw error
-        purge()
+        // Saving the rubric here writes through to the live round, so the
+        // presets tag has to go with it.
+        purgePresets()
         return NextResponse.json({ ok: true })
+      }
+      // ---- evaluation rounds (rubric presets) ----
+      // The active preset drives the student-facing rubric, the judging PDFs
+      // and every evaluator's sheet, so each of these purges both tags.
+      case "save-preset": {
+        const id = body?.id == null ? null : String(body.id)
+        const name = String(body?.name ?? "").trim()
+        const rubric = Array.isArray(body?.rubric) ? body.rubric : null
+        if (!name) return NextResponse.json({ error: "A round name is required." }, { status: 400 })
+        if (!rubric || rubric.length === 0) {
+          return NextResponse.json({ error: "Add at least one criterion." }, { status: 400 })
+        }
+        const clean = rubric.map((r: unknown) => {
+          const row = r as { label?: unknown; max?: unknown }
+          const label = String(row.label ?? "").trim()
+          const max = Number(row.max)
+          if (!label || !Number.isFinite(max) || max <= 0) {
+            throw new Error("Each criterion needs a label and a positive mark.")
+          }
+          return { label, max: Math.round(max) }
+        })
+        const { data, error } = await supabase.rpc("admin_save_rubric_preset", {
+          p_admin_user_id: admin,
+          p_id: id,
+          p_name: name,
+          p_rubric: clean,
+        })
+        if (error) throw error
+        purgePresets()
+        return NextResponse.json({ id: data })
+      }
+      case "activate-preset": {
+        const id = String(body?.id ?? "")
+        if (!id) return NextResponse.json({ error: "id is required." }, { status: 400 })
+        const { error } = await supabase.rpc("admin_activate_rubric_preset", {
+          p_admin_user_id: admin,
+          p_id: id,
+        })
+        if (error) throw error
+        purgePresets()
+        return NextResponse.json({ ok: true })
+      }
+      case "delete-preset": {
+        const id = String(body?.id ?? "")
+        if (!id) return NextResponse.json({ error: "id is required." }, { status: 400 })
+        const { error } = await supabase.rpc("admin_delete_rubric_preset", {
+          p_admin_user_id: admin,
+          p_id: id,
+        })
+        if (error) throw error
+        purgePresets()
+        return NextResponse.json({ ok: true })
+      }
+
+      // ---- evaluator scope ----
+      case "set-evaluator-venues":
+      case "set-evaluator-teams": {
+        const evaluatorUserId = String(body?.evaluatorUserId ?? "")
+        const ids = Array.isArray(body?.ids) ? body.ids.map(String) : []
+        if (!evaluatorUserId) {
+          return NextResponse.json({ error: "evaluatorUserId is required." }, { status: 400 })
+        }
+        const venues = action === "set-evaluator-venues"
+        const { error } = await supabase.rpc(
+          venues ? "admin_set_evaluator_venues" : "admin_set_evaluator_teams",
+          venues
+            ? { p_admin_user_id: admin, p_evaluator_user_id: evaluatorUserId, p_venue_ids: ids }
+            : { p_admin_user_id: admin, p_evaluator_user_id: evaluatorUserId, p_student_ids: ids },
+        )
+        if (error) throw error
+        return NextResponse.json({ ok: true })
+      }
+
+      // ---- admin override of any evaluator's sheet ----
+      case "set-evaluation": {
+        const presetId = String(body?.presetId ?? "")
+        const evaluatorUserId = String(body?.evaluatorUserId ?? "")
+        const studentUserId = String(body?.studentUserId ?? "")
+        if (!presetId || !evaluatorUserId || !studentUserId) {
+          return NextResponse.json(
+            { error: "presetId, evaluatorUserId and studentUserId are required." },
+            { status: 400 },
+          )
+        }
+        const raw = body?.marks
+        const marks: Record<string, number> = {}
+        if (raw && typeof raw === "object" && !Array.isArray(raw)) {
+          for (const [label, value] of Object.entries(raw as Record<string, unknown>)) {
+            if (value === null || value === undefined || String(value).trim() === "") continue
+            const mark = Number(value)
+            if (!Number.isFinite(mark) || mark < 0 || mark > 1000) {
+              return NextResponse.json({ error: `"${label}" must be a number.` }, { status: 400 })
+            }
+            marks[label] = Math.round(mark * 100) / 100
+          }
+        }
+        const { data, error } = await supabase.rpc("admin_set_evaluation", {
+          p_admin_user_id: admin,
+          p_preset_id: presetId,
+          p_evaluator_user_id: evaluatorUserId,
+          p_student_user_id: studentUserId,
+          p_marks: Object.keys(marks).length > 0 ? marks : null,
+        })
+        if (error) throw error
+        return NextResponse.json({ ok: true, total: data == null ? null : Number(data) })
       }
       default:
         return NextResponse.json({ error: "Unknown action." }, { status: 400 })

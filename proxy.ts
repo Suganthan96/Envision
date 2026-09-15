@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { roleHome, verifySessionToken, SESSION_COOKIE } from "@/lib/session"
 
-const PROTECTED_PREFIXES = ["/member", "/mentor", "/admin", "/change-password"]
+const PROTECTED_PREFIXES = ["/member", "/mentor", "/admin", "/evaluate", "/change-password"]
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -58,5 +58,12 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/login", "/member/:path*", "/mentor/:path*", "/admin/:path*", "/change-password"],
+  matcher: [
+    "/login",
+    "/member/:path*",
+    "/mentor/:path*",
+    "/admin/:path*",
+    "/evaluate/:path*",
+    "/change-password",
+  ],
 }

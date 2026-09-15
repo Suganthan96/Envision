@@ -2,7 +2,7 @@ import { SignJWT, jwtVerify } from "jose"
 
 export const SESSION_COOKIE = "envision_session"
 
-export type Role = "member" | "mentor" | "admin"
+export type Role = "member" | "mentor" | "admin" | "faculty" | "jury"
 
 export type SessionPayload = {
   userId: string
@@ -48,5 +48,12 @@ export async function verifySessionToken(token: string): Promise<SessionPayload 
 export function roleHome(role: Role) {
   if (role === "admin") return "/admin"
   if (role === "mentor") return "/mentor"
+  // Faculty and external jury share one judging portal — the only difference
+  // between them is which is which on the admin's results sheet.
+  if (role === "faculty" || role === "jury") return "/evaluate"
   return "/member"
 }
+
+/** Roles that mark teams on /evaluate. */
+export const EVALUATOR_ROLES: Role[] = ["faculty", "jury"]
+export const isEvaluator = (role: Role) => role === "faculty" || role === "jury"

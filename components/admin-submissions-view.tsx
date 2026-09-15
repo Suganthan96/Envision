@@ -1,12 +1,12 @@
 "use client"
 
-import { Fragment, useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import {
   CheckCircle2,
-  Circle,
   ChevronDown,
+  Circle,
   Download,
   ExternalLink,
   Plus,
@@ -108,21 +108,12 @@ export function AdminSubmissionsView({
   }
 
   // ---- scores ----
-  // Marks are entered one criterion at a time and held locally, so the total
-  // and the scored count update as they are typed. A failed save rolls the
-  // team back to its previous marks.
-  const [breakdowns, setBreakdowns] = useState<Record<string, Record<string, number>>>(() =>
-    Object.fromEntries(rows.map((r) => [r.studentUserId, r.scoreBreakdown ?? {}])),
+  // Marks are entered on /admin/scores; this page only reads the totals, for
+  // the scored count and the Excel export.
+  const breakdowns = useMemo<Record<string, Record<string, number>>>(
+    () => Object.fromEntries(rows.map((r) => [r.studentUserId, r.scoreBreakdown ?? {}])),
+    [rows],
   )
-  /** Which team's mark-entry panel is open. Only one at a time. */
-  const [openScoreFor, setOpenScoreFor] = useState<string | null>(null)
-
-  /** Marks available per the current rubric — the "/ 50" beside each total. */
-  const rubricTotal = useMemo(
-    () => liveSettings.rubric.reduce((sum, row) => sum + (Number(row.max) || 0), 0),
-    [liveSettings.rubric],
-  )
-
   /** A team's total, summed from whatever criteria have been filled in.
    *  null (not 0) while nothing has been entered at all. */
   function totalFor(studentUserId: string): number | null {
@@ -131,18 +122,6 @@ export function AdminSubmissionsView({
     const values = Object.values(marks)
     if (values.length === 0) return null
     return values.reduce((sum, v) => sum + v, 0)
-  }
-
-  async function saveMarks(studentUserId: string, next: Record<string, number>) {
-    setError("")
-    const prev = breakdowns[studentUserId] ?? {}
-    setBreakdowns((cur) => ({ ...cur, [studentUserId]: next }))
-    try {
-      await callJudging("set-scores", { studentUserId, marks: next })
-    } catch (e) {
-      setBreakdowns((cur) => ({ ...cur, [studentUserId]: prev }))
-      setError(e instanceof Error ? e.message : "Could not save the marks.")
-    }
   }
 
   const scoredCount = useMemo(
@@ -471,8 +450,9 @@ export function AdminSubmissionsView({
         setError={setError}
       />
 
-      {/* ---- submissions table (breaks out to near-full viewport width so
-              the wide table fits without a horizontal scrollbar) ---- */}
+      {/* ---- submissions table. Breaks out to near-full viewport width so the
+              wide table has room; it never scrolls sideways — on narrow
+              screens the rows become cards instead. ---- */}
       <div className="flex flex-col gap-4 relative w-[92vw] max-w-[1700px] left-1/2 -translate-x-1/2">
         <h2 className="font-serif text-2xl text-foreground">Teams</h2>
         <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4">
@@ -526,61 +506,114 @@ export function AdminSubmissionsView({
         {filtered.length === 0 ? (
           <p className="text-muted-foreground text-sm py-8">No teams match your filters.</p>
         ) : (
-          <div className="border border-border rounded-lg overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="border-b border-border text-primary uppercase tracking-[0.1em] text-[10px]">
-                  <th className="text-left font-medium px-3 py-3">Team</th>
-                  <th className="text-left font-medium px-3 py-3">Mentor</th>
-                  <th className="text-left font-medium px-3 py-3">Theme</th>
-                  <th className="text-left font-medium px-3 py-3">Score</th>
-                  <th className="text-left font-medium px-3 py-3">Presentation Venue</th>
-                  <th className="text-left font-medium px-3 py-3">Waiting Venue</th>
-                  <th className="text-left font-medium px-3 py-3">Drive</th>
-                  <th className="text-left font-medium px-3 py-3">Canva</th>
-                  <th className="text-left font-medium px-3 py-3">Status</th>
-                  <th className="text-left font-medium px-3 py-3">Updated</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((r) => {
-                  const submitted = Boolean(r.driveUrl)
-                  const resolved = resolvedByTeam.get(r.studentUserId) ?? { venueId: null, source: null }
-                  const resolvedWait = resolvedWaitingByTeam.get(r.studentUserId) ?? {
-                    venueId: null,
-                    source: null,
-                  }
-                  return (
-                    <Fragment key={r.studentUserId}>
-                    <tr className="border-b border-border last:border-0 align-top">
-                      <td className="px-3 py-3">
-                        <Link
-                          href={`/admin/team-profiles/${r.studentUserId}`}
-                          className="text-foreground hover:text-primary"
-                        >
-                          {r.teamName?.trim() || r.loginId}
-                        </Link>
-                        <span className="text-muted-foreground font-mono text-xs ml-2">#{r.loginId}</span>
-                      </td>
-                      <td className="px-3 py-3 text-muted-foreground whitespace-nowrap">{r.mentorName ?? "—"}</td>
-                      <td className="px-3 py-3 text-muted-foreground max-w-[150px]">
-                        <span className="block truncate" title={domainTitle(r.domainId) ?? undefined}>
-                          {domainTitle(r.domainId) ?? "—"}
-                        </span>
-                      </td>
-                      <td className="px-3 py-3">
-                        <ScoreCell
-                          total={totalFor(r.studentUserId)}
-                          max={rubricTotal}
-                          open={openScoreFor === r.studentUserId}
-                          onToggle={() =>
-                            setOpenScoreFor((cur) =>
-                              cur === r.studentUserId ? null : r.studentUserId,
-                            )
-                          }
-                        />
-                      </td>
-                      <td className="px-3 py-3 w-[190px]">
+          <>
+            {/* Wide screens. Columns are grouped — status folded into the team
+                name, both deck links into one cell — so the table fits its
+                container instead of scrolling sideways. */}
+            <div className="border border-border rounded-lg overflow-hidden hidden lg:block">
+              <table className="w-full text-sm table-fixed">
+                <thead>
+                  <tr className="border-b border-border text-primary uppercase tracking-[0.1em] text-[10px]">
+                    <th className="text-left font-medium px-3 py-3 w-[22%]">Team</th>
+                    <th className="text-left font-medium px-3 py-3 w-[14%]">Mentor</th>
+                    <th className="text-left font-medium px-3 py-3 w-[14%]">Theme</th>
+                    <th className="text-left font-medium px-3 py-3 w-[16%]">Presentation Venue</th>
+                    <th className="text-left font-medium px-3 py-3 w-[16%]">Waiting Venue</th>
+                    <th className="text-left font-medium px-3 py-3 w-[9%]">Deck</th>
+                    <th className="text-left font-medium px-3 py-3 w-[9%]">Updated</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((r) => {
+                    const resolved = resolvedByTeam.get(r.studentUserId) ?? {
+                      venueId: null,
+                      source: null,
+                    }
+                    const resolvedWait = resolvedWaitingByTeam.get(r.studentUserId) ?? {
+                      venueId: null,
+                      source: null,
+                    }
+                    return (
+                      <tr key={r.studentUserId} className="border-b border-border last:border-0 align-top">
+                        <td className="px-3 py-3">
+                          <TeamCell row={r} />
+                        </td>
+                        <td className="px-3 py-3 text-muted-foreground break-words">
+                          {r.mentorName ?? "—"}
+                        </td>
+                        <td className="px-3 py-3 text-muted-foreground">
+                          <span className="block truncate" title={domainTitle(r.domainId) ?? undefined}>
+                            {domainTitle(r.domainId) ?? "—"}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3">
+                          <SearchableSelect
+                            value={assignmentValue("judging", "team", r.studentUserId)}
+                            onChange={(v) => setAssignment("judging", "team", r.studentUserId, v)}
+                            options={judgingVenueOptions}
+                            allLabel={
+                              resolved.venueId && resolved.source !== "team"
+                                ? `Inherited: ${venueName(resolved.venueId)} (${resolved.source})`
+                                : "Not set"
+                            }
+                            placeholder="Search venues…"
+                            className="h-9 text-xs"
+                          />
+                        </td>
+                        <td className="px-3 py-3">
+                          <SearchableSelect
+                            value={assignmentValue("waiting", "team", r.studentUserId)}
+                            onChange={(v) => setAssignment("waiting", "team", r.studentUserId, v)}
+                            options={waitingVenueOptions}
+                            allLabel={
+                              resolvedWait.venueId && resolvedWait.source !== "team"
+                                ? `Inherited: ${venueName(resolvedWait.venueId)} (${resolvedWait.source})`
+                                : "Not set"
+                            }
+                            placeholder="Search venues…"
+                            className="h-9 text-xs"
+                          />
+                        </td>
+                        <td className="px-3 py-3">
+                          <DeckLinks row={r} />
+                        </td>
+                        <td className="px-3 py-3 text-muted-foreground text-xs">
+                          {formatDate(r.updatedAt)}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Narrow screens: the same row stacked, so nothing runs off the
+                side of a phone or tablet. */}
+            <div className="flex flex-col gap-3 lg:hidden">
+              {filtered.map((r) => {
+                const resolved = resolvedByTeam.get(r.studentUserId) ?? { venueId: null, source: null }
+                const resolvedWait = resolvedWaitingByTeam.get(r.studentUserId) ?? {
+                  venueId: null,
+                  source: null,
+                }
+                return (
+                  <div
+                    key={r.studentUserId}
+                    className="border border-border rounded-lg p-4 flex flex-col gap-3"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <TeamCell row={r} />
+                      <DeckLinks row={r} />
+                    </div>
+                    <p className="text-muted-foreground text-xs">
+                      {r.mentorName ?? "No mentor"} &middot; {domainTitle(r.domainId) ?? "No theme"}{" "}
+                      &middot; {formatDate(r.updatedAt)}
+                    </p>
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                        <Label className="text-primary tracking-[0.1em] uppercase text-[10px]">
+                          Presentation
+                        </Label>
                         <SearchableSelect
                           value={assignmentValue("judging", "team", r.studentUserId)}
                           onChange={(v) => setAssignment("judging", "team", r.studentUserId, v)}
@@ -593,8 +626,11 @@ export function AdminSubmissionsView({
                           placeholder="Search venues…"
                           className="h-9 text-xs"
                         />
-                      </td>
-                      <td className="px-3 py-3 w-[190px]">
+                      </div>
+                      <div className="flex flex-col gap-1.5 flex-1 min-w-0">
+                        <Label className="text-primary tracking-[0.1em] uppercase text-[10px]">
+                          Waiting
+                        </Label>
                         <SearchableSelect
                           value={assignmentValue("waiting", "team", r.studentUserId)}
                           onChange={(v) => setAssignment("waiting", "team", r.studentUserId, v)}
@@ -607,71 +643,13 @@ export function AdminSubmissionsView({
                           placeholder="Search venues…"
                           className="h-9 text-xs"
                         />
-                      </td>
-                      <td className="px-3 py-3">
-                        {r.driveUrl ? (
-                          <a
-                            href={r.driveUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-primary hover:underline"
-                            title={r.driveUrl}
-                          >
-                            <ExternalLink className="w-3.5 h-3.5 shrink-0" /> Open
-                          </a>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </td>
-                      <td className="px-3 py-3">
-                        {r.canvaUrl ? (
-                          <a
-                            href={r.canvaUrl}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="inline-flex items-center gap-1 text-primary hover:underline"
-                            title={r.canvaUrl}
-                          >
-                            <ExternalLink className="w-3.5 h-3.5 shrink-0" /> Open
-                          </a>
-                        ) : (
-                          <span className="text-muted-foreground">—</span>
-                        )}
-                      </td>
-                      <td className="px-3 py-3">
-                        {submitted ? (
-                          <span className="inline-flex items-center gap-1 text-primary">
-                            <CheckCircle2 className="w-4 h-4" /> Submitted
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 text-muted-foreground">
-                            <Circle className="w-4 h-4" /> —
-                          </span>
-                        )}
-                      </td>
-                      <td className="px-3 py-3 text-muted-foreground whitespace-nowrap">
-                        {formatDate(r.updatedAt)}
-                      </td>
-                    </tr>
-                    {openScoreFor === r.studentUserId && (
-                      <tr className="border-b border-border bg-card/40">
-                        <td colSpan={10} className="px-3 py-4">
-                          <ScoreBreakdownEditor
-                            teamLabel={r.teamName?.trim() || r.loginId}
-                            rubric={liveSettings.rubric}
-                            marks={breakdowns[r.studentUserId] ?? EMPTY_MARKS}
-                            onSave={(next) => saveMarks(r.studentUserId, next)}
-                            onClose={() => setOpenScoreFor(null)}
-                          />
-                        </td>
-                      </tr>
-                    )}
-                    </Fragment>
-                  )
-                })}
-              </tbody>
-            </table>
-          </div>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </>
         )}
       </div>
     </div>
@@ -680,207 +658,71 @@ export function AdminSubmissionsView({
 
 /* ------------------------------------------------------------------ */
 
-/** Stable identity so the editor's re-sync effect doesn't fire every render. */
-const EMPTY_MARKS: Record<string, number> = {}
+/* ------------------------------------------------------------------ */
 
-/**
- * The teams table shows only the total. Clicking it opens the panel where the
- * individual criteria are entered.
- */
-function ScoreCell({
-  total,
-  max,
-  open,
-  onToggle,
-}: {
-  total: number | null
-  max: number
-  open: boolean
-  onToggle: () => void
-}) {
+/** Team name, number and whether the deck is in — one cell, both layouts. */
+function TeamCell({ row }: { row: AdminSubmissionRow }) {
   return (
-    <button
-      type="button"
-      onClick={onToggle}
-      aria-expanded={open}
-      title={total == null ? "Enter marks" : "Edit marks"}
-      className={cn(
-        "inline-flex items-center gap-1.5 rounded border border-border px-2 py-1.5",
-        "hover:border-primary hover:text-primary transition-colors",
-        open && "border-primary text-primary",
-      )}
-    >
-      <span className="tabular-nums font-medium">{total == null ? "—" : total}</span>
-      {max > 0 && <span className="text-muted-foreground text-xs">/ {max}</span>}
-      <ChevronDown className={cn("w-3.5 h-3.5 transition-transform", open && "rotate-180")} />
-    </button>
-  )
-}
-
-/**
- * Mark entry for one team: one input per rubric criterion, totalled live as
- * they are filled in. Each input commits on blur, so marks can be typed
- * straight down the list with Tab. Criteria left blank are simply not counted,
- * so a partly-judged team still totals correctly.
- */
-function ScoreBreakdownEditor({
-  teamLabel,
-  rubric,
-  marks,
-  onSave,
-  onClose,
-}: {
-  teamLabel: string
-  rubric: RubricRow[]
-  marks: Record<string, number>
-  onSave: (marks: Record<string, number>) => Promise<void>
-  onClose: () => void
-}) {
-  const toDraft = (source: Record<string, number>) =>
-    Object.fromEntries(
-      rubric.map((row) => [row.label, source[row.label] == null ? "" : String(source[row.label])]),
-    ) as Record<string, string>
-
-  const [draft, setDraft] = useState(() => toDraft(marks))
-  const [busy, setBusy] = useState(false)
-
-  // Re-sync when the saved marks change underneath — notably when a failed
-  // save rolls them back. Keyed on the serialised value rather than object
-  // identity, so typing isn't interrupted on every re-render.
-  const marksKey = JSON.stringify(marks)
-  useEffect(() => setDraft(toDraft(marks)), [marksKey])
-
-  const rubricTotal = rubric.reduce((sum, row) => sum + (Number(row.max) || 0), 0)
-
-  /** Live total of whatever has been typed so far. */
-  const liveTotal = rubric.reduce((sum, row) => {
-    const raw = (draft[row.label] ?? "").trim()
-    if (raw === "") return sum
-    const n = Number(raw)
-    return Number.isFinite(n) ? sum + n : sum
-  }, 0)
-  const anyFilled = rubric.some((row) => (draft[row.label] ?? "").trim() !== "")
-  const filledCount = rubric.filter((row) => (draft[row.label] ?? "").trim() !== "").length
-
-  function draftToMarks(source: Record<string, string>) {
-    const next: Record<string, number> = {}
-    for (const row of rubric) {
-      const raw = (source[row.label] ?? "").trim()
-      if (raw === "") continue
-      const n = Number(raw)
-      if (Number.isFinite(n) && n >= 0) next[row.label] = n
-    }
-    return next
-  }
-
-  async function commit(source = draft) {
-    const next = draftToMarks(source)
-    if (JSON.stringify(next) === JSON.stringify(marks)) return
-    setBusy(true)
-    try {
-      await onSave(next)
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  async function clearAll() {
-    const blank = Object.fromEntries(rubric.map((row) => [row.label, ""])) as Record<string, string>
-    setDraft(blank)
-    setBusy(true)
-    try {
-      await onSave({})
-    } finally {
-      setBusy(false)
-    }
-  }
-
-  return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-primary tracking-[0.1em] uppercase text-[10px]">
-          Marks &middot; <span className="text-foreground normal-case tracking-normal">{teamLabel}</span>
-        </p>
-        <p className="text-muted-foreground text-xs">
-          {filledCount} of {rubric.length} criteria entered
-        </p>
-      </div>
-
-      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-        {rubric.map((row) => {
-          const raw = (draft[row.label] ?? "").trim()
-          const n = Number(raw)
-          const overMax = raw !== "" && Number.isFinite(n) && n > row.max
-          return (
-            <div key={row.label} className="flex items-center justify-between gap-3 min-w-0">
-              <span className="text-muted-foreground text-sm truncate" title={row.label}>
-                {row.label}
-              </span>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <Input
-                  type="number"
-                  inputMode="decimal"
-                  min={0}
-                  max={row.max}
-                  step="0.5"
-                  value={draft[row.label] ?? ""}
-                  disabled={busy}
-                  onChange={(e) => setDraft((cur) => ({ ...cur, [row.label]: e.target.value }))}
-                  onBlur={() => commit()}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter") e.currentTarget.blur()
-                  }}
-                  placeholder="—"
-                  aria-label={row.label}
-                  title={overMax ? `Above the maximum of ${row.max}` : undefined}
-                  className={cn(
-                    "h-9 w-[70px] bg-card border-border text-foreground text-center tabular-nums",
-                    overMax && "border-destructive text-destructive",
-                  )}
-                />
-                <span className="text-muted-foreground text-xs w-8">/ {row.max}</span>
-              </div>
-            </div>
-          )
-        })}
-      </div>
-
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
-        <p className="text-sm">
-          <span className="text-primary tracking-[0.1em] uppercase text-[10px] mr-2">Total</span>
-          <span className="text-foreground font-medium text-lg tabular-nums">
-            {anyFilled ? liveTotal : "—"}
-          </span>
-          {rubricTotal > 0 && <span className="text-muted-foreground text-xs ml-1">/ {rubricTotal}</span>}
-        </p>
-        <div className="flex items-center gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={clearAll}
-            disabled={busy || !anyFilled}
-            className="border-border text-muted-foreground hover:text-foreground hover:bg-transparent dark:hover:bg-transparent"
-          >
-            Clear
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={onClose}
-            disabled={busy}
-            className="border-border text-foreground hover:text-primary hover:bg-transparent dark:hover:bg-transparent"
-          >
-            Done
-          </Button>
-        </div>
-      </div>
+    <div className="min-w-0">
+      <Link
+        href={`/admin/team-profiles/${row.studentUserId}`}
+        className="text-foreground hover:text-primary break-words"
+      >
+        {row.teamName?.trim() || row.loginId}
+      </Link>
+      <span className="text-muted-foreground font-mono text-xs ml-2">#{row.loginId}</span>
+      <span
+        className={cn(
+          "flex items-center gap-1 text-xs mt-0.5",
+          row.driveUrl ? "text-primary" : "text-muted-foreground",
+        )}
+      >
+        {row.driveUrl ? (
+          <>
+            <CheckCircle2 className="w-3.5 h-3.5" /> Submitted
+          </>
+        ) : (
+          <>
+            <Circle className="w-3.5 h-3.5" /> Not submitted
+          </>
+        )}
+      </span>
     </div>
   )
 }
 
-/* ------------------------------------------------------------------ */
+/** Drive + Canva links together, so they cost one column instead of two. */
+function DeckLinks({ row }: { row: AdminSubmissionRow }) {
+  if (!row.driveUrl && !row.canvaUrl) {
+    return <span className="text-muted-foreground text-xs">—</span>
+  }
+  return (
+    <div className="flex flex-col gap-1 shrink-0">
+      {row.driveUrl && (
+        <a
+          href={row.driveUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1 text-primary hover:underline text-xs"
+          title={row.driveUrl}
+        >
+          <ExternalLink className="w-3.5 h-3.5 shrink-0" /> Drive
+        </a>
+      )}
+      {row.canvaUrl && (
+        <a
+          href={row.canvaUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="inline-flex items-center gap-1 text-primary hover:underline text-xs"
+          title={row.canvaUrl}
+        >
+          <ExternalLink className="w-3.5 h-3.5 shrink-0" /> Canva
+        </a>
+      )}
+    </div>
+  )
+}
 
 function VenuesCard({
   kind,
