@@ -180,3 +180,64 @@ begin
   return public.admin_set_round_scores(p_admin_user_id, v_preset, p_student_user_id, p_marks);
 end;
 $$;
+
+-- Faculty / jury sheets feed the round's score. Whenever an evaluator saves,
+-- the team's round score becomes the per-criterion average of every sheet
+-- filed for it in that round (a criterion averages only the evaluators who
+-- marked it). An admin can still edit the result on /admin/scores; the next
+-- evaluator save for that team recomputes it.
+create or replace function public._sync_round_score_from_evaluations(p_preset_id uuid, p_student_user_id uuid)
+returns void
+language plpgsql
+security definer
+set search_path to 'public'
+as $$
+declare v_marks jsonb;
+begin
+  select jsonb_object_agg(k, avg_mark) into v_marks
+  from (
+    select kv.key as k, round(avg((kv.value)::numeric), 2) as avg_mark
+    from public.evaluations e, jsonb_each(e.marks) kv
+    where e.preset_id = p_preset_id and e.student_user_id = p_student_user_id
+      and jsonb_typeof(kv.value) = 'number'
+    group by kv.key
+  ) x;
+
+  if v_marks is null then
+    delete from public.round_scores where preset_id = p_preset_id and student_user_id = p_student_user_id;
+    return;
+  end if;
+
+  insert into public.round_scores (preset_id, student_user_id, marks, total, updated_at)
+  select p_preset_id, p_student_user_id, v_marks, sum((value)::numeric), now()
+  from jsonb_each(v_marks)
+  on conflict (preset_id, student_user_id)
+  do update set marks = excluded.marks, total = excluded.total, updated_at = now();
+end;
+$$;
+
+create or replace function public._evaluations_sync_round_score()
+returns trigger
+language plpgsql
+security definer
+set search_path to 'public'
+as $$
+begin
+  if tg_op in ('UPDATE', 'DELETE') then
+    perform public._sync_round_score_from_evaluations(old.preset_id, old.student_user_id);
+  end if;
+  if tg_op in ('INSERT', 'UPDATE') then
+    perform public._sync_round_score_from_evaluations(new.preset_id, new.student_user_id);
+  end if;
+  return null;
+end;
+$$;
+
+drop trigger if exists evaluations_sync_round_score on public.evaluations;
+create trigger evaluations_sync_round_score
+after insert or update or delete on public.evaluations
+for each row execute function public._evaluations_sync_round_score();
+
+-- Backfill sheets filed before the trigger existed.
+select public._sync_round_score_from_evaluations(preset_id, student_user_id)
+from (select distinct preset_id, student_user_id from public.evaluations) s;
