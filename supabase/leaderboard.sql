@@ -55,6 +55,7 @@ begin
         'projectTitle', u.project_title,
         'domainId', ds.domain_id,
         'mentorName', m.name,
+        'mentorUserId', m.id,
         'scores', coalesce((
           select jsonb_object_agg(rs.preset_id, rs.total)
           from public.round_scores rs

@@ -60,6 +60,7 @@ export default async function MemberPage() {
           icon={<Trophy className="w-9 h-9" />}
           title="Leaderboard"
           description="See where your team stands in the judging rounds."
+          className="sm:col-span-2 sm:mx-auto sm:w-[calc(50%-1rem)]"
         />
       </div>
     </main>

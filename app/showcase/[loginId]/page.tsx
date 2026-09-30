@@ -29,8 +29,8 @@ export default async function ShowcaseTeamPage({
       <PublicNav isAuthenticated={!!session} dashboardHref={session ? roleHome(session.role) : undefined} />
 
       <div className="relative z-10 px-6 py-16 max-w-3xl mx-auto">
-        {from === "leaderboard" && session?.role === "member" ? (
-          <BackLink label="Back to Leaderboard" fallbackHref="/member/leaderboard" />
+        {from === "leaderboard" && (session?.role === "member" || session?.role === "mentor") ? (
+          <BackLink label="Back to Leaderboard" fallbackHref={`/${session.role}/leaderboard`} />
         ) : (
           <BackLink label="Back to Showcase" fallbackHref="/showcase" />
         )}

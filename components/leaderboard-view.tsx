@@ -7,14 +7,17 @@ import { getDomains } from "@/lib/domains"
 import { getLeaderboard, type LeaderboardEntry, type LeaderboardRound } from "@/lib/leaderboard"
 import { cn } from "@/lib/utils"
 
-export const dynamic = "force-dynamic"
-
 const fmt = (n: number) => (Number.isInteger(n) ? String(n) : n.toFixed(2).replace(/0$/, ""))
 
 /** Clicking a team opens its project profile, with a way back here. */
 const profileHref = (loginId: string) => `/showcase/${encodeURIComponent(loginId)}?from=leaderboard`
 
-export default async function MemberLeaderboardPage() {
+/**
+ * The published-scores leaderboard, shared by the member and mentor portals.
+ * "Yours" is the signed-in team, or every team the signed-in mentor guides;
+ * those are pinned in a strip at the top and highlighted in the list.
+ */
+export async function LeaderboardView({ portal }: { portal: "member" | "mentor" }) {
   const session = await getSession()
   const [{ rounds, entries }, domains] = await Promise.all([
     session ? getLeaderboard(session.userId) : Promise.resolve({ rounds: [], entries: [] }),
@@ -26,7 +29,9 @@ export default async function MemberLeaderboardPage() {
   // What the headline score is out of: the round's marks, or the mean of them
   // when the headline is an average.
   const overallMax = rounds.length === 0 ? 0 : rounds.reduce((s, r) => s + r.max, 0) / rounds.length
-  const mine = entries.find((e) => e.studentUserId === session?.userId) ?? null
+  const isMine = (e: LeaderboardEntry) =>
+    !!session && (portal === "mentor" ? e.mentorUserId === session.userId : e.studentUserId === session.userId)
+  const mine = entries.filter(isMine)
   const podium = entries.filter((e) => e.rank <= 3).slice(0, 3)
   const rest = entries.slice(podium.length)
 
@@ -36,7 +41,7 @@ export default async function MemberLeaderboardPage() {
 
       <div className="relative z-10 max-w-5xl mx-auto">
         <Link
-          href="/member"
+          href={`/${portal}`}
           className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider mb-8 inline-block"
         >
           ← Back to Portal
@@ -63,27 +68,40 @@ export default async function MemberLeaderboardPage() {
           </div>
         ) : (
           <div className="flex flex-col gap-10">
-            {mine && (
-              <Link
-                href={profileHref(mine.loginId)}
-                className="group flex flex-wrap items-center gap-x-6 gap-y-3 rounded-2xl border border-primary bg-primary/10 px-6 py-5 hover:bg-primary/15 transition-colors"
-              >
-                <div className="flex items-baseline gap-2">
-                  <span className="text-primary tracking-[0.1em] uppercase text-[10px]">Your rank</span>
-                  <span className="font-serif text-4xl text-primary tabular-nums">#{mine.rank}</span>
-                  <span className="text-muted-foreground text-sm">of {entries.length}</span>
-                </div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-primary tracking-[0.1em] uppercase text-[10px]">
-                    {averaged ? "Average" : "Score"}
-                  </span>
-                  <span className="font-serif text-3xl text-foreground tabular-nums">{fmt(mine.overall)}</span>
-                  <span className="text-muted-foreground text-sm">/ {fmt(overallMax)}</span>
-                </div>
-                <span className="ml-auto inline-flex items-center gap-1 text-primary text-xs uppercase tracking-[0.1em]">
-                  Your project <ArrowUpRight className="w-3.5 h-3.5" />
-                </span>
-              </Link>
+            {mine.length > 0 && (
+              <div className="flex flex-col gap-3">
+                {mine.map((m) => (
+                  <Link
+                    key={m.studentUserId}
+                    href={profileHref(m.loginId)}
+                    className="group flex flex-wrap items-center gap-x-6 gap-y-3 rounded-2xl border border-primary bg-primary/10 px-6 py-5 hover:bg-primary/15 transition-colors"
+                  >
+                    {portal === "mentor" && (
+                      <div className="min-w-0 basis-full sm:basis-auto">
+                        <p className="text-primary tracking-[0.1em] uppercase text-[10px]">Your team</p>
+                        <p className="font-serif text-xl text-foreground truncate">{m.teamName}</p>
+                      </div>
+                    )}
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-primary tracking-[0.1em] uppercase text-[10px]">
+                        {portal === "mentor" ? "Rank" : "Your rank"}
+                      </span>
+                      <span className="font-serif text-4xl text-primary tabular-nums">#{m.rank}</span>
+                      <span className="text-muted-foreground text-sm">of {entries.length}</span>
+                    </div>
+                    <div className="flex items-baseline gap-2">
+                      <span className="text-primary tracking-[0.1em] uppercase text-[10px]">
+                        {averaged ? "Average" : "Score"}
+                      </span>
+                      <span className="font-serif text-3xl text-foreground tabular-nums">{fmt(m.overall)}</span>
+                      <span className="text-muted-foreground text-sm">/ {fmt(overallMax)}</span>
+                    </div>
+                    <span className="ml-auto inline-flex items-center gap-1 text-primary text-xs uppercase tracking-[0.1em]">
+                      {portal === "mentor" ? "Project" : "Your project"} <ArrowUpRight className="w-3.5 h-3.5" />
+                    </span>
+                  </Link>
+                ))}
+              </div>
             )}
 
             {podium.length > 0 && (
@@ -98,7 +116,7 @@ export default async function MemberLeaderboardPage() {
                       averaged={averaged}
                       overallMax={overallMax}
                       domain={domainTitle(e.domainId)}
-                      isMine={e.studentUserId === session?.userId}
+                      isMine={isMine(e)}
                       className={cn(i === 1 ? "md:order-2 order-1" : i === 0 ? "md:order-1 order-2" : "order-3")}
                     />
                   ) : null,
@@ -116,7 +134,7 @@ export default async function MemberLeaderboardPage() {
                     averaged={averaged}
                     overallMax={overallMax}
                     domain={domainTitle(e.domainId)}
-                    isMine={e.studentUserId === session?.userId}
+                    isMine={isMine(e)}
                   />
                 ))}
               </section>

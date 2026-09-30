@@ -1,6 +1,6 @@
 import { DashboardNavCard } from "@/components/dashboard-nav-card"
 import { getSession } from "@/lib/get-session"
-import { CalendarClock, UserCircle, LayoutGrid, Users, BookOpen } from "lucide-react"
+import { CalendarClock, UserCircle, LayoutGrid, Users, BookOpen, Trophy } from "lucide-react"
 import { PortalHeader } from "@/components/portal-header"
 
 export default async function MentorPage() {
@@ -48,7 +48,12 @@ export default async function MentorPage() {
           icon={<BookOpen className="w-9 h-9" />}
           title="Guidelines"
           description="How teams should approach their project, slide by slide."
-          className="sm:col-span-2 sm:mx-auto sm:w-[calc(50%-1rem)]"
+        />
+        <DashboardNavCard
+          href="/mentor/leaderboard"
+          icon={<Trophy className="w-9 h-9" />}
+          title="Leaderboard"
+          description="See where your teams stand in the judging rounds."
         />
       </div>
     </main>

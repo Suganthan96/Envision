@@ -16,6 +16,7 @@ export interface LeaderboardEntry {
   projectTitle: string | null
   domainId: string | null
   mentorName: string | null
+  mentorUserId: string | null
   /** Total per published round, keyed by round id. Absent = not scored. */
   scores: Record<string, number>
   /** The single round's total, or the average across all published rounds. */
@@ -45,6 +46,7 @@ export async function getLeaderboard(
       projectTitle: string | null
       domainId: string | null
       mentorName: string | null
+      mentorUserId: string | null
       scores: Record<string, number | string>
     }[]
   }
@@ -71,6 +73,7 @@ export async function getLeaderboard(
       projectTitle: t.projectTitle?.trim() || null,
       domainId: t.domainId,
       mentorName: t.mentorName,
+      mentorUserId: t.mentorUserId,
       scores,
       overall: Math.round((sum / rounds.length) * 100) / 100,
     }
