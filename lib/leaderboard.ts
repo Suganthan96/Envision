@@ -1,4 +1,5 @@
 import { getSupabaseServerClient } from "@/lib/supabase-server"
+import { teamLogoUrl } from "@/lib/image-url"
 
 export interface LeaderboardRound {
   id: string
@@ -11,6 +12,10 @@ export interface LeaderboardEntry {
   studentUserId: string
   loginId: string
   teamName: string
+  teamLogoUrl: string | null
+  projectTitle: string | null
+  domainId: string | null
+  mentorName: string | null
   /** Total per published round, keyed by round id. Absent = not scored. */
   scores: Record<string, number>
   /** The single round's total, or the average across all published rounds. */
@@ -32,7 +37,16 @@ export async function getLeaderboard(
   const { data } = await supabase.rpc("get_leaderboard", { p_user_id: userId })
   const raw = (data ?? {}) as {
     rounds?: { id: string; name: string; max: number | string }[]
-    teams?: { id: string; loginId: string; name: string | null; scores: Record<string, number | string> }[]
+    teams?: {
+      id: string
+      loginId: string
+      name: string | null
+      logoVersion: string | null
+      projectTitle: string | null
+      domainId: string | null
+      mentorName: string | null
+      scores: Record<string, number | string>
+    }[]
   }
 
   const rounds: LeaderboardRound[] = (raw.rounds ?? []).map((r) => ({
@@ -53,6 +67,10 @@ export async function getLeaderboard(
       studentUserId: t.id,
       loginId: t.loginId,
       teamName: t.name?.trim() || t.loginId,
+      teamLogoUrl: teamLogoUrl(t.loginId, t.logoVersion),
+      projectTitle: t.projectTitle?.trim() || null,
+      domainId: t.domainId,
+      mentorName: t.mentorName,
       scores,
       overall: Math.round((sum / rounds.length) * 100) / 100,
     }
@@ -62,8 +80,7 @@ export async function getLeaderboard(
   const ranked = scored
     .filter((t) => rounds.some((r) => t.scores[r.id] != null))
     .sort(
-      (a, b) =>
-        b.overall - a.overall || Number(a.loginId) - Number(b.loginId) || a.loginId.localeCompare(b.loginId),
+      (a, b) => b.overall - a.overall || Number(a.loginId) - Number(b.loginId) || a.loginId.localeCompare(b.loginId),
     )
 
   const entries: LeaderboardEntry[] = []

@@ -8,8 +8,14 @@ import { roleHome } from "@/lib/session"
 
 export const dynamic = "force-dynamic"
 
-export default async function ShowcaseTeamPage({ params }: { params: Promise<{ loginId: string }> }) {
-  const { loginId } = await params
+export default async function ShowcaseTeamPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ loginId: string }>
+  searchParams: Promise<{ from?: string | string[] }>
+}) {
+  const [{ loginId }, { from }] = await Promise.all([params, searchParams])
   const [team, domains, session] = await Promise.all([getPublicShowcaseTeam(loginId), getDomains(), getSession()])
 
   if (!team) notFound()
@@ -23,7 +29,11 @@ export default async function ShowcaseTeamPage({ params }: { params: Promise<{ l
       <PublicNav isAuthenticated={!!session} dashboardHref={session ? roleHome(session.role) : undefined} />
 
       <div className="relative z-10 px-6 py-16 max-w-3xl mx-auto">
-        <BackLink label="Back to Showcase" fallbackHref="/showcase" />
+        {from === "leaderboard" && session?.role === "member" ? (
+          <BackLink label="Back to Leaderboard" fallbackHref="/member/leaderboard" />
+        ) : (
+          <BackLink label="Back to Showcase" fallbackHref="/showcase" />
+        )}
 
         <div className="flex flex-col sm:flex-row items-start gap-8 mb-12">
           <div className="size-28 border border-border bg-card flex items-center justify-center overflow-hidden shrink-0">

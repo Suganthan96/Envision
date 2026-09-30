@@ -51,6 +51,10 @@ begin
         'id', u.id,
         'loginId', u.login_id,
         'name', u.name,
+        'logoVersion', left(md5(u.team_logo_url), 8),
+        'projectTitle', u.project_title,
+        'domainId', ds.domain_id,
+        'mentorName', m.name,
         'scores', coalesce((
           select jsonb_object_agg(rs.preset_id, rs.total)
           from public.round_scores rs
@@ -59,6 +63,9 @@ begin
         ), '{}'::jsonb)
       ))
       from public.app_users u
+      left join public.domain_selections ds on ds.user_id = u.id and ds.role = 'member'
+      left join public.mentor_assignments ma on ma.student_user_id = u.id
+      left join public.app_users m on m.id = ma.mentor_user_id
       where u.role = 'member' and u.hidden is not true
     ), '[]'::jsonb)
   );
