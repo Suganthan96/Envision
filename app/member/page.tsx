@@ -1,6 +1,6 @@
 import { DashboardNavCard } from "@/components/dashboard-nav-card"
 import { getSession } from "@/lib/get-session"
-import { CalendarClock, Users, LayoutGrid, UserCircle, Lightbulb, BookOpen } from "lucide-react"
+import { CalendarClock, Users, LayoutGrid, UserCircle, Lightbulb, BookOpen, Trophy } from "lucide-react"
 import { PortalHeader } from "@/components/portal-header"
 
 export default async function MemberPage() {
@@ -54,6 +54,12 @@ export default async function MemberPage() {
           icon={<BookOpen className="w-9 h-9" />}
           title="Guidelines"
           description="How to approach your project, slide by slide."
+        />
+        <DashboardNavCard
+          href="/member/leaderboard"
+          icon={<Trophy className="w-9 h-9" />}
+          title="Leaderboard"
+          description="See where your team stands in the judging rounds."
         />
       </div>
     </main>

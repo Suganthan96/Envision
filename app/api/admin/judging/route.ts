@@ -201,6 +201,19 @@ export async function POST(request: NextRequest) {
         purgePresets()
         return NextResponse.json({ ok: true })
       }
+      case "publish-round": {
+        // Shows (or hides) this round's scores on the member leaderboard,
+        // which is read uncached, so there is nothing to purge.
+        const id = String(body?.id ?? "")
+        if (!id) return NextResponse.json({ error: "id is required." }, { status: 400 })
+        const { error } = await supabase.rpc("admin_set_round_published", {
+          p_admin_user_id: admin,
+          p_preset_id: id,
+          p_published: body?.published === true,
+        })
+        if (error) throw error
+        return NextResponse.json({ ok: true })
+      }
       case "delete-preset": {
         const id = String(body?.id ?? "")
         if (!id) return NextResponse.json({ error: "id is required." }, { status: 400 })

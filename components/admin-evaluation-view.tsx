@@ -268,6 +268,7 @@ function RoundsCard({
               isActive: false,
               sortOrder: presets.length,
               evaluationCount: 0,
+              scoresPublished: false,
             }}
             setPresets={setPresets}
             setError={setError}

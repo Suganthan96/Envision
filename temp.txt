@@ -1,0 +1,64 @@
+E11	Mr Robert Rajkumar, AP/ECE	9	The Fantastic Seven	Arokiya Serly Serwin A	Joanna Preethi J	Health, Well-being & Assistive Technology	A.U.R.A (ASHA Unified Reporting Assistant)
+		29	Light Bringers	Rufus T	Priyadharshan V	AI for Social Good	DebrisDetect.AI
+		34	TECHNITRO	J Samantha Jacqueline	Jose Regish J	Health, Well-being & Assistive Technology	Pill Proof
+		40	Ali Baba and 7 Thieves	Sharvesh	Ashmitha Christi J	Future-Ready Cities & Communities	AERIS
+		41	Paradine	Muguntharaj	Priyadharshan V	Climate Resilience & Disaster Management	Smart Natural-Dam Detection
+		42	7 Aum Arivu	Hayden Victor	Jose Regish J	Campus 360: One Intelligent Ecosystem	Campus360
+		57	Team Connectors	Tejas Mombrin A	Ashmitha Christi J	Campus 360: One Intelligent Ecosystem	Campus Connect
+		62	intelligenceX	Lanya Berree M	Joanna Preethi J	Future-Ready Cities & Communities	IoT-Enabled Pneumatic Waste Collection and Resource Recovery System
+J12	"
+Dr Santhi Mary, ASP/EEE"	10	Super 7	Dharshni M	Steve Godwin S	Future-Ready Cities & Communities	Lumina Save Light
+		11	Le Debunkers	Alvin Mahiban Benedict	RAVEESHWAR N	Climate Resilience & Disaster Management	ACRA
+		16	7 Senses	hadriel vincent	Steve Godwin S	Inclusive Innovation for a Better Society	SMARTSONIC
+		26	Techthulir	Jannes Stephaniya S	Ponram P	Inclusive Innovation for a Better Society	KID-Z Tracker
+		30	7 Wonders	Jebinson Raj. R	Ponram P	Future-Ready Cities & Communities	TRAZEN
+		43	team techh	Santossh	Prince Arockiaraj R	Smart Water & Clean Energy for a Sustainable Future	Corrosense AI
+		44	supernova	Sarvesh AS	Prince Arockiaraj R	Smart Agriculture & Food Security	NilamTech
+		46	The Blast	Sandhiya Sri.S	RAVEESHWAR N	Waste to Value	Sensor-Based Waste Plastic-to-3D Printing Filament System
+C30	Mr Mahimai Don Bosco, AP/ECE	3	MARK 43	Aaron C	DEVANSHI SAHANI A	Waste to Value	V - MAX
+		18	CREATIVE RANGERS7(CR7)	S DIYA MAHIMA	DEVANSHI SAHANI A	Climate Resilience & Disaster Management	FLOWS — Flood-Level Observation & Warning System
+		20	MATRIX	Ebilovis V	Chandra Prasad S	AI for Social Good	MATRIX
+		23	INNO-DEA	Geneliaa Maria	Chandra Prasad S	Inclusive Innovation for a Better Society	Queue-Buster
+		33	Extra-ordinary 7	Samjoyson	Abargil Priela	Future-Ready Cities & Communities	Fleet cross
+		35	7 Stars	Ebenezer Octavius Dawson	Abargil Priela	Smart & Sustainable Home Automation	WattWise
+		48	stranger brains	sarveash aj	John Febin S	Smart Agriculture & Food Security	ROOT 2 REACH
+		59	Club Gotham	Kevin A	John Febin S	Smart Water & Clean Energy for a Sustainable Future	Water Monitoring and Support System
+I13/I11	"
+Dr. Jainish, AP/CSE"	4	Rectify	Andrea Casildaa	Krithik S	Inclusive Innovation for a Better Society	ITSPU — Intelligent Traffic Sensing & Prediction Unit
+		19	NEXUS	Hashmitha.S	Krithik S	Campus 360: One Intelligent Ecosystem	NEXUS
+		21	IShowVision	O.Emmanuel David	Rehaan Rafael John	Climate Resilience & Disaster Management	ResQMesh
+		37	CATALYST	Nimshi	Anusha Agnes I	Campus 360: One Intelligent Ecosystem	PRESYNC
+		45	Thunderboltz	sakthiadiram	Steffi M	Smart & Sustainable Home Automation	Smart Home Health & Self-Healing System
+		51	Cyphers	Reni Joana R	R.Arul pragatheeshwaran	Smart & Sustainable Home Automation	D-ta
+		52	Innovision	M.Rewin Sharon	Steffi M	Smart Water & Clean Energy for a Sustainable Future	Aquasync
+		60	N3B	Tharvin M	Rehaan Rafael John	AI for Social Good	SENTRAI
+A11	Ms Freesi Greta, AP/CSE	13	UniVision	Felician Ferno	Bharanidharan V	Smart Agriculture & Food Security	IndiGrade
+		24	24/7 rangers	Riya Leema Rose A	Ram siddhaarth LJ	Health, Well-being & Assistive Technology	SENRAFA (Sensory Emergency Network for Rapid Aid and First Assistance)
+		31	Future Wrappers	Mohamed Arshaan Miyan	ENOCH PAUL H	Health, Well-being & Assistive Technology	AmbuLink
+		36	Phoenix	Jude Kavin Peries	Dev Dharsshan	Smart & Sustainable Home Automation	Wall-E
+		38	Innovengers	Nthish Kumar J R	ENOCH PAUL H	Climate Resilience & Disaster Management	droughtIQ
+		49	Dynamo	Srijith A	Dev Dharsshan	Climate Resilience & Disaster Management	Dynamo
+		54	Dude	G.sarah tamilselvi	Joseeca Anto Francis F	Smart Water & Clean Energy for a Sustainable Future	DETECTION OF EXCESSIVE CURRENT CONSUMPTION
+		55	provators	Subikshaa	Bharanidharan V	Smart & Sustainable Home Automation	FlexiClean (Shape-Adaptive Robotic Cleaning Mechanism)
+A21	Ms Sylvia, AP/IT	1	7 BRAIN CELLS	Z. AAMIRA RAKHSHANA	Asmita J	Smart Agriculture & Food Security	VISTA ( Visual Intelligence & Sensor-based Technology for Agriculture )
+		5	6:00 AM	Maria Akshaya Pelicks	Mohamed Kaif SA	Inclusive Innovation for a Better Society	Saigai
+		6	SEVENTEENS	Adrian Athiban Benedict	Nixon Immanuel	Inclusive Innovation for a Better Society	An app for scholarships and events conducted by government
+		7	The Revelations	Calisto Desmond Charles	Sam Salamon S	Climate Resilience & Disaster Management	Earthguard
+		15	Arosen	Bernice Claudia	Bernice Claudia	Smart & Sustainable Home Automation	FlowSense – A Retrofit Smart Tap Attachment for Household Water Conservation
+		17	Smartineers	Carolene Ruth Samson	Nixon Immanuel	Smart & Sustainable Home Automation	HARRY - Home Automation through Routine-based Recognition (Adaptive Home Automation)
+		28	Vision-Techies	D Krithik Balaji	Mohamed Kaif SA	Future-Ready Cities & Communities	PAARVAI
+		56	Team Luceat	P. Joshua Anand	Sam Salamon S	Smart Water & Clean Energy for a Sustainable Future	FlowSense
+B32	Mr Sairam, AP/AI & DS	22	HEPTONOVA	rishi s	Anto Snowin	Future-Ready Cities & Communities	AEGIS
+		25	7 Rangers	Jose Antony Rosheena	Anto Snowin	Health, Well-being & Assistive Technology	CARETRACK
+		39	Micro7	Mohammed Shariq N S	DALBERT JOE	Health, Well-being & Assistive Technology	Micro7 Signbridge
+		58	Nova Titans	Joyce Sarah M	DALBERT JOE	Campus 360: One Intelligent Ecosystem	Campus Connect
+		32	seven vagaiyara	K.S.Sai Abhinav	Mohammed Aasim	AI for Social Good	seven vagaiyara
+		14	Mythbusters seven	Balaji A	Mohammed Aasim	Smart Agriculture & Food Security	Agromate
+		27	Kaizen	Roshan R	Adeline Shweta CJ	Smart Agriculture & Food Security	A Phone Based Market Price, Storage, and Transport Advisory Connecting Small Farmers to Fair Prices Through Existing Government Infrastructure Schemes
+		53	Betto	Tharish H	Dev Arjun G	Health, Well-being & Assistive Technology	thunai
+B21	Mr Pandian, AP/Mech.	47	TechNova	Jaffy Spino J	Tony Kishore M	Campus 360: One Intelligent Ecosystem	VIGITAG
+		61	G-Xplorer's	R.G Yohan Aclaredius	Tony Kishore M	AI for Social Good	G-Xplorer's
+		2	GenVision	Akshaya D	Amal Raj	Inclusive Innovation for a Better Society	NOVA(Navigation and Orientation for Visual Access)
+		12	NEXORA	Alwin.A	Amal Raj	AI for Social Good	NEXORA
+		8	Unique Stars 	Bavani.M	Karan Cindae R	Smart Agriculture & Food Security	AgriCane 360
+		50	Mechatronics Minds	J Schenova Jo Adlyn	Karan Cindae R	Smart & Sustainable Home Automation	RO REJECT WATER RECOVERY SYSTEM

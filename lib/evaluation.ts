@@ -16,6 +16,8 @@ export interface RubricPreset {
   sortOrder: number
   /** Sheets already filed against this round — a delete would take them too. */
   evaluationCount: number
+  /** Shown on the member leaderboard. */
+  scoresPublished: boolean
 }
 
 /** One team as it appears in an evaluator's own list, with their own marks. */
@@ -79,6 +81,7 @@ export async function getRubricPresets(adminUserId: string): Promise<RubricPrese
     is_active: boolean
     sort_order: number
     evaluation_count: number
+    scores_published: boolean | null
   }[]).map((r) => ({
     id: r.id,
     name: r.name,
@@ -86,6 +89,7 @@ export async function getRubricPresets(adminUserId: string): Promise<RubricPrese
     isActive: r.is_active,
     sortOrder: r.sort_order,
     evaluationCount: Number(r.evaluation_count ?? 0),
+    scoresPublished: Boolean(r.scores_published),
   }))
 }
 
