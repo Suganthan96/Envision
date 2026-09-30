@@ -6,7 +6,14 @@ import { ScoresSection } from "./scores-section"
 
 export const dynamic = "force-dynamic"
 
-export default function AdminScoresPage() {
+export default async function AdminScoresPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ round?: string | string[] }>
+}) {
+  const { round } = await searchParams
+  const roundId = typeof round === "string" && round ? round : null
+
   return (
     <main className="min-h-screen bg-background px-6 py-12">
       <div className="relative z-10 max-w-7xl mx-auto">
@@ -19,11 +26,12 @@ export default function AdminScoresPage() {
           Judging <span className="text-gold-gradient">Scores</span>
         </h1>
         <p className="text-muted-foreground text-lg mb-10">
-          Enter each team&apos;s mark for every rubric criterion. The total is worked out as you go.
+          Each judging round keeps its own marks. Open a round to enter or edit every team&apos;s
+          score, criterion by criterion.
         </p>
 
-        <Suspense fallback={<TableSkeleton />}>
-          <ScoresSection />
+        <Suspense key={roundId ?? "all"} fallback={<TableSkeleton />}>
+          <ScoresSection roundId={roundId} />
         </Suspense>
       </div>
     </main>

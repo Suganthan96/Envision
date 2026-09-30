@@ -90,9 +90,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ok: true })
       }
       case "set-scores": {
+        const presetId = String(body?.presetId ?? "")
         const studentUserId = String(body?.studentUserId ?? "")
-        if (!studentUserId) {
-          return NextResponse.json({ error: "studentUserId is required." }, { status: 400 })
+        if (!presetId || !studentUserId) {
+          return NextResponse.json({ error: "presetId and studentUserId are required." }, { status: 400 })
         }
 
         // Per-criterion marks keyed by rubric label. Criteria left blank are
@@ -114,16 +115,18 @@ export async function POST(request: NextRequest) {
           }
         }
 
+        // Marks belong to one round, so a new round never overwrites the last.
         // The total is derived inside the RPC, so it can never drift from the
         // parts that produced it.
-        const { data, error } = await supabase.rpc("admin_set_submission_scores", {
+        const { data, error } = await supabase.rpc("admin_set_round_scores", {
           p_admin_user_id: admin,
+          p_preset_id: presetId,
           p_student_user_id: studentUserId,
           p_marks: Object.keys(marks).length > 0 ? marks : null,
         })
         if (error) throw error
-        // Scores are read through getSubmissionsForAdmin, which is uncached on
-        // a force-dynamic page, so there is nothing to purge here.
+        // Scores are read uncached on force-dynamic pages, so there is
+        // nothing to purge here.
         return NextResponse.json({ ok: true, total: data == null ? null : Number(data) })
       }
       case "save-settings": {

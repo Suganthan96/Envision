@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils"
 import {
   resolveJudgingVenue,
   type JudgingAssignment,
-  type JudgingSettings,
   type JudgingVenue,
   type RubricRow,
 } from "@/lib/judging"
@@ -22,13 +21,13 @@ let inFlight = 0
 let lastWriteAt = 0
 const writesSettled = () => inFlight === 0 && Date.now() - lastWriteAt > 3_000
 
-async function saveScores(studentUserId: string, marks: Record<string, number>) {
+async function saveScores(presetId: string, studentUserId: string, marks: Record<string, number>) {
   inFlight += 1
   try {
     const res = await fetch("/api/admin/judging", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "set-scores", studentUserId, marks }),
+      body: JSON.stringify({ action: "set-scores", presetId, studentUserId, marks }),
     })
     const data = await res.json().catch(() => ({}))
     if (!res.ok) throw new Error(data.error ?? "Something went wrong.")
@@ -43,24 +42,29 @@ async function saveScores(studentUserId: string, marks: Record<string, number>) 
 const EMPTY_MARKS: Record<string, number> = {}
 
 /**
- * The judging console. Teams present room by room, so the venue filter narrows
+ * The judging console for one round. Teams present room by room, so the venue filter narrows
  * the list to the room you're sitting in and the panel then walks straight down
  * it: mark a team, "Save & next" moves to the one after. Every team stays one
  * click away in the list, and the list shows at a glance who is still unmarked.
  */
 export function AdminScoresView({
+  presetId,
+  rubric,
+  scores,
   rows,
   venues,
   assignments,
-  settings,
 }: {
+  presetId: string
+  rubric: RubricRow[]
+  /** This round's marks, keyed by team. Teams not yet scored are absent. */
+  scores: Record<string, Record<string, number>>
   rows: AdminSubmissionRow[]
   venues: JudgingVenue[]
   assignments: JudgingAssignment[]
-  settings: JudgingSettings
 }) {
   const [breakdowns, setBreakdowns] = useState<Record<string, Record<string, number>>>(() =>
-    Object.fromEntries(rows.map((r) => [r.studentUserId, r.scoreBreakdown ?? {}])),
+    Object.fromEntries(rows.map((r) => [r.studentUserId, scores[r.studentUserId] ?? {}])),
   )
   const [selected, setSelected] = useState("")
   const [error, setError] = useState("")
@@ -76,25 +80,19 @@ export function AdminScoresView({
   // The page refreshes itself on a timer. Adopt the server's marks for every
   // team except the one open in the sheet, which would wipe an entry in
   // progress.
-  const serverKey = JSON.stringify(rows.map((r) => [r.studentUserId, r.scoreBreakdown ?? {}]))
+  const serverKey = JSON.stringify(rows.map((r) => [r.studentUserId, scores[r.studentUserId] ?? {}]))
   useEffect(() => {
     if (!writesSettled()) return
     setBreakdowns((cur) => {
       const next = { ...cur }
       for (const r of rows) {
         if (r.studentUserId === selectedRef.current) continue
-        next[r.studentUserId] = r.scoreBreakdown ?? {}
+        next[r.studentUserId] = scores[r.studentUserId] ?? {}
       }
       return next
     })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [serverKey])
-
-  /** Marks available per the current rubric — the "/ 50" beside each total. */
-  const rubricTotal = useMemo(
-    () => settings.rubric.reduce((sum, row) => sum + (Number(row.max) || 0), 0),
-    [settings.rubric],
-  )
 
   /** A team's total, summed from whatever criteria have been filled in.
    *  null (not 0) while nothing has been entered at all. */
@@ -111,7 +109,7 @@ export function AdminScoresView({
     const prev = breakdowns[studentUserId] ?? {}
     setBreakdowns((cur) => ({ ...cur, [studentUserId]: next }))
     try {
-      await saveScores(studentUserId, next)
+      await saveScores(presetId, studentUserId, next)
     } catch (e) {
       setBreakdowns((cur) => ({ ...cur, [studentUserId]: prev }))
       setError(e instanceof Error ? e.message : "Could not save the marks.")
@@ -277,9 +275,9 @@ export function AdminScoresView({
         <div className="flex-1 min-w-0 w-full border border-border rounded-lg bg-card/40 p-5">
           {!row ? (
             <p className="text-muted-foreground text-sm">Pick a team to enter its marks.</p>
-          ) : settings.rubric.length === 0 ? (
+          ) : rubric.length === 0 ? (
             <p className="text-muted-foreground text-sm">
-              No rubric criteria yet — add them under Judging Rubric on the Submissions page.
+              This round has no criteria yet — add them on the Judging Rounds page.
             </p>
           ) : (
             <MarkSheet
@@ -289,7 +287,7 @@ export function AdminScoresView({
                 .filter(Boolean)
                 .join(" · ")}
               position={`${index + 1} of ${list.length}`}
-              rubric={settings.rubric}
+              rubric={rubric}
               marks={breakdowns[row.studentUserId] ?? EMPTY_MARKS}
               onSave={(next) => saveMarks(row.studentUserId, next)}
               hasPrev={index > 0}
