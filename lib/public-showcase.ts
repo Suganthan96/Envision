@@ -49,6 +49,23 @@ type TeamRow = {
   mentor_name: string | null
 }
 
+// supabase-js reports network failures as `{ data: null, error }` rather
+// than throwing. Swallowing that would let unstable_cache store an empty
+// result — on the detail page that is a cached `null`, which renders as a
+// 404 until the cache expires (and AutoRefresh re-renders every 30s, so a
+// page left open eventually hits one). Retry once, then throw so the failure
+// is never cached and never mistaken for "team doesn't exist".
+async function rpcOrThrow<T>(fn: string, args?: Record<string, unknown>): Promise<T> {
+  const supabase = getSupabaseServerClient()
+  let lastError: unknown
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const { data, error } = await supabase.rpc(fn, args)
+    if (!error) return data as T
+    lastError = error
+  }
+  throw new Error(`${fn} failed: ${(lastError as { message?: string })?.message ?? lastError}`)
+}
+
 function mapTeam(row: TeamRow): PublicShowcaseTeam {
   return {
     studentUserId: row.student_user_id,
@@ -71,9 +88,8 @@ function mapTeam(row: TeamRow): PublicShowcaseTeam {
 // enough that an edit shows up almost immediately.
 export const getPublicShowcaseTeams = unstable_cache(
   async (): Promise<PublicShowcaseTeam[]> => {
-    const supabase = getSupabaseServerClient()
-    const { data } = await supabase.rpc("get_public_showcase_teams")
-    return ((data ?? []) as TeamRow[]).map(mapTeam)
+    const data = await rpcOrThrow<TeamRow[] | null>("get_public_showcase_teams")
+    return (data ?? []).map(mapTeam)
   },
   ["public-showcase-teams"],
   { revalidate: 20, tags: [CACHE_TAGS.publicShowcase] },
@@ -81,12 +97,11 @@ export const getPublicShowcaseTeams = unstable_cache(
 
 export const getPublicShowcaseTeam = unstable_cache(
   async (loginId: string): Promise<PublicShowcaseTeamDetail | null> => {
-    const supabase = getSupabaseServerClient()
-    const { data } = await supabase.rpc("get_public_showcase_team", { p_login_id: loginId })
-    const row = (data as (TeamRow & {
+    const data = await rpcOrThrow<(TeamRow & {
       problem_statement: string | null
       solution_long: string | null
-    })[] | null)?.[0]
+    })[] | null>("get_public_showcase_team", { p_login_id: loginId })
+    const row = data?.[0]
     if (!row) return null
     return {
       ...mapTeam(row),
@@ -100,8 +115,7 @@ export const getPublicShowcaseTeam = unstable_cache(
 
 export const getPublicMentorShowcase = unstable_cache(
   async (): Promise<PublicShowcaseMentor[]> => {
-    const supabase = getSupabaseServerClient()
-    const { data } = await supabase.rpc("get_public_mentor_showcase")
+    const data = await rpcOrThrow<unknown[] | null>("get_public_mentor_showcase")
     return (
       (data ?? []) as {
         mentor_user_id: string
