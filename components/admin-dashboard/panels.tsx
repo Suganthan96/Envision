@@ -4,9 +4,10 @@ import { ArrowUpRight, CircleCheck } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { getSession } from "@/lib/get-session"
 import { getAppSettings } from "@/lib/app-settings"
-import { getLeaderboard } from "@/lib/leaderboard"
+import { getRoundScores } from "@/lib/round-scores"
 import { AdminSettingToggle } from "@/components/admin-setting-toggle"
 import { LiveRoundBar } from "@/components/judging/live-round-bar"
+import { LeaderboardPicker, type PickerRound, type PickerTeam } from "@/components/admin-dashboard/leaderboard-picker"
 import {
   dashAttention,
   dashEvaluators,
@@ -293,57 +294,44 @@ export function LiveRound() {
 export async function Leaderboard() {
   const admin = await adminId()
   if (!admin) return null
-  const { rounds, entries } = await getLeaderboard(admin)
-  const top = entries.slice(0, 5)
-  const max = rounds.length ? rounds.reduce((s, r) => s + r.max, 0) / rounds.length : 0
+  const [presets, teams] = await Promise.all([dashPresets(admin), dashTeams(admin)])
+  // Every round's marks, so any mix of rounds can be ranked on the page.
+  const marksByRound = await Promise.all(presets.map((p) => getRoundScores(admin, p.id)))
+
+  const rounds: PickerRound[] = presets.map((p) => ({
+    id: p.id,
+    name: p.name,
+    max: p.rubric.reduce((s, r) => s + (Number(r.max) || 0), 0),
+    tiebreak: p.tiebreak,
+    published: p.scoresPublished,
+    live: p.isActive,
+  }))
+  const pickerTeams: PickerTeam[] = teams.map((t) => {
+    const scores: Record<string, number> = {}
+    const marks: Record<string, Record<string, number>> = {}
+    presets.forEach((p, i) => {
+      const m = marksByRound[i][t.studentUserId]
+      if (!m || Object.keys(m).length === 0) return
+      marks[p.id] = m
+      scores[p.id] = Math.round(Object.values(m).reduce((a, b) => a + b, 0) * 100) / 100
+    })
+    return {
+      studentUserId: t.studentUserId,
+      loginId: t.loginId,
+      teamName: t.teamName?.trim() || `Team ${t.loginId}`,
+      mentorName: t.mentorName,
+      scores,
+      marks,
+    }
+  })
 
   return (
     <Panel
       title="Leaderboard"
       className="lg:col-span-5"
-      aside={rounds.length > 0 ? <PanelLink href="/admin/judging/scores">Scores</PanelLink> : undefined}
+      aside={<PanelLink href="/admin/judging/scores">Scores</PanelLink>}
     >
-      {rounds.length === 0 ? (
-        <p className="text-muted-foreground">
-          No round is on the leaderboard yet.{" "}
-          <Link href="/admin/judging/scores" className="text-primary hover:underline">
-            Publish one from Scores
-          </Link>{" "}
-          when the marks are in.
-        </p>
-      ) : (
-        <>
-          <p className="text-sm text-muted-foreground -mt-2">
-            {rounds.length === 1 ? rounds[0].name : `Average of ${rounds.map((r) => r.name).join(" and ")}`}, as teams
-            and mentors see it.
-          </p>
-          <ol className="flex flex-col divide-y divide-border">
-            {top.map((e) => (
-              <li key={e.studentUserId} className="flex items-center gap-4 py-2.5">
-                <span
-                  className={cn(
-                    "font-serif text-2xl w-7 text-right tabular-nums leading-none",
-                    e.rank === 1 ? "text-primary" : "text-muted-foreground",
-                  )}
-                >
-                  {e.rank}
-                </span>
-                <span className="flex-1 min-w-0">
-                  <span className="block text-foreground truncate">{e.teamName}</span>
-                  <span className="block text-xs text-muted-foreground truncate">
-                    Team {e.loginId}
-                    {e.mentorName ? `, mentored by ${e.mentorName}` : ""}
-                  </span>
-                </span>
-                <span className="tabular-nums text-foreground">
-                  {e.overall}
-                  <span className="text-muted-foreground text-sm">/{Math.round(max)}</span>
-                </span>
-              </li>
-            ))}
-          </ol>
-        </>
-      )}
+      <LeaderboardPicker rounds={rounds} teams={pickerTeams} />
     </Panel>
   )
 }
