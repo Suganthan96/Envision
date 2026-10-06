@@ -5,7 +5,7 @@ import { getJudgingVenues } from "@/lib/judging"
 import { getEvaluators } from "@/lib/evaluation"
 
 /**
- * The one slow part of /admin: the full user list RPC. Kept in its own
+ * The one slow part of /admin/users: the full user list RPC. Kept in its own
  * async component so the page shell (nav + heading) streams to the browser
  * immediately and this table swaps in under a <Suspense> when the query
  * returns, instead of the whole route blocking on it.

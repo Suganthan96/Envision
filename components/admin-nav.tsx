@@ -1,7 +1,8 @@
 import Link from "next/link"
 
 const ADMIN_NAV_ITEMS = [
-  { href: "/admin", label: "User Management" },
+  { href: "/admin", label: "Home" },
+  { href: "/admin/users", label: "Users" },
   { href: "/admin/domain-selection", label: "Domain Selection" },
   { href: "/admin/matching", label: "Mentor Allocation" },
   { href: "/admin/timeline", label: "Timeline" },
