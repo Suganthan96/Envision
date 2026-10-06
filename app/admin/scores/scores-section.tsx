@@ -1,6 +1,7 @@
 import Link from "next/link"
 import { AdminScoresView } from "@/components/admin-scores-view"
 import { ScoreRoundCards } from "@/components/score-round-cards"
+import { TiebreakEditor } from "@/components/tiebreak-editor"
 import { getSession } from "@/lib/get-session"
 import { getSubmissionsForAdmin } from "@/lib/admin-directories"
 import { getJudgingVenues, getJudgingAssignments } from "@/lib/judging"
@@ -9,7 +10,8 @@ import { getRoundScoreSummaries, getRoundScores } from "@/lib/round-scores"
 
 /**
  * Without a round: one card per judging round. With `?round=<id>`: that
- * round's marking console, where each team's score can be entered or edited.
+ * round's marking console, where each team's score can be entered or edited,
+ * and the order of criteria that breaks equal totals.
  */
 export async function ScoresSection({ roundId }: { roundId: string | null }) {
   const session = await getSession()
@@ -59,6 +61,7 @@ export async function ScoresSection({ roundId }: { roundId: string | null }) {
           </h2>
         </div>
       </div>
+      <TiebreakEditor key={`tb-${preset.id}`} presetId={preset.id} initial={preset.tiebreak} />
       <AdminScoresView
         key={preset.id}
         presetId={preset.id}

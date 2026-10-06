@@ -58,6 +58,12 @@ export async function LeaderboardView({ portal }: { portal: "member" | "mentor" 
               ? `Ranked by the average of ${rounds.map((r) => r.name).join(", ")}. Tap a team to see its project.`
               : `Scores from ${rounds[0].name}. Tap a team to see its project.`}
         </p>
+        {rounds.length > 0 && rounds[0].tiebreak.length > 0 && (
+          <p className="text-muted-foreground text-sm mb-4">
+            Equal scores are separated by {rounds[0].tiebreak.join(", then ")}
+            {averaged ? ` (${rounds[0].name}, then the next round)` : ""}.
+          </p>
+        )}
 
         <ArtDecoDivider variant="stepped" />
 

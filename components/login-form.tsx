@@ -10,7 +10,9 @@ import { PasswordInput } from "@/components/ui/password-input"
 import { Label } from "@/components/ui/label"
 import { MENTOR_ID_ERROR, isValidMentorId, looksLikeMentorId } from "@/lib/mentor-login-id"
 
-export function LoginForm() {
+/** `redirectTo` sends the user back to a same-site page after signing in
+ *  (e.g. the MCP sign-in screen) instead of their portal home. */
+export function LoginForm({ redirectTo }: { redirectTo?: string } = {}) {
   const router = useRouter()
   const [loginId, setLoginId] = useState("")
   const [password, setPassword] = useState("")
@@ -42,6 +44,11 @@ export function LoginForm() {
         return
       }
 
+      if (redirectTo?.startsWith("/") && !redirectTo.startsWith("//")) {
+        // Full navigation so the server page renders with the new cookie.
+        window.location.assign(redirectTo)
+        return
+      }
       router.push(data.redirect)
       router.refresh()
     } catch {

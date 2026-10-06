@@ -214,6 +214,20 @@ export async function POST(request: NextRequest) {
         if (error) throw error
         return NextResponse.json({ ok: true })
       }
+      case "set-tiebreak": {
+        // Read uncached by the leaderboard; the presets list carries it too.
+        const id = String(body?.id ?? "")
+        const order = Array.isArray(body?.tiebreak) ? body.tiebreak.map(String) : null
+        if (!id || !order) return NextResponse.json({ error: "id and tiebreak are required." }, { status: 400 })
+        const { error } = await supabase.rpc("admin_set_round_tiebreak", {
+          p_admin_user_id: admin,
+          p_preset_id: id,
+          p_tiebreak: order,
+        })
+        if (error) throw error
+        purgePresets()
+        return NextResponse.json({ ok: true })
+      }
       case "delete-preset": {
         const id = String(body?.id ?? "")
         if (!id) return NextResponse.json({ error: "id is required." }, { status: 400 })

@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { CACHE_TAGS } from "@/lib/cache-tags"
 import type { RubricRow } from "@/lib/judging"
+import { effectiveTiebreak } from "@/lib/tiebreak"
 
 /**
  * An evaluation round. Exactly one preset is active at a time; the active
@@ -18,6 +19,8 @@ export interface RubricPreset {
   evaluationCount: number
   /** Shown on the member leaderboard. */
   scoresPublished: boolean
+  /** Criteria in the order that breaks equal totals (lib/tiebreak.ts). */
+  tiebreak: string[]
 }
 
 /** One team as it appears in an evaluator's own list, with their own marks. */
@@ -82,6 +85,7 @@ export async function getRubricPresets(adminUserId: string): Promise<RubricPrese
     sort_order: number
     evaluation_count: number
     scores_published: boolean | null
+    tiebreak: string[] | null
   }[]).map((r) => ({
     id: r.id,
     name: r.name,
@@ -90,6 +94,10 @@ export async function getRubricPresets(adminUserId: string): Promise<RubricPrese
     sortOrder: r.sort_order,
     evaluationCount: Number(r.evaluation_count ?? 0),
     scoresPublished: Boolean(r.scores_published),
+    tiebreak: effectiveTiebreak(
+      (Array.isArray(r.rubric) ? r.rubric : []).map((c) => c.label),
+      r.tiebreak,
+    ),
   }))
 }
 
