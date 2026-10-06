@@ -1,10 +1,9 @@
 import { Suspense, type ReactNode } from "react"
-import Link from "next/link"
 import { AdminNav } from "@/components/admin-nav"
 import { AdminHeader } from "@/components/admin-header"
 import { TableSkeleton } from "@/components/skeletons"
-import { JUDGING_SECTIONS, type JudgingSlug } from "@/components/judging/judging-sections"
-import { LiveRoundBar } from "@/components/judging/live-round-bar"
+import type { JudgingSlug } from "@/components/judging/judging-sections"
+import { JudgingBand } from "@/components/judging/judging-band"
 
 /**
  * The frame every Judging section page shares: admin header and nav, a way
@@ -32,34 +31,7 @@ export function JudgingPage({
 
         <AdminNav active="/admin/judging" />
 
-        <nav className="flex items-center gap-x-5 gap-y-2 flex-wrap mb-8 text-sm" aria-label="Judging sections">
-          <Link
-            href="/admin/judging"
-            className="text-muted-foreground hover:text-primary uppercase tracking-wider"
-          >
-            ← Judging
-          </Link>
-          <span className="w-px h-4 bg-border hidden sm:block" />
-          {JUDGING_SECTIONS.map((s) =>
-            s.slug === active ? (
-              <span key={s.slug} className="text-primary border-b border-primary pb-0.5" aria-current="page">
-                {s.label}
-              </span>
-            ) : (
-              <Link
-                key={s.slug}
-                href={`/admin/judging/${s.slug}`}
-                className="text-muted-foreground hover:text-primary"
-              >
-                {s.label}
-              </Link>
-            ),
-          )}
-        </nav>
-
-        <Suspense fallback={null}>
-          <LiveRoundBar />
-        </Suspense>
+        <JudgingBand active={active} />
 
         <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Admin Portal · Judging</p>
         <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-4">{title}</h1>

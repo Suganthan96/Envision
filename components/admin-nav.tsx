@@ -34,7 +34,7 @@ export function AdminNav({ active }: { active: AdminNavActive }) {
     // out to the viewport and re-centering at a fixed width makes the nav's
     // own width independent of whatever container it's placed in.
     <div className="relative w-screen left-1/2 -translate-x-1/2 px-6 mb-8">
-      <div className="max-w-5xl mx-auto flex items-center gap-6 flex-wrap rounded-2xl bg-card/40 backdrop-blur-md border border-border px-5 py-4">
+      <div className="max-w-5xl mx-auto flex items-center justify-center gap-x-6 gap-y-3 flex-wrap rounded-2xl bg-card/40 backdrop-blur-md border border-border px-5 py-4">
         {ADMIN_NAV_ITEMS.map((item) =>
           item.href === activeHref ? (
             <span

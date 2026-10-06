@@ -13,7 +13,7 @@ import { AdminHeader } from "@/components/admin-header"
 import { DashboardNavCard } from "@/components/dashboard-nav-card"
 import { TableSkeleton } from "@/components/skeletons"
 import { JUDGING_GROUPS, type JudgingSlug } from "@/components/judging/judging-sections"
-import { LiveRoundBar } from "@/components/judging/live-round-bar"
+import { JudgingBand } from "@/components/judging/judging-band"
 import { getSession } from "@/lib/get-session"
 import { getSubmissionsForAdmin } from "@/lib/admin-directories"
 import { getJudgingAssignments, getJudgingVenues, resolveJudgingVenue } from "@/lib/judging"
@@ -107,14 +107,12 @@ async function HubCards() {
 export default function AdminJudgingPage() {
   return (
     <main className="min-h-screen bg-background px-6 py-12">
-      <div className="relative z-10 max-w-6xl mx-auto">
+      <div className="relative z-10 max-w-5xl mx-auto">
         <AdminHeader />
 
         <AdminNav active="/admin/judging" />
 
-        <Suspense fallback={null}>
-          <LiveRoundBar />
-        </Suspense>
+        <JudgingBand />
 
         <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">Admin Portal</p>
         <h1 className="font-serif text-4xl md:text-5xl text-foreground mb-4">
