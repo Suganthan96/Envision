@@ -28,7 +28,7 @@ export interface LeaderboardEntry {
 }
 
 /**
- * The rounds an admin has published from /admin/scores, and every team ranked
+ * The rounds an admin has published from /admin/judging/scores, and every team ranked
  * by them. With one round the ranking is that round's total; with two or more
  * it is the average across them, a round a team has no score in counting as 0
  * so skipping a round never lifts a team. Equal scores are separated by each

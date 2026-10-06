@@ -53,7 +53,7 @@ export function ScoreRoundCards({
   if (presets.length === 0) {
     return (
       <p className="text-muted-foreground text-sm">
-        No judging rounds yet — create one on the Judging Rounds page.
+        No judging rounds yet — create one under Judging → Rounds.
       </p>
     )
   }
@@ -85,7 +85,7 @@ export function ScoreRoundCards({
                 p.isActive && "border-primary/60",
               )}
             >
-              <Link href={`/admin/scores?round=${p.id}`} className="group flex flex-col gap-4 p-6 flex-1">
+              <Link href={`/admin/judging/scores?round=${p.id}`} className="group flex flex-col gap-4 p-6 flex-1">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <h2 className="font-serif text-2xl text-foreground truncate" title={p.name}>

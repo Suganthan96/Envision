@@ -62,7 +62,11 @@ async function callJudging(action: string, payload: Record<string, unknown>) {
   }
 }
 
+/** Which part of the Judging hub this view renders. */
+export type SubmissionsSection = "submissions" | "venues" | "documents"
+
 export function AdminSubmissionsView({
+  section,
   rows,
   domains,
   venues: initialVenues,
@@ -70,6 +74,7 @@ export function AdminSubmissionsView({
   assignments: initialAssignments,
   settings: initialSettings,
 }: {
+  section: SubmissionsSection
   rows: AdminSubmissionRow[]
   domains: Domain[]
   venues: JudgingVenue[]
@@ -134,7 +139,7 @@ export function AdminSubmissionsView({
   }
 
   // ---- scores ----
-  // Marks are entered on /admin/scores; this page only reads the totals, for
+  // Marks are entered on /admin/judging/scores; this view only reads the totals, for
   // the scored count and the Excel export.
   const breakdowns = useMemo<Record<string, Record<string, number>>>(
     () => Object.fromEntries(rows.map((r) => [r.studentUserId, r.scoreBreakdown ?? {}])),
@@ -377,6 +382,7 @@ export function AdminSubmissionsView({
 
   return (
     <div className="flex flex-col gap-8">
+      {section === "documents" && (
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm text-muted-foreground">
           <span className="text-foreground font-medium">{submittedCount}</span> of {rows.length} teams
@@ -424,9 +430,12 @@ export function AdminSubmissionsView({
           </Button>
         </div>
       </div>
+      )}
 
       {error && <p className="text-destructive text-sm">{error}</p>}
 
+      {section === "venues" && (
+        <>
       <VenuesCard
         kind="judging"
         title="Judging Venues"
@@ -466,7 +475,10 @@ export function AdminSubmissionsView({
         assignmentValue={(s, r) => assignmentValue("waiting", s, r)}
         setAssignment={(s, r, v) => setAssignment("waiting", s, r, v)}
       />
+        </>
+      )}
 
+      {section === "documents" && (
       <RubricCard
         settings={initialSettings}
         onSaved={(s) => {
@@ -475,10 +487,12 @@ export function AdminSubmissionsView({
         }}
         setError={setError}
       />
+      )}
 
       {/* ---- submissions table. Breaks out to near-full viewport width so the
               wide table has room; it never scrolls sideways — on narrow
               screens the rows become cards instead. ---- */}
+      {section === "submissions" && (
       <div className="flex flex-col gap-4 relative w-[92vw] max-w-[1700px] left-1/2 -translate-x-1/2">
         <h2 className="font-serif text-2xl text-foreground">Teams</h2>
         <div className="flex flex-col sm:flex-row sm:flex-wrap gap-4">
@@ -678,6 +692,7 @@ export function AdminSubmissionsView({
           </>
         )}
       </div>
+      )}
     </div>
   )
 }

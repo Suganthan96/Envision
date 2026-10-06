@@ -277,7 +277,7 @@ export function AdminScoresView({
             <p className="text-muted-foreground text-sm">Pick a team to enter its marks.</p>
           ) : rubric.length === 0 ? (
             <p className="text-muted-foreground text-sm">
-              This round has no criteria yet — add them on the Judging Rounds page.
+              This round has no criteria yet — add them under Judging → Rounds.
             </p>
           ) : (
             <MarkSheet

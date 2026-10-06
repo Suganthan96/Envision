@@ -1,10 +1,11 @@
-import { AdminEvaluationView } from "@/components/admin-evaluation-view"
+import { AdminEvaluationView, type EvaluationSection as Section } from "@/components/admin-evaluation-view"
 import { getSession } from "@/lib/get-session"
 import { getSubmissionsForAdmin } from "@/lib/admin-directories"
 import { getJudgingVenues } from "@/lib/judging"
 import { getEvaluations, getEvaluators, getRubricPresets, type EvaluationRow } from "@/lib/evaluation"
 
-export async function EvaluationSection() {
+/** Rounds, Faculty & Jury and Evaluator Sheets share one client view. */
+export async function EvaluationSection({ section }: { section: Section }) {
   const session = await getSession()
   const admin = session?.userId
   if (!admin) return <p className="text-muted-foreground">Not authorized.</p>
@@ -16,14 +17,17 @@ export async function EvaluationSection() {
     getEvaluators(admin),
   ])
 
-  // A handful of rounds, so fetching every round's sheets up front is cheaper
-  // than a round-trip each time the admin switches between them.
-  const byPreset = await Promise.all(
-    presets.map(async (p) => [p.id, await getEvaluations(admin, p.id)] as const),
-  )
+  // Only Evaluator Sheets shows filed sheets. A handful of rounds, so fetching
+  // every round's sheets up front is cheaper than a round-trip each time the
+  // admin switches between them.
+  const byPreset =
+    section === "sheets"
+      ? await Promise.all(presets.map(async (p) => [p.id, await getEvaluations(admin, p.id)] as const))
+      : []
 
   return (
     <AdminEvaluationView
+      section={section}
       teams={rows.map((r) => ({
         studentUserId: r.studentUserId,
         loginId: r.loginId,

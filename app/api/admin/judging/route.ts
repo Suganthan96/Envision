@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
   const action = typeof body?.action === "string" ? body.action : ""
 
   // Every branch below mutates judging venues, assignments or settings, all
-  // of which are cached under the `judging` tag and read on /admin/submissions.
+  // of which are cached under the `judging` tag and read on the Judging pages.
   const purge = () => revalidateSharedData(CACHE_TAGS.judging)
   // Switching or editing a round changes what students, mentors and evaluators
   // see, all of which read through the presets tag as well.

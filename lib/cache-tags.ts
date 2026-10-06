@@ -24,7 +24,7 @@ export const CACHE_TAGS = {
   domainCapacities: "domain-capacities",
   projectGuideline: "project-guideline",
   /** Judging venues, their layered assignments, and the rubric/report
-   *  settings — read on every /admin/submissions load, written only from
+   *  settings — read on every Judging page load, written only from
    *  /api/admin/judging. */
   judging: "judging",
   /** Rubric presets — the evaluation rounds. The active one drives the

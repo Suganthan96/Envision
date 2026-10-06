@@ -46,7 +46,7 @@ export async function ScoresSection({ roundId }: { roundId: string | null }) {
       <div className="flex flex-wrap items-baseline justify-between gap-3">
         <div>
           <Link
-            href="/admin/scores"
+            href="/admin/judging/scores"
             className="text-muted-foreground hover:text-primary text-sm uppercase tracking-wider"
           >
             ← All rounds

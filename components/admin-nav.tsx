@@ -8,10 +8,8 @@ const ADMIN_NAV_ITEMS = [
   { href: "/admin/domains", label: "Domains" },
   { href: "/admin/mentor-profiles", label: "Mentor Profiles" },
   { href: "/admin/team-profiles", label: "Team Profiles" },
-  { href: "/admin/submissions", label: "Submissions" },
   { href: "/admin/guidelines", label: "Guidelines" },
-  { href: "/admin/scores", label: "Scores" },
-  { href: "/admin/evaluation", label: "Judging Rounds" },
+  { href: "/admin/judging", label: "Judging" },
 ] as const
 
 type AdminNavHref = (typeof ADMIN_NAV_ITEMS)[number]["href"]

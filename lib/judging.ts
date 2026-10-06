@@ -42,7 +42,7 @@ export const DEFAULT_RUBRIC: RubricRow[] = [
 
 // Judging venues, assignments and settings are admin-managed and change only
 // via /api/admin/judging, which purges the `judging` tag. Caching them keeps
-// /admin/submissions — which loads six datasets at once — off the database on
+// the Judging pages — which load six datasets at once — off the database on
 // every view. The admin id is part of the cache key (it is an argument), so
 // the authorization check inside each RPC still runs on a cache miss.
 export const getJudgingVenues = unstable_cache(

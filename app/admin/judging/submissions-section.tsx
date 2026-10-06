@@ -1,4 +1,4 @@
-import { AdminSubmissionsView } from "@/components/admin-submissions-view"
+import { AdminSubmissionsView, type SubmissionsSection as Section } from "@/components/admin-submissions-view"
 import { getSession } from "@/lib/get-session"
 import { getSubmissionsForAdmin } from "@/lib/admin-directories"
 import { getDomains } from "@/lib/domains"
@@ -9,7 +9,8 @@ import {
   DEFAULT_RUBRIC,
 } from "@/lib/judging"
 
-export async function SubmissionsSection() {
+/** Submissions, Venues and Documents share one client view and its data. */
+export async function SubmissionsSection({ section }: { section: Section }) {
   const session = await getSession()
   const admin = session?.userId
 
@@ -31,6 +32,7 @@ export async function SubmissionsSection() {
 
   return (
     <AdminSubmissionsView
+      section={section}
       rows={rows}
       domains={domains}
       venues={venues}

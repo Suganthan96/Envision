@@ -37,6 +37,9 @@ async function callJudging(action: string, payload: Record<string, unknown>) {
   }
 }
 
+/** Stable identity so the refresh-sync effect doesn't fire every render. */
+const NO_EVALUATIONS: Record<string, EvaluationRow[]> = {}
+
 interface TeamRef {
   studentUserId: string
   loginId: string
@@ -48,18 +51,24 @@ interface TeamRef {
  * uses and which one is live, which rooms each faculty member / juror covers,
  * and every mark that has been filed — averaged per criterion, and editable.
  */
+/** Which part of the Judging hub this view renders. */
+export type EvaluationSection = "rounds" | "evaluators" | "sheets"
+
 export function AdminEvaluationView({
+  section,
   teams,
   venues,
   presets: initialPresets,
   evaluators: initialEvaluators,
-  evaluationsByPreset: initialEvaluations,
+  evaluationsByPreset: initialEvaluations = NO_EVALUATIONS,
 }: {
+  section: EvaluationSection
   teams: TeamRef[]
   venues: JudgingVenue[]
   presets: RubricPreset[]
   evaluators: Evaluator[]
-  evaluationsByPreset: Record<string, EvaluationRow[]>
+  /** Only the Evaluator Sheets page loads these. */
+  evaluationsByPreset?: Record<string, EvaluationRow[]>
 }) {
   const router = useRouter()
   const [presets, setPresets] = useState(initialPresets)
@@ -97,13 +106,16 @@ export function AdminEvaluationView({
     <div className="flex flex-col gap-8">
       {error && <p className="text-destructive text-sm">{error}</p>}
 
+      {section === "rounds" && (
       <RoundsCard
         presets={presets}
         setPresets={setPresets}
         setError={setError}
         onChanged={() => router.refresh()}
       />
+      )}
 
+      {section === "evaluators" && (
       <EvaluatorsCard
         evaluators={evaluators}
         setEvaluators={setEvaluators}
@@ -111,7 +123,9 @@ export function AdminEvaluationView({
         teams={teams}
         setError={setError}
       />
+      )}
 
+      {section === "sheets" && (
       <ResultsCard
         openTeamRef={openTeamRef}
         teams={teams}
@@ -122,6 +136,7 @@ export function AdminEvaluationView({
         setEvaluations={setEvaluations}
         setError={setError}
       />
+      )}
     </div>
   )
 }

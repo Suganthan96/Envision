@@ -4,7 +4,7 @@
  * ranks higher; if that is equal too, the next criterion decides, and so on.
  * Teams equal on every criterion share a rank.
  *
- * The admin sets the order per round on /admin/scores. Saved labels that are
+ * The admin sets the order per round on /admin/judging/scores. Saved labels that are
  * no longer in the rubric are dropped, and criteria missing from the saved
  * list follow in rubric order, so an empty list means "rubric order".
  */
