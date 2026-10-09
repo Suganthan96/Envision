@@ -1,51 +1,16 @@
-import { unstable_cache } from "next/cache"
+import { editionCached } from "@/lib/edition"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { CACHE_TAGS } from "@/lib/cache-tags"
 
-export interface JudgingVenue {
-  id: string
-  name: string
-  sortOrder: number
-}
-
-export type JudgingScope = "team" | "mentor" | "theme"
-
-/** 'judging' = the room a team presents in; 'waiting' = where it waits. */
-export type VenueKind = "judging" | "waiting"
-
-export interface JudgingAssignment {
-  kind: VenueKind
-  scope: JudgingScope
-  refId: string
-  venueId: string
-}
-
-export interface RubricRow {
-  label: string
-  max: number
-}
-
-export interface JudgingSettings {
-  reportHeading: string
-  rubric: RubricRow[]
-  facultyHeading: string
-  facultyTiming: string
-}
-
-export const DEFAULT_RUBRIC: RubricRow[] = [
-  { label: "Background Study", max: 10 },
-  { label: "Problem Statement", max: 15 },
-  { label: "User Identification", max: 10 },
-  { label: "Solution", max: 5 },
-  { label: "Team work and presentation", max: 10 },
-]
+export * from "@/lib/judging-shared"
+import { DEFAULT_RUBRIC, type JudgingAssignment, type JudgingScope, type JudgingSettings, type JudgingVenue, type RubricRow, type VenueKind } from "@/lib/judging-shared"
 
 // Judging venues, assignments and settings are admin-managed and change only
 // via /api/admin/judging, which purges the `judging` tag. Caching them keeps
 // the Judging pages — which load six datasets at once — off the database on
 // every view. The admin id is part of the cache key (it is an argument), so
 // the authorization check inside each RPC still runs on a cache miss.
-export const getJudgingVenues = unstable_cache(
+export const getJudgingVenues = editionCached(
   async (adminUserId: string, kind: VenueKind = "judging"): Promise<JudgingVenue[]> => {
     const supabase = getSupabaseServerClient()
     const { data } = await supabase.rpc("admin_list_judging_venues", {
@@ -62,7 +27,7 @@ export const getJudgingVenues = unstable_cache(
   { tags: [CACHE_TAGS.judging] },
 )
 
-export const getJudgingAssignments = unstable_cache(
+export const getJudgingAssignments = editionCached(
   async (adminUserId: string): Promise<JudgingAssignment[]> => {
     const supabase = getSupabaseServerClient()
     const { data } = await supabase.rpc("admin_list_judging_assignments", { p_admin_user_id: adminUserId })
@@ -103,7 +68,7 @@ export async function getJudgingSettings(adminUserId: string): Promise<JudgingSe
  * required (the RPC is granted to anon). Returns null if the criteria
  * haven't been set up.
  */
-export const getPublicJudgingRubric = unstable_cache(
+export const getPublicJudgingRubric = editionCached(
   async (): Promise<{ heading: string; rubric: RubricRow[] } | null> => {
     const supabase = getSupabaseServerClient()
     const { data } = await supabase.rpc("get_judging_rubric")
@@ -117,28 +82,3 @@ export const getPublicJudgingRubric = unstable_cache(
   { tags: [CACHE_TAGS.judging] },
 )
 
-/**
- * A team's presentation venue is layered: its own assignment wins, then its
- * mentor's, then its theme's. Returns the resolving level too so the UI can
- * show where the value came from.
- */
-export function resolveJudgingVenue(
-  assignments: JudgingAssignment[],
-  team: { studentUserId: string; mentorUserId: string | null; domainId: string | null },
-  kind: VenueKind = "judging",
-): { venueId: string | null; source: JudgingScope | null } {
-  const byKey = new Map(
-    assignments.filter((a) => a.kind === kind).map((a) => [`${a.scope}:${a.refId}`, a.venueId]),
-  )
-  const team_ = byKey.get(`team:${team.studentUserId}`)
-  if (team_) return { venueId: team_, source: "team" }
-  if (team.mentorUserId) {
-    const m = byKey.get(`mentor:${team.mentorUserId}`)
-    if (m) return { venueId: m, source: "mentor" }
-  }
-  if (team.domainId) {
-    const t = byKey.get(`theme:${team.domainId}`)
-    if (t) return { venueId: t, source: "theme" }
-  }
-  return { venueId: null, source: null }
-}

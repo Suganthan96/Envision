@@ -1,4 +1,6 @@
+import { Suspense } from "react"
 import Link from "next/link"
+import { YearBar } from "@/components/year-bar"
 
 const ADMIN_NAV_ITEMS = [
   { href: "/admin", label: "Home" },
@@ -17,7 +19,7 @@ type AdminNavHref = (typeof ADMIN_NAV_ITEMS)[number]["href"]
 
 // The student and mentor selection screens live under the Domain Selection
 // hub, so they keep that tab lit rather than adding entries of their own.
-export type AdminNavActive = AdminNavHref | "/admin/students" | "/admin/mentors"
+export type AdminNavActive = AdminNavHref | "/admin/students" | "/admin/mentors" | "/admin/years"
 
 const HUB_CHILDREN: Record<string, AdminNavHref> = {
   "/admin/students": "/admin/domain-selection",
@@ -34,6 +36,7 @@ export function AdminNav({ active }: { active: AdminNavActive }) {
     // and therefore wrapping the 7 items differently, on every page. Breaking
     // out to the viewport and re-centering at a fixed width makes the nav's
     // own width independent of whatever container it's placed in.
+    <>
     <div className="relative w-screen left-1/2 -translate-x-1/2 px-6 mb-8">
       <div className="max-w-5xl mx-auto flex items-center justify-center gap-x-6 gap-y-3 flex-wrap rounded-2xl bg-card/40 backdrop-blur-md border border-border px-5 py-4">
         {ADMIN_NAV_ITEMS.map((item) =>
@@ -56,5 +59,10 @@ export function AdminNav({ active }: { active: AdminNavActive }) {
         )}
       </div>
     </div>
+    {/* Which programme year these admin pages show, on every admin page. */}
+    <Suspense fallback={null}>
+      <YearBar />
+    </Suspense>
+    </>
   )
 }

@@ -4,12 +4,26 @@ import { ArtDecoDivider } from "@/components/art-deco-divider"
 import { CardGridSkeleton } from "@/components/skeletons"
 import { getSession } from "@/lib/get-session"
 import { roleHome } from "@/lib/session"
+import { PublicYearPicker } from "@/components/public-year-picker"
+import { getCurrentEdition, getEditions, validEditionId } from "@/lib/edition"
 import { ShowcaseGrid } from "./showcase-grid"
 
 export const dynamic = "force-dynamic"
 
-export default async function ShowcasePage() {
-  const session = await getSession()
+export default async function ShowcasePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ year?: string | string[] }>
+}) {
+  const { year } = await searchParams
+  const [session, years, current, picked] = await Promise.all([
+    getSession(),
+    getEditions(),
+    getCurrentEdition(),
+    validEditionId(typeof year === "string" ? year : null),
+  ])
+  // Anyone may browse an earlier year here; the page is read-only.
+  const edition = years.find((y) => y.id === picked) ?? current
 
   return (
     <main className="min-h-screen bg-background">
@@ -24,10 +38,11 @@ export default async function ShowcasePage() {
               <div className="w-12 h-px bg-primary" />
             </div>
           </div>
-          <p className="text-primary tracking-[0.3em] uppercase text-sm mb-4">EnVision 2026</p>
+          <p className="text-primary tracking-[0.3em] uppercase text-sm mb-4">EnVision {edition.label}</p>
           <h1 className="font-serif text-5xl md:text-6xl text-foreground text-balance">
             Project <span className="text-gold-gradient">Showcase</span>
           </h1>
+          <PublicYearPicker years={years} active={edition.id} basePath="/showcase" />
         </div>
 
         <ArtDecoDivider variant="chevron" />
@@ -53,8 +68,8 @@ export default async function ShowcasePage() {
           </blockquote>
         </div>
 
-        <Suspense fallback={<CardGridSkeleton />}>
-          <ShowcaseGrid />
+        <Suspense key={edition.id} fallback={<CardGridSkeleton />}>
+          <ShowcaseGrid edition={edition.id} pastYear={edition.id !== current.id} />
         </Suspense>
       </div>
     </main>

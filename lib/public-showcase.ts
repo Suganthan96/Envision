@@ -1,4 +1,5 @@
-import { unstable_cache } from "next/cache"
+import { editionCached } from "@/lib/edition"
+import { editionStore } from "@/lib/edition-context"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { mentorAvatarUrl, teamLogoUrl } from "@/lib/image-url"
 import { CACHE_TAGS } from "@/lib/cache-tags"
@@ -72,7 +73,7 @@ function mapTeam(row: TeamRow): PublicShowcaseTeam {
     loginId: row.login_id,
     teamName: row.team_name,
     teamLeadName: row.team_lead_name,
-    teamLogoUrl: teamLogoUrl(row.login_id, row.team_logo_version),
+    teamLogoUrl: teamLogoUrl(row.login_id, row.team_logo_version, editionStore.getStore()),
     domainId: row.domain_id,
     projectTitle: row.project_title,
     solutionShort: row.solution_short,
@@ -86,7 +87,7 @@ function mapTeam(row: TeamRow): PublicShowcaseTeam {
 // single admin-triggered invalidation point. A 20s window makes the
 // public /showcase list near-instant on repeat hits while staying fresh
 // enough that an edit shows up almost immediately.
-export const getPublicShowcaseTeams = unstable_cache(
+export const getPublicShowcaseTeams = editionCached(
   async (): Promise<PublicShowcaseTeam[]> => {
     const data = await rpcOrThrow<TeamRow[] | null>("get_public_showcase_teams")
     return (data ?? []).map(mapTeam)
@@ -95,7 +96,7 @@ export const getPublicShowcaseTeams = unstable_cache(
   { revalidate: 20, tags: [CACHE_TAGS.publicShowcase] },
 )
 
-export const getPublicShowcaseTeam = unstable_cache(
+export const getPublicShowcaseTeam = editionCached(
   async (loginId: string): Promise<PublicShowcaseTeamDetail | null> => {
     const data = await rpcOrThrow<(TeamRow & {
       problem_statement: string | null
@@ -113,7 +114,7 @@ export const getPublicShowcaseTeam = unstable_cache(
   { revalidate: 20, tags: [CACHE_TAGS.publicShowcase] },
 )
 
-export const getPublicMentorShowcase = unstable_cache(
+export const getPublicMentorShowcase = editionCached(
   async (): Promise<PublicShowcaseMentor[]> => {
     const data = await rpcOrThrow<unknown[] | null>("get_public_mentor_showcase")
     return (
@@ -129,7 +130,7 @@ export const getPublicMentorShowcase = unstable_cache(
       mentorUserId: row.mentor_user_id,
       loginId: row.login_id,
       name: row.name,
-      avatarUrl: mentorAvatarUrl(row.login_id, row.avatar_version),
+      avatarUrl: mentorAvatarUrl(row.login_id, row.avatar_version, editionStore.getStore()),
       bio: row.bio,
       domainIds: row.domain_ids ?? [],
     }))

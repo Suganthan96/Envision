@@ -9,9 +9,11 @@ import type { PublicShowcaseTeam } from "@/lib/public-showcase"
 interface ShowcaseSearchProps {
   teams: PublicShowcaseTeam[]
   domainTitleById: Record<string, string>
+  /** Set when showing an earlier programme year, so cards link to it. */
+  year?: string
 }
 
-export function ShowcaseSearch({ teams, domainTitleById }: ShowcaseSearchProps) {
+export function ShowcaseSearch({ teams, domainTitleById, year }: ShowcaseSearchProps) {
   const [query, setQuery] = useState("")
   const [themeFilter, setThemeFilter] = useState("")
   const [mentorFilter, setMentorFilter] = useState("")
@@ -96,6 +98,7 @@ export function ShowcaseSearch({ teams, domainTitleById }: ShowcaseSearchProps) 
         <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-4">
           {filtered.map((team) => (
             <PublicTeamCard
+              year={year}
               key={team.studentUserId}
               team={team}
               domainTitle={team.domainId ? (domainTitleById[team.domainId] ?? null) : null}

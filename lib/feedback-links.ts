@@ -1,10 +1,10 @@
-import { unstable_cache } from "next/cache"
+import { editionCached } from "@/lib/edition"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { CACHE_TAGS } from "@/lib/cache-tags"
 
 // Cached until an admin edits a form link (/api/admin/feedback-links
 // invalidates CACHE_TAGS.feedbackLinks).
-export const getFeedbackLinks = unstable_cache(
+export const getFeedbackLinks = editionCached(
   async (): Promise<Record<string, string>> => {
     const supabase = getSupabaseServerClient()
     const { data } = await supabase.rpc("get_feedback_links")

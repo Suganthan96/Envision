@@ -1,11 +1,12 @@
 import { MentorsSearch } from "@/components/mentors-search"
 import { getPublicMentorShowcase } from "@/lib/public-showcase"
 import { getDomains } from "@/lib/domains"
+import { withEdition } from "@/lib/edition"
 
 /** Mentor list + domain lookup, streamed under <Suspense> so the page
  *  hero paints without waiting on the RPC. */
-export async function MentorsGrid() {
-  const [mentors, domains] = await Promise.all([getPublicMentorShowcase(), getDomains()])
+export async function MentorsGrid({ edition }: { edition: string }) {
+  const [mentors, domains] = await withEdition(edition, () => Promise.all([getPublicMentorShowcase(), getDomains()]))
   const domainTitleById = Object.fromEntries(domains.map((d) => [d.id, d.title]))
 
   if (mentors.length === 0) {

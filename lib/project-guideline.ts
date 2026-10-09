@@ -26,11 +26,12 @@ let cachedGetProjectGuideline: (() => Promise<ProjectGuideline>) | null = null
 
 export async function getProjectGuideline(): Promise<ProjectGuideline> {
   if (!cachedGetProjectGuideline) {
-    const [{ unstable_cache }, { CACHE_TAGS }] = await Promise.all([
-      import("next/cache"),
+    // Keyed by programme year, so one year's data never serves another.
+    const [{ editionCached }, { CACHE_TAGS }] = await Promise.all([
+      import("@/lib/edition"),
       import("@/lib/cache-tags"),
     ])
-    cachedGetProjectGuideline = unstable_cache(
+    cachedGetProjectGuideline = editionCached(
       async () => {
         const { getSupabaseServerClient } = await import("@/lib/supabase-server")
         const supabase = getSupabaseServerClient()

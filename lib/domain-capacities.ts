@@ -1,4 +1,4 @@
-import { unstable_cache } from "next/cache"
+import { editionCached } from "@/lib/edition"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { CACHE_TAGS } from "@/lib/cache-tags"
 
@@ -12,7 +12,7 @@ export interface DomainCapacityRecord {
 // invalidates CACHE_TAGS.domainCapacities). Worth caching because
 // /api/domains/state re-reads this on every poll from every signed-in
 // student and mentor.
-export const getDomainCapacities = unstable_cache(
+export const getDomainCapacities = editionCached(
   async (): Promise<DomainCapacityRecord[]> => {
     const supabase = getSupabaseServerClient()
     const { data } = await supabase.rpc("get_domain_capacities")

@@ -1,4 +1,4 @@
-import { unstable_cache } from "next/cache"
+import { editionCached } from "@/lib/edition"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { CACHE_TAGS } from "@/lib/cache-tags"
 import type { RubricRow } from "@/lib/judging"
@@ -106,7 +106,7 @@ export async function getRubricPresets(adminUserId: string): Promise<RubricPrese
  * Guidelines and evaluators on /evaluate. Cached under the presets tag, so
  * activating a different round takes effect immediately everywhere.
  */
-export const getActiveRubric = unstable_cache(
+export const getActiveRubric = editionCached(
   async (): Promise<{ presetId: string; presetName: string; rubric: RubricRow[] } | null> => {
     const supabase = getSupabaseServerClient()
     const { data } = await supabase.rpc("get_active_rubric")
@@ -204,21 +204,5 @@ export async function getEvaluations(
   }))
 }
 
-/**
- * Per-criterion average across every sheet filed for a team, plus the average
- * total. A criterion only averages the evaluators who actually marked it, so
- * one evaluator skipping a row doesn't drag it down.
- */
-export function averageMarks(rows: { marks: Record<string, number> }[], rubric: RubricRow[]) {
-  const perCriterion: Record<string, number | null> = {}
-  for (const criterion of rubric) {
-    const values = rows
-      .map((r) => r.marks[criterion.label])
-      .filter((v): v is number => typeof v === "number" && Number.isFinite(v))
-    perCriterion[criterion.label] =
-      values.length === 0 ? null : values.reduce((a, b) => a + b, 0) / values.length
-  }
-  const totals = rows.map((r) => Object.values(r.marks).reduce((a, b) => a + b, 0))
-  const average = totals.length === 0 ? null : totals.reduce((a, b) => a + b, 0) / totals.length
-  return { perCriterion, average, count: rows.length }
-}
+export { averageMarks } from "@/lib/evaluation-marks"
+

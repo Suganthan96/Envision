@@ -17,7 +17,16 @@ interface PublicTeamCardData {
  * the byline, matching a hackathon-showcase feel instead of a plain roster
  * entry. BorderGlow adds a cursor-tracking gold ring on hover; the card's
  * own background/blur/corner-glow stays underneath it regardless. */
-export function PublicTeamCard({ team, domainTitle }: { team: PublicTeamCardData; domainTitle: string | null }) {
+export function PublicTeamCard({
+  team,
+  domainTitle,
+  year,
+}: {
+  team: PublicTeamCardData
+  domainTitle: string | null
+  /** An earlier programme year this card belongs to. */
+  year?: string
+}) {
   const displayName = team.teamName?.trim() || team.loginId
   const headline = team.projectTitle?.trim() || displayName
 
@@ -32,7 +41,7 @@ export function PublicTeamCard({ team, domainTitle }: { team: PublicTeamCardData
       colors={["var(--primary)", "var(--gold-gradient-2)", "var(--gold-gradient-1)"]}
     >
       <Link
-        href={`/showcase/${team.loginId}`}
+        href={year ? `/showcase/${team.loginId}?year=${year}` : `/showcase/${team.loginId}`}
         className="group relative flex flex-col h-full overflow-hidden rounded-2xl bg-card/60 backdrop-blur-md border border-border hover:border-primary/70 transition-all duration-300 hover:-translate-y-1"
       >
         {/* Ambient corner glow behind the text area — the banner above already

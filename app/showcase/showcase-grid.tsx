@@ -1,11 +1,12 @@
 import { ShowcaseSearch } from "@/components/showcase-search"
 import { getPublicShowcaseTeams } from "@/lib/public-showcase"
 import { getDomains } from "@/lib/domains"
+import { withEdition } from "@/lib/edition"
 
 /** Team list + domain lookup, streamed under <Suspense> so the showcase
  *  hero paints without waiting on the RPC. */
-export async function ShowcaseGrid() {
-  const [teams, domains] = await Promise.all([getPublicShowcaseTeams(), getDomains()])
+export async function ShowcaseGrid({ edition, pastYear }: { edition: string; pastYear: boolean }) {
+  const [teams, domains] = await withEdition(edition, () => Promise.all([getPublicShowcaseTeams(), getDomains()]))
   const domainTitleById = Object.fromEntries(domains.map((d) => [d.id, d.title]))
 
   if (teams.length === 0) {
@@ -17,7 +18,7 @@ export async function ShowcaseGrid() {
       <p className="text-primary text-xs uppercase tracking-[0.2em] mb-10 text-center">
         {teams.length} {teams.length === 1 ? "Team" : "Teams"}
       </p>
-      <ShowcaseSearch teams={teams} domainTitleById={domainTitleById} />
+      <ShowcaseSearch teams={teams} domainTitleById={domainTitleById} year={pastYear ? edition : undefined} />
     </>
   )
 }

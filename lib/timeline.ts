@@ -192,17 +192,20 @@ let cachedGetTimelinePhases: (() => Promise<TimelinePhase[]>) | null = null
 
 export async function getTimelinePhases(): Promise<TimelinePhase[]> {
   if (!cachedGetTimelinePhases) {
-    const [{ unstable_cache }, { CACHE_TAGS }] = await Promise.all([
-      import("next/cache"),
+    // Keyed by programme year, so one year's data never serves another.
+    const [{ editionCached }, { CACHE_TAGS }] = await Promise.all([
+      import("@/lib/edition"),
       import("@/lib/cache-tags"),
     ])
-    cachedGetTimelinePhases = unstable_cache(
+    cachedGetTimelinePhases = editionCached(
       async () => {
         const { getSupabaseServerClient } = await import("@/lib/supabase-server")
         const supabase = getSupabaseServerClient()
         const { data } = await supabase.rpc("get_timeline")
 
-        if (Array.isArray(data) && data.length > 0) {
+        // An empty list is a real answer (a new year with no timeline yet);
+        // the defaults are only for a failed read.
+        if (Array.isArray(data)) {
           return data as TimelinePhase[]
         }
         return DEFAULT_TIMELINE_PHASES

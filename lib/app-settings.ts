@@ -1,4 +1,4 @@
-import { unstable_cache } from "next/cache"
+import { editionCached } from "@/lib/edition"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 import { CACHE_TAGS } from "@/lib/cache-tags"
 
@@ -13,7 +13,7 @@ type AppSettings = {
 // Read on nearly every page render but only written from /api/admin/settings,
 // which invalidates CACHE_TAGS.appSettings — so this is cached until an admin
 // actually flips a toggle.
-export const getAppSettings = unstable_cache(
+export const getAppSettings = editionCached(
   async (): Promise<AppSettings> => {
     const supabase = getSupabaseServerClient()
     const { data } = await supabase.rpc("get_app_settings")

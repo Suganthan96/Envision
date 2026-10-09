@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { unstable_cache } from "next/cache"
+import { editionCached, validEditionId, withEdition } from "@/lib/edition"
 import { getSupabaseServerClient } from "@/lib/supabase-server"
 
 /**
@@ -41,7 +41,7 @@ function decodeDataUri(uri: string): { mime: string; bytes: Buffer } | null {
  * parallel requests a grid of cards fires on a cold browser cache) don't each
  * hit Postgres for the same row.
  */
-const readImage = unstable_cache(
+const readImage = editionCached(
   async (rpc: string, loginId: string): Promise<string | null> => {
     const supabase = getSupabaseServerClient()
     const { data } = await supabase.rpc(rpc, { p_login_id: loginId })
@@ -51,8 +51,10 @@ const readImage = unstable_cache(
   { revalidate: 300 },
 )
 
-export async function serveUserImage(rpc: string, loginId: string) {
-  const uri = await readImage(rpc, loginId)
+/** `year` is the `?y=` the URL may carry (see lib/image-url.ts). */
+export async function serveUserImage(rpc: string, loginId: string, year?: string | null) {
+  const pinned = await validEditionId(year)
+  const uri = pinned ? await withEdition(pinned, () => readImage(rpc, loginId)) : await readImage(rpc, loginId)
   const decoded = uri ? decodeDataUri(uri) : null
 
   if (!decoded) {

@@ -12,7 +12,7 @@ import {
   type JudgingAssignment,
   type JudgingVenue,
   type RubricRow,
-} from "@/lib/judging"
+} from "@/lib/judging-shared"
 import type { AdminSubmissionRow } from "@/lib/admin-directories"
 
 // A refresh landing mid-save would hand back the server's pre-save marks, so

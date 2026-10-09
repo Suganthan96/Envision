@@ -105,11 +105,12 @@ let cachedGetDomains: (() => Promise<Domain[]>) | null = null
 
 export async function getDomains(): Promise<Domain[]> {
   if (!cachedGetDomains) {
-    const [{ unstable_cache }, { CACHE_TAGS }] = await Promise.all([
-      import("next/cache"),
+    // Keyed by programme year, so one year's data never serves another.
+    const [{ editionCached }, { CACHE_TAGS }] = await Promise.all([
+      import("@/lib/edition"),
       import("@/lib/cache-tags"),
     ])
-    cachedGetDomains = unstable_cache(
+    cachedGetDomains = editionCached(
       async () => {
         const { getSupabaseServerClient } = await import("@/lib/supabase-server")
         const supabase = getSupabaseServerClient()

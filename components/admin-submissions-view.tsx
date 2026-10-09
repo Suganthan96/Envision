@@ -26,7 +26,7 @@ import {
   type JudgingVenue,
   type RubricRow,
   type VenueKind,
-} from "@/lib/judging"
+} from "@/lib/judging-shared"
 import {
   downloadJudgingSheetsPdf,
   downloadTeamDetailsPdf,

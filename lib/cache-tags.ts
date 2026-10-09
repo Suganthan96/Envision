@@ -35,6 +35,9 @@ export const CACHE_TAGS = {
    *  admin actions that change *visibility* — hiding or deleting a user —
    *  must take effect immediately rather than after the timer. */
   publicShowcase: "public-showcase",
+  /** The programme years and which one is current — written only from
+   *  /admin/years. */
+  editions: "editions",
 } as const
 
 export type CacheTag = (typeof CACHE_TAGS)[keyof typeof CACHE_TAGS]

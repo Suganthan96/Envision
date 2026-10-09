@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label"
 import { SearchableSelect } from "@/components/searchable-select"
 import { cn } from "@/lib/utils"
 import type { JudgingVenue, RubricRow } from "@/lib/judging"
-import { averageMarks, type EvaluationRow, type Evaluator, type RubricPreset } from "@/lib/evaluation"
+import { averageMarks } from "@/lib/evaluation-marks"
+import type { EvaluationRow, Evaluator, RubricPreset } from "@/lib/evaluation"
 
 
 // A refresh that lands while a change is still saving — or moments after —

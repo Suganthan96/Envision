@@ -4,6 +4,7 @@ import { BackLink } from "@/components/back-link"
 import { getPublicShowcaseTeam } from "@/lib/public-showcase"
 import { getDomains } from "@/lib/domains"
 import { getSession } from "@/lib/get-session"
+import { getCurrentEdition, validEditionId, withEdition } from "@/lib/edition"
 import { roleHome } from "@/lib/session"
 
 export const dynamic = "force-dynamic"
@@ -13,10 +14,15 @@ export default async function ShowcaseTeamPage({
   searchParams,
 }: {
   params: Promise<{ loginId: string }>
-  searchParams: Promise<{ from?: string | string[] }>
+  searchParams: Promise<{ from?: string | string[]; year?: string | string[] }>
 }) {
-  const [{ loginId }, { from }] = await Promise.all([params, searchParams])
-  const [team, domains, session] = await Promise.all([getPublicShowcaseTeam(loginId), getDomains(), getSession()])
+  const [{ loginId }, { from, year }] = await Promise.all([params, searchParams])
+  const edition = (await validEditionId(typeof year === "string" ? year : null)) ?? (await getCurrentEdition()).id
+  const [team, domains, session] = await Promise.all([
+    withEdition(edition, () => getPublicShowcaseTeam(loginId)),
+    withEdition(edition, () => getDomains()),
+    getSession(),
+  ])
 
   if (!team) notFound()
 
@@ -32,7 +38,7 @@ export default async function ShowcaseTeamPage({
         {from === "leaderboard" && (session?.role === "member" || session?.role === "mentor") ? (
           <BackLink label="Back to Leaderboard" fallbackHref={`/${session.role}/leaderboard`} />
         ) : (
-          <BackLink label="Back to Showcase" fallbackHref="/showcase" />
+          <BackLink label="Back to Showcase" fallbackHref={typeof year === "string" ? `/showcase?year=${edition}` : "/showcase"} />
         )}
 
         <div className="flex flex-col sm:flex-row items-start gap-8 mb-12">
