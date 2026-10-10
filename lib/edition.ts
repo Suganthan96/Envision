@@ -34,8 +34,9 @@ export interface Edition {
 /** Used until the year RPCs exist, and if they ever fail. */
 const FALLBACK: Edition[] = [{ id: "2026-27", label: "2026–27", isCurrent: true, createdAt: null }]
 
-/** Every year, newest first. Changes only when an admin adds a year or
- *  switches the current one, both of which purge the tag. */
+/** Every year, newest first. Adding a year or switching the current one
+ *  purges the tag; the 5-minute expiry also heals edits made straight in the
+ *  database. */
 export const getEditions = unstable_cache(
   async (): Promise<Edition[]> => {
     const { data, error } = await getBaseSupabaseClient().rpc("get_editions")
@@ -48,7 +49,7 @@ export const getEditions = unstable_cache(
     }))
   },
   ["editions"],
-  { tags: [CACHE_TAGS.editions] },
+  { tags: [CACHE_TAGS.editions], revalidate: 300 },
 )
 
 export async function getCurrentEdition(): Promise<Edition> {

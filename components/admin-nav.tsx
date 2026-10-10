@@ -19,7 +19,7 @@ type AdminNavHref = (typeof ADMIN_NAV_ITEMS)[number]["href"]
 
 // The student and mentor selection screens live under the Domain Selection
 // hub, so they keep that tab lit rather than adding entries of their own.
-export type AdminNavActive = AdminNavHref | "/admin/students" | "/admin/mentors" | "/admin/years"
+export type AdminNavActive = AdminNavHref | "/admin/students" | "/admin/mentors" | "/admin/years" | "/admin/manual"
 
 const HUB_CHILDREN: Record<string, AdminNavHref> = {
   "/admin/students": "/admin/domain-selection",
