@@ -13,6 +13,7 @@ const ADMIN_NAV_ITEMS = [
   { href: "/admin/team-profiles", label: "Team Profiles" },
   { href: "/admin/guidelines", label: "Guidelines" },
   { href: "/admin/judging", label: "Judging" },
+  { href: "/admin/reports", label: "Reports" },
 ] as const
 
 type AdminNavHref = (typeof ADMIN_NAV_ITEMS)[number]["href"]

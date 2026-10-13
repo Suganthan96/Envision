@@ -6,6 +6,7 @@ import { getTeamMembers } from "@/lib/team-members"
 import { getMyMentor } from "@/lib/mentor-profile"
 import { getDomains } from "@/lib/domains"
 import { AdminHeader } from "@/components/admin-header"
+import { TeamReportButton } from "@/components/reports/team-report-button"
 
 export const dynamic = "force-dynamic"
 
@@ -34,6 +35,9 @@ export default async function AdminTeamProfileDetailPage({
       <AdminHeader />
 
       <div className="relative z-10 max-w-4xl mx-auto">
+        <div className="flex justify-end mb-4">
+          <TeamReportButton loginId={team.loginId} />
+        </div>
         <TeamDetailView
           team={team}
           domainTitle={domainTitle}

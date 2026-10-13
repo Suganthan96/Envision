@@ -550,6 +550,36 @@ export const MANUAL: ManualTopic[] = [
     keywords: ["tie", "tiebreak", "tie-break", "equal", "same", "draw", "priority", "order", "criteria", "rank"],
   },
 
+  {
+    id: "reports",
+    section: "results",
+    title: "Download statistics, team reports and records",
+    summary:
+      "Reports (in the menu) has every download for the year you're working in: a programme statistics PDF and workbook, a report for one team or every team, team, student, mentor, evaluator and account lists, each round's results with evaluator sheets, the leaderboard for any mix of rounds, and one workbook with everything.",
+    steps: [
+      "Open Reports in the menu. Check the Year above shows the year you want.",
+      "Programme statistics: PDF with charts, or the same numbers in Excel.",
+      "Team report: pick a team and download its PDF, or download every team's report in one PDF.",
+      "Round results: pick a round; the Excel version also lists every evaluator's sheet.",
+      "Leaderboard: switch on one round, or several to rank by their average.",
+      "Everything: one Excel workbook with every sheet.",
+    ],
+    notes: [
+      "A single team's report is also on its admin profile: Download team report.",
+      "Hidden accounts are left out of team, mentor and statistics reports. Passwords are never included.",
+    ],
+    links: [{ label: "Reports", href: "/admin/reports" }],
+    asks: [
+      "download statistics", "export data", "team report pdf", "download all records", "print a team's details",
+      "get excel of all teams", "download student list", "export results", "report for the principal", "annual report numbers",
+      "download leaderboard", "backup data", "mentor list excel",
+    ],
+    keywords: [
+      "report", "reports", "download", "export", "statistics", "stats", "pdf", "excel", "xlsx", "spreadsheet", "records",
+      "backup", "summary", "analytics", "roster", "list", "certificate", "print", "data",
+    ],
+  },
+
   /* ---------------------------------------------------------- portals -- */
   {
     id: "team-portal",
