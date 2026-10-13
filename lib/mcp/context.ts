@@ -85,6 +85,7 @@ export interface Round {
   sort_order: number
   evaluation_count: number
   scores_published: boolean
+  tiebreak: string[] | null
 }
 
 export async function listRounds(ctx: McpContext): Promise<Round[]> {

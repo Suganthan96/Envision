@@ -195,7 +195,13 @@ Implemented in `supabase/editions.sql`, `supabase/editions_part2.sql`, `lib/edit
 
 ## AI assistant access (MCP)
 
-`/api/mcp` is a Model Context Protocol server with about 40 admin tools and an app guide (`lib/mcp/`). Add `https://envisionlicet.vercel.app/api/mcp` to Claude, VS Code or Cursor, sign in as an admin and click Allow; OAuth is stateless (JWTs signed with a key derived from `SESSION_SECRET`). The tools work on the **current** year. See `MCP.md`.
+`/api/mcp` is a Model Context Protocol server with about 50 admin tools, an app guide and a manual search (`lib/mcp/`). Add `https://envisionlicet.vercel.app/api/mcp` to Claude, VS Code or Cursor, sign in as an admin and click Allow; OAuth is stateless (JWTs signed with a key derived from `SESSION_SECRET`).
+
+- Every tool takes an optional `year` (e.g. `"2026-27"`) and otherwise works on the current year; `server.ts` adds it to all tools and runs the call inside that year with `withEdition`.
+- Year tools: `list_years`, `start_year`, `set_current_year`. Judging extras: `set_round_tiebreak`, `preview_leaderboard`. Help: `search_manual`.
+- When you add an admin feature, add a matching tool (usually in `lib/mcp/tools/extras.ts`) and a line in `lib/mcp/guide.ts`.
+
+See `MCP.md`.
 
 ## Deploying
 

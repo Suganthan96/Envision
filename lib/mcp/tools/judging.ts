@@ -3,6 +3,8 @@ import type { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js"
 import { CACHE_TAGS } from "@/lib/cache-tags"
 import { resolveJudgingVenue as resolveTeamVenue, type JudgingAssignment } from "@/lib/judging"
 import { getLeaderboard } from "@/lib/leaderboard"
+import { effectiveTiebreak } from "@/lib/tiebreak"
+import { workingYear } from "@/lib/mcp/tools/extras"
 import {
   run,
   cleanMarks,
@@ -70,12 +72,13 @@ export function registerJudgingTools(server: McpServer, ctx: McpContext) {
     {
       title: "Admin overview",
       description:
-        "A snapshot of the whole programme: account counts by role, the live judging round, every round's scoring progress, judging venues and portal settings. A good first call.",
+        "A snapshot of the programme year: which year it is, account counts by role, the live judging round, every round's scoring progress, judging venues and portal settings. A good first call.",
       inputSchema: {},
       annotations: READ,
     },
     run(ctx, async () => {
-      const [users, rounds, summaries, judging, waiting, settings] = await Promise.all([
+      const [year, users, rounds, summaries, judging, waiting, settings] = await Promise.all([
+        workingYear(),
         ctx.rpc<{ role: string; hidden: boolean }[]>("admin_list_users", { p_admin_user_id: ctx.adminId }),
         listRounds(ctx),
         ctx.rpc<{ preset_id: string; scored_count: number; average_total: number | null }[]>(
@@ -89,6 +92,7 @@ export function registerJudgingTools(server: McpServer, ctx: McpContext) {
       const accounts: Record<string, number> = {}
       for (const u of users ?? []) if (!u.hidden) accounts[u.role] = (accounts[u.role] ?? 0) + 1
       return {
+        ...year,
         accounts,
         live_round: rounds.find((r) => r.is_active)?.name ?? null,
         rounds: rounds.map((r) => {
@@ -289,7 +293,7 @@ export function registerJudgingTools(server: McpServer, ctx: McpContext) {
     {
       title: "Judging rounds",
       description:
-        "Every judging round (rubric preset) with its criteria, whether it's live (what evaluators mark against and students see), whether it's on the leaderboard, and scoring progress.",
+        "Every judging round (rubric preset) with its criteria, its tie-break order, whether it's live (what evaluators mark against and students see), whether it's on the leaderboard, and scoring progress.",
       inputSchema: {},
       annotations: READ,
     },
@@ -309,6 +313,7 @@ export function registerJudgingTools(server: McpServer, ctx: McpContext) {
           live: r.is_active,
           on_leaderboard: r.scores_published,
           criteria: r.rubric,
+          tiebreak: effectiveTiebreak(r.rubric.map((c) => c.label), r.tiebreak),
           out_of: r.rubric.reduce((a, c) => a + Number(c.max || 0), 0),
           teams_scored: Number(s?.scored_count ?? 0),
           average: s?.average_total == null ? null : Number(s.average_total),
@@ -579,7 +584,7 @@ export function registerJudgingTools(server: McpServer, ctx: McpContext) {
     {
       title: "Leaderboard",
       description:
-        "The leaderboard exactly as teams and mentors see it: rounds currently published, each team's score per round, and rank (by the average when two or more rounds are published; a missing round counts as 0).",
+        "The leaderboard exactly as teams and mentors see it: rounds currently published, each team's score per round, and rank (by the average when two or more rounds are published; a missing round counts as 0). Equal scores are separated by each round's tie-break order; teams equal on every criterion share a rank. To rank by rounds that aren't published, use preview_leaderboard.",
       inputSchema: { top: z.number().int().positive().optional().describe("Only the top N") },
       annotations: READ,
     },
@@ -587,7 +592,7 @@ export function registerJudgingTools(server: McpServer, ctx: McpContext) {
       const { rounds, entries } = await getLeaderboard(ctx.adminId)
       const roundName = new Map(rounds.map((r) => [r.id, r.name]))
       return {
-        rounds: rounds.map((r) => ({ name: r.name, out_of: r.max })),
+        rounds: rounds.map((r) => ({ name: r.name, out_of: r.max, tiebreak: r.tiebreak })),
         ranked_by: rounds.length > 1 ? "average" : rounds.length === 1 ? rounds[0].name : null,
         entries: (top ? entries.slice(0, top) : entries).map((e) => ({
           rank: e.rank,
