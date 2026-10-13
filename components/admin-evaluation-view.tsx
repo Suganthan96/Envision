@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useRef, useState } from "react"
+import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Check, ChevronDown, Plus, Trash2, X } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -587,7 +588,9 @@ function EvaluatorsCard({
                     key={id}
                     className="inline-flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-xs text-foreground"
                   >
-                    {teamLabel(id)}
+                    <Link href={`/admin/team-profiles/${id}`} className="hover:text-primary">
+                      {teamLabel(id)}
+                    </Link>
                     <button
                       type="button"
                       onClick={() =>
@@ -801,6 +804,14 @@ function ResultsCard({
 
                 {open && (
                   <div className="border-t border-border divide-y divide-border">
+                    <div className="px-4 py-2 pl-10 text-sm">
+                      <Link
+                        href={`/admin/team-profiles/${team.studentUserId}`}
+                        className="text-primary hover:underline underline-offset-4"
+                      >
+                        {team.teamName?.trim() || `Team ${team.loginId}`}: team profile
+                      </Link>
+                    </div>
                     {sheets.map((sheet) => (
                       <SheetRow
                         key={sheet.evaluatorUserId}

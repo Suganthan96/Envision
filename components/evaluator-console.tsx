@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { SearchableSelect } from "@/components/searchable-select"
 import { MarkSheet } from "@/components/mark-sheet"
+import { publicTeamHref } from "@/lib/team-links"
 import { cn } from "@/lib/utils"
 import type { RubricRow } from "@/lib/judging"
 import type { EvaluatorTeam } from "@/lib/evaluation"
@@ -273,6 +274,7 @@ export function EvaluatorConsole({
                 <MarkSheet
                   key={team.studentUserId}
                   teamLabel={`#${team.loginId} · ${team.teamName?.trim() || team.loginId}`}
+                  teamHref={publicTeamHref(team.loginId)}
                   subtitle={[
                     team.projectTitle?.trim(),
                     team.venueName,

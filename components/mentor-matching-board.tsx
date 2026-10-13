@@ -2,6 +2,7 @@
 
 import type React from "react"
 import { useMemo, useRef, useState } from "react"
+import Link from "next/link"
 import { X, Download, Plus, Trash2 } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -198,8 +199,15 @@ function TeamCard({
       title={student.loginId}
     >
       <p className="text-foreground text-sm font-medium truncate pr-5">
-        <span className="text-primary font-mono mr-1.5">#{student.loginId}</span>
-        {teamName}
+        <Link
+          href={`/admin/team-profiles/${student.studentUserId}`}
+          draggable={false}
+          className="hover:text-primary"
+          title="Open the team's profile"
+        >
+          <span className="text-primary font-mono mr-1.5">#{student.loginId}</span>
+          {teamName}
+        </Link>
       </p>
       <p className="text-muted-foreground text-xs truncate">{domainTitle(domains, student.domainId)}</p>
       {student.venue && (

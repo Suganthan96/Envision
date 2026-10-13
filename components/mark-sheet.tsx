@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
+import Link from "next/link"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -16,6 +17,7 @@ import type { RubricRow } from "@/lib/judging"
  */
 export function MarkSheet({
   teamLabel,
+  teamHref,
   subtitle,
   position,
   rubric,
@@ -26,6 +28,8 @@ export function MarkSheet({
   onStep,
 }: {
   teamLabel: string
+  /** The team's profile; opens in a new tab so marks being typed aren't lost. */
+  teamHref?: string
   subtitle: string
   position: string
   rubric: RubricRow[]
@@ -118,7 +122,21 @@ export function MarkSheet({
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <h2 className="font-serif text-2xl text-foreground truncate">{teamLabel}</h2>
+          <h2 className="font-serif text-2xl text-foreground truncate">
+            {teamHref ? (
+              <Link
+                href={teamHref}
+                target="_blank"
+                rel="noopener"
+                title="Open the team's profile in a new tab"
+                className="hover:text-primary underline-offset-4 hover:underline"
+              >
+                {teamLabel}
+              </Link>
+            ) : (
+              teamLabel
+            )}
+          </h2>
           {subtitle && <p className="text-muted-foreground text-sm mt-0.5 truncate">{subtitle}</p>}
         </div>
         <div className="flex items-center gap-2 shrink-0">

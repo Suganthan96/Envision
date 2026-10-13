@@ -127,7 +127,7 @@ export default async function AdminStudentsPage() {
           <DomainCapacityEditor rows={capacityRows} role="member" />
         </div>
 
-        <PendingSelections people={pending} personLabel="Student" />
+        <PendingSelections people={pending} personLabel="Student" linkTeams />
 
         <RoleSelectionsView
           people={students}
@@ -136,6 +136,7 @@ export default async function AdminStudentsPage() {
           personLabel="Student"
           personLabelPlural="students"
           emptyLabel="No students have selected a domain yet."
+          linkTeams
         />
       </div>
     </main>

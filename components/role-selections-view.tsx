@@ -1,7 +1,9 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import Link from "next/link"
 import { Search } from "lucide-react"
+import { adminTeamHref } from "@/lib/team-links"
 import { Input } from "@/components/ui/input"
 import { SegmentedHealthBar } from "@/components/segmented-health-bar"
 import { DomainIcon } from "@/components/domain-icon"
@@ -21,7 +23,7 @@ function domainTitle(domains: Domain[], domainId: string) {
   return domains.find((d) => d.id === domainId)?.title ?? domainId
 }
 
-function PersonCard({ person, domains }: { person: RoleRow; domains: Domain[] }) {
+function PersonCard({ person, domains, linkTeams }: { person: RoleRow; domains: Domain[]; linkTeams?: boolean }) {
   const displayName = person.name?.trim() || person.loginId
 
   return (
@@ -31,7 +33,15 @@ function PersonCard({ person, domains }: { person: RoleRow; domains: Domain[] })
       <div className="absolute bottom-0 left-0 w-5 h-5 border-b-2 border-l-2 border-primary" />
       <div className="absolute bottom-0 right-0 w-5 h-5 border-b-2 border-r-2 border-primary" />
 
-      <h3 className="font-serif text-lg text-foreground mb-1 text-balance">{displayName}</h3>
+      <h3 className="font-serif text-lg text-foreground mb-1 text-balance">
+        {linkTeams ? (
+          <Link href={adminTeamHref(person.loginId)} className="hover:text-primary">
+            {displayName}
+          </Link>
+        ) : (
+          displayName
+        )}
+      </h3>
       {person.name?.trim() && (
         <p className="text-muted-foreground text-xs font-mono">{person.loginId}</p>
       )}
@@ -62,10 +72,12 @@ function PersonCardsView({
   people,
   personLabelPlural,
   domains,
+  linkTeams,
 }: {
   people: RoleRow[]
   personLabelPlural: string
   domains: Domain[]
+  linkTeams?: boolean
 }) {
   const [query, setQuery] = useState("")
 
@@ -97,7 +109,7 @@ function PersonCardsView({
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((person) => (
-            <PersonCard key={person.loginId} person={person} domains={domains} />
+            <PersonCard key={person.loginId} person={person} domains={domains} linkTeams={linkTeams} />
           ))}
         </div>
       )}
@@ -116,7 +128,8 @@ function ThemeCard({
   icon: Domain["icon"]
   count: number
   capacity: number
-  names: string[]
+  /** href is set for teams, so each name opens the team's profile. */
+  names: { label: string; href?: string }[]
 }) {
   const full = count >= capacity
 
@@ -147,11 +160,21 @@ function ThemeCard({
 
       {names.length > 0 && (
         <div className="mt-4 pt-4 border-t border-border flex flex-wrap gap-1.5">
-          {names.map((name) => (
-            <span key={name} className="text-xs text-muted-foreground border border-border px-2 py-0.5">
-              {name}
-            </span>
-          ))}
+          {names.map((name) =>
+            name.href ? (
+              <Link
+                key={name.href}
+                href={name.href}
+                className="text-xs text-muted-foreground border border-border px-2 py-0.5 hover:text-primary hover:border-primary/60"
+              >
+                {name.label}
+              </Link>
+            ) : (
+              <span key={name.label} className="text-xs text-muted-foreground border border-border px-2 py-0.5">
+                {name.label}
+              </span>
+            ),
+          )}
         </div>
       )}
     </div>
@@ -162,23 +185,25 @@ function ThemeWiseView({
   people,
   capacities,
   domains,
+  linkTeams,
 }: {
   people: RoleRow[]
   capacities: Record<string, number>
   domains: Domain[]
+  linkTeams?: boolean
 }) {
   const byDomain = useMemo(() => {
-    const map = new Map<string, string[]>()
+    const map = new Map<string, { label: string; href?: string }[]>()
     for (const person of people) {
-      const displayName = person.name?.trim() || person.loginId
+      const label = person.name?.trim() || person.loginId
       for (const domainId of person.domainIds) {
         const existing = map.get(domainId) ?? []
-        existing.push(displayName)
+        existing.push({ label, href: linkTeams ? adminTeamHref(person.loginId) : undefined })
         map.set(domainId, existing)
       }
     }
     return map
-  }, [people])
+  }, [people, linkTeams])
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -206,6 +231,7 @@ export function RoleSelectionsView({
   personLabel,
   personLabelPlural,
   emptyLabel,
+  linkTeams,
 }: {
   people: RoleRow[]
   capacities: Record<string, number>
@@ -213,6 +239,8 @@ export function RoleSelectionsView({
   personLabel: string
   personLabelPlural: string
   emptyLabel: string
+  /** These people are teams: link each name to the team's profile. */
+  linkTeams?: boolean
 }) {
   const [view, setView] = useState<"person" | "theme">("person")
 
@@ -246,9 +274,9 @@ export function RoleSelectionsView({
           <p className="text-muted-foreground">{emptyLabel}</p>
         </div>
       ) : view === "person" ? (
-        <PersonCardsView people={people} personLabelPlural={personLabelPlural} domains={domains} />
+        <PersonCardsView people={people} personLabelPlural={personLabelPlural} domains={domains} linkTeams={linkTeams} />
       ) : (
-        <ThemeWiseView people={people} capacities={capacities} domains={domains} />
+        <ThemeWiseView people={people} capacities={capacities} domains={domains} linkTeams={linkTeams} />
       )}
     </div>
   )

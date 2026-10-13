@@ -1,3 +1,5 @@
+import Link from "next/link"
+import { publicTeamHref } from "@/lib/team-links"
 import { DashboardNavCard } from "@/components/dashboard-nav-card"
 import { getSession } from "@/lib/get-session"
 import { CalendarClock, Users, LayoutGrid, UserCircle, Lightbulb, BookOpen, Trophy } from "lucide-react"
@@ -14,7 +16,14 @@ export default async function MemberPage() {
       <div className="relative z-10 max-w-3xl mx-auto mb-12">
         <p className="text-primary tracking-[0.2em] uppercase text-sm mb-4">EnVision 2026</p>
         <h1 className="font-serif text-3xl md:text-4xl text-foreground">
-          Welcome, <span className="text-gold-gradient">{teamName}</span>
+          Welcome,{" "}
+          {session?.loginId ? (
+            <Link href={publicTeamHref(session.loginId)} className="text-gold-gradient hover:opacity-80" title="Your team's project page">
+              {teamName}
+            </Link>
+          ) : (
+            <span className="text-gold-gradient">{teamName}</span>
+          )}
         </h1>
       </div>
 

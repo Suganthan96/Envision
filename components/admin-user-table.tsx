@@ -1,6 +1,8 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
+import Link from "next/link"
+import { adminTeamHref } from "@/lib/team-links"
 import { useRouter } from "next/navigation"
 import { Eye, EyeOff, Pencil, Search, Trash2, UserPlus } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -359,10 +361,22 @@ export function AdminUserTable({
                       )}
                     </TableCell>
                     <TableCell className="text-foreground font-mono truncate" title={u.login_id}>
-                      {u.login_id}
+                      {u.role === "member" ? (
+                        <Link href={adminTeamHref(u.login_id)} className="hover:text-primary">
+                          {u.login_id}
+                        </Link>
+                      ) : (
+                        u.login_id
+                      )}
                     </TableCell>
                     <TableCell className="text-muted-foreground truncate" title={u.name ?? ""}>
-                      {u.name ?? "—"}
+                      {u.role === "member" && u.name ? (
+                        <Link href={adminTeamHref(u.login_id)} className="hover:text-primary">
+                          {u.name}
+                        </Link>
+                      ) : (
+                        (u.name ?? "—")
+                      )}
                     </TableCell>
                     <TableCell className="text-muted-foreground font-mono text-xs truncate">
                       {u.phone ?? "—"}
@@ -693,8 +707,17 @@ function AccountCell({
 }) {
   return (
     <div className="min-w-0">
-      <span className="block text-foreground font-mono break-all">{u.login_id}</span>
-      <span className="block text-muted-foreground text-xs break-words">{u.name ?? "—"}</span>
+      {u.role === "member" ? (
+        <Link href={adminTeamHref(u.login_id)} className="block hover:text-primary">
+          <span className="block text-foreground font-mono break-all">{u.login_id}</span>
+          <span className="block text-muted-foreground text-xs break-words">{u.name ?? "—"}</span>
+        </Link>
+      ) : (
+        <>
+          <span className="block text-foreground font-mono break-all">{u.login_id}</span>
+          <span className="block text-muted-foreground text-xs break-words">{u.name ?? "—"}</span>
+        </>
+      )}
       <span className="block text-muted-foreground text-xs">
         {ROLE_LABEL[u.role] ?? u.role}
         {isEvaluatorRole(u.role) && <> &middot; {roomsOf(u, venues, venuesByLogin)}</>}

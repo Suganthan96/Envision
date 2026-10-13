@@ -124,7 +124,12 @@ export function LeaderboardPicker({ rounds, teams }: { rounds: PickerRound[]; te
                   {e.rank}
                 </span>
                 <span className="flex-1 min-w-0">
-                  <span className="block text-foreground truncate">{e.teamName}</span>
+                  <Link
+                    href={`/admin/team-profiles/${e.studentUserId}`}
+                    className="block text-foreground truncate hover:text-primary"
+                  >
+                    {e.teamName}
+                  </Link>
                   <span
                     className="block text-xs text-muted-foreground truncate"
                     title={

@@ -464,10 +464,13 @@ export async function RecentDecks() {
         <ul className="flex flex-col divide-y divide-border -my-2">
           {recent.map((t) => (
             <li key={t.studentUserId} className="flex items-baseline gap-3 py-2.5">
-              <span className="flex-1 min-w-0 truncate text-foreground">
+              <Link
+                href={`/admin/team-profiles/${t.studentUserId}`}
+                className="flex-1 min-w-0 truncate text-foreground hover:text-primary"
+              >
                 {t.teamName?.trim() || `Team ${t.loginId}`}
                 <span className="text-muted-foreground text-sm"> · Team {t.loginId}</span>
-              </span>
+              </Link>
               <span className="text-sm text-muted-foreground whitespace-nowrap">{ago(t.updatedAt!, now)}</span>
             </li>
           ))}

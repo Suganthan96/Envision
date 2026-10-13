@@ -283,6 +283,7 @@ export function AdminScoresView({
             <MarkSheet
               key={row.studentUserId}
               teamLabel={`#${row.loginId} · ${row.teamName?.trim() || row.loginId}`}
+              teamHref={`/admin/team-profiles/${row.studentUserId}`}
               subtitle={[venueName(venueByTeam.get(row.studentUserId) ?? null), row.mentorName]
                 .filter(Boolean)
                 .join(" · ")}

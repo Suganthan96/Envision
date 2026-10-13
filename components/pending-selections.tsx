@@ -1,3 +1,6 @@
+import Link from "next/link"
+import { adminTeamHref } from "@/lib/team-links"
+
 export interface PendingPerson {
   loginId: string
   name: string | null
@@ -8,9 +11,12 @@ export interface PendingPerson {
 export function PendingSelections({
   people,
   personLabel,
+  linkTeams,
 }: {
   people: PendingPerson[]
   personLabel: string
+  /** These people are teams: link each name to the team's profile. */
+  linkTeams?: boolean
 }) {
   if (people.length === 0) return null
 
@@ -31,7 +37,13 @@ export function PendingSelections({
               className="text-sm text-muted-foreground border border-border px-3 py-1.5"
               title={person.loginId}
             >
-              {displayName}
+              {linkTeams ? (
+                <Link href={adminTeamHref(person.loginId)} className="text-foreground hover:text-primary">
+                  {displayName}
+                </Link>
+              ) : (
+                displayName
+              )}
               {person.phone?.trim() && <span className="text-muted-foreground/70"> · {person.phone}</span>}
               {person.email?.trim() && <span className="text-muted-foreground/70"> · {person.email}</span>}
             </span>
