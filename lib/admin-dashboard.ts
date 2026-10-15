@@ -46,6 +46,8 @@ export interface ProgrammeStop {
   title: string
   /** The first date in the entry, when it has one. */
   date: Date | null
+  /** The date was worked out from the previous dated week, not entered. */
+  estimated?: boolean
   state: "done" | "today" | "upcoming" | "undated"
 }
 
@@ -70,15 +72,34 @@ const sameDay = (a: Date, b: Date) =>
 
 /**
  * The timeline as stops on a line, each marked done, today or upcoming from
- * its date. Phase 2 runs weekly without dates, so its stops stay "undated"
- * rather than pretending to know where the programme is.
+ * its date. Weekly sessions only need their first date: a "Week n" with no
+ * date of its own follows the last dated week by 7 days a week (marked
+ * `estimated`). Stops with nothing to go on stay "undated" rather than
+ * pretending to know where the programme is.
  */
 export function buildProgramme(phases: TimelinePhase[], now = istNow()): ProgrammeTrack[] {
-  return phases.map((p) => ({
+  return phases.map((p) => {
+    let lastDate: Date | null = null
+    let lastIndex = -1
+    const dates = p.entries.map((e, i) => {
+      const own = firstDate(e.date)
+      if (own) {
+        lastDate = own
+        lastIndex = i
+        return { date: own, estimated: false }
+      }
+      if (lastDate && /^\s*week\b/i.test(e.label)) {
+        const d = new Date(lastDate as Date)
+        d.setDate(d.getDate() + 7 * (i - lastIndex))
+        return { date: d, estimated: true }
+      }
+      return { date: null, estimated: false }
+    })
+    return {
     id: p.id,
     title: p.title,
-    stops: p.entries.map((e) => {
-      const date = firstDate(e.date)
+    stops: p.entries.map((e, i) => {
+      const { date, estimated } = dates[i]
       const state: ProgrammeStop["state"] = !date
         ? "undated"
         : sameDay(date, now)
@@ -86,9 +107,10 @@ export function buildProgramme(phases: TimelinePhase[], now = istNow()): Program
           : date < now
             ? "done"
             : "upcoming"
-      return { id: e.id, label: e.label, title: e.title, date, state }
+      return { id: e.id, label: e.label, title: e.title, date, state, estimated }
     }),
-  }))
+    }
+  })
 }
 
 export const dashProgramme = cache(async () => buildProgramme(await getTimelinePhases()))

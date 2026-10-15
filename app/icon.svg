@@ -1,0 +1,24 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!--
+    EnVision mark: a geometric E in the app's gold gradient (.text-gold-gradient,
+    135deg #c79e41 → #e7cb80 → #c79e41) on the app background (#020202),
+    inside an art-deco frame broken by the site's line–diamond–line motif.
+  -->
+  <defs>
+    <linearGradient id="gold" gradientUnits="userSpaceOnUse" x1="14" y1="14" x2="50" y2="50">
+      <stop offset="0" stop-color="#c79e41"/>
+      <stop offset="0.5" stop-color="#e7cb80"/>
+      <stop offset="1" stop-color="#c79e41"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="14" fill="#020202"/>
+  <!-- frame -->
+  <rect x="4" y="4" width="56" height="56" rx="10" fill="none" stroke="#c79e41" stroke-opacity="0.45" stroke-width="1.2"/>
+  <!-- the frame's diamonds, each in a gap cut from the line -->
+  <rect x="26" y="1" width="12" height="6" fill="#020202"/>
+  <rect x="26" y="57" width="12" height="6" fill="#020202"/>
+  <rect x="29.5" y="1.5" width="5" height="5" transform="rotate(45 32 4)" fill="#e7cb80"/>
+  <rect x="29.5" y="57.5" width="5" height="5" transform="rotate(45 32 60)" fill="#e7cb80"/>
+  <!-- E -->
+  <path fill="url(#gold)" d="M17 15H47V22H25V28.5H42V35.5H25V42H47V49H17Z"/>
+</svg>

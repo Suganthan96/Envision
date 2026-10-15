@@ -382,6 +382,7 @@ export const MANUAL: ManualTopic[] = [
     summary: "Timeline → edit phases and their sessions: label (Day 1 / Week 1), date, title, venue and resource person. Save when done; teams and mentors see it at once.",
     notes: [
       "Write dates as 21.08.2026 (AN). The home page uses them to mark sessions done or today.",
+      "Weekly sessions only need Week 1 dated (e.g. 09.09.2026 · Wed, Periods 4–5): later weeks with no date of their own follow it every 7 days. Give a week its own date if a session moves.",
       "Each session can have a feedback form link.",
     ],
     links: [{ label: "Timeline", href: "/admin/timeline" }],

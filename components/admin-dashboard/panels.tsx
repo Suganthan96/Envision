@@ -170,7 +170,7 @@ function ProgrammeLine({ title, stops }: { title: string; stops: ProgrammeStop[]
           />
         )}
         {stops.map((s) => (
-          <li key={s.id} className="relative z-10 flex" title={`${s.label}: ${s.title}${s.date ? ` (${fmtDay(s.date)})` : ""}`}>
+          <li key={s.id} className="relative z-10 flex" title={`${s.label}: ${s.title}${s.date ? ` (${s.estimated ? "about " : ""}${fmtDay(s.date)})` : ""}`}>
             <span className="sr-only">
               {s.label}, {s.title}, {s.state === "done" ? "done" : s.state === "today" ? "today" : "to come"}
             </span>
