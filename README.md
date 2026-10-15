@@ -1,4 +1,4 @@
-# EnVision
+# EnVision - IIC
 
 The web app that runs **EnVision**, LICET's interdepartmental prototype contest organised by the Institution's Innovation Council (IIC). First-year student teams pick a theme, get a senior mentor, build a project and present it in judging rounds marked by faculty and an external jury; results go on a leaderboard.
 
@@ -6,7 +6,7 @@ Live site: **https://envisionlicet.vercel.app**
 
 - [What the app does](#what-the-app-does)
 - [Who uses it](#who-uses-it)
-- [Running a year: the admin's checklist](#running-a-year-the-admins-checklist)
+- [Running a year: the admin&#39;s checklist](#running-a-year-the-admins-checklist)
 - [Starting the next year](#starting-the-next-year)
 - [Tech stack](#tech-stack)
 - [Getting started locally](#getting-started-locally)
@@ -26,27 +26,27 @@ Live site: **https://envisionlicet.vercel.app**
 
 ## What the app does
 
-| Area | What happens |
-|---|---|
-| Teams | Each team has a login (its team number). It edits its name, logo and roster, picks a theme, writes its project (title, problem, solution) and submits a deck link. |
-| Mentors | Senior students sign in with their 12-digit registration number, write a profile, pick the themes they'd mentor and see their (at most two) teams. |
-| Themes | Ten SDG-mapped problem areas with capacities for teams and mentors. Admins open and close viewing and picking. |
-| Mentor allocation | Admins pair mentors with teams on a drag-and-drop board and seat them in lab venues. |
-| Timeline and guidelines | The session plan (phases, days/weeks, venues, resource persons, feedback forms) and the pitch-deck guideline slides with a downloadable PPTX. |
-| Judging | Rounds with their own criteria, one round live at a time; judging and waiting rooms; evaluators assigned to rooms; per-evaluator sheets averaged into a team score; admin overrides; printable sheets and Excel. |
-| Leaderboard | Admins publish rounds; with several published, teams are ranked by the average. Ties are broken by a configurable order of criteria. |
-| Programme years | Every year (2026-27, 2027-28, …) keeps all its data side by side. Admins can open and edit any year; a wizard starts the next one. |
-| Public site | Landing page, project Showcase and Mentors, with a year selector for earlier years. |
-| Admin tools | A home dashboard ("cockpit"), a built-in user manual with a free-text help search, and an MCP endpoint so AI assistants can run admin jobs. |
+| Area                    | What happens                                                                                                                                                                                                     |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Teams                   | Each team has a login (its team number). It edits its name, logo and roster, picks a theme, writes its project (title, problem, solution) and submits a deck link.                                               |
+| Mentors                 | Senior students sign in with their 12-digit registration number, write a profile, pick the themes they'd mentor and see their (at most two) teams.                                                               |
+| Themes                  | Ten SDG-mapped problem areas with capacities for teams and mentors. Admins open and close viewing and picking.                                                                                                   |
+| Mentor allocation       | Admins pair mentors with teams on a drag-and-drop board and seat them in lab venues.                                                                                                                             |
+| Timeline and guidelines | The session plan (phases, days/weeks, venues, resource persons, feedback forms) and the pitch-deck guideline slides with a downloadable PPTX.                                                                    |
+| Judging                 | Rounds with their own criteria, one round live at a time; judging and waiting rooms; evaluators assigned to rooms; per-evaluator sheets averaged into a team score; admin overrides; printable sheets and Excel. |
+| Leaderboard             | Admins publish rounds; with several published, teams are ranked by the average. Ties are broken by a configurable order of criteria.                                                                             |
+| Programme years         | Every year (2026-27, 2027-28, …) keeps all its data side by side. Admins can open and edit any year; a wizard starts the next one.                                                                              |
+| Public site             | Landing page, project Showcase and Mentors, with a year selector for earlier years.                                                                                                                              |
+| Admin tools             | A home dashboard ("cockpit"), a built-in user manual with a free-text help search, and an MCP endpoint so AI assistants can run admin jobs.                                                                      |
 
 ## Who uses it
 
-| Role | Signs in with | Lands on | Can |
-|---|---|---|---|
-| Team (`member`) | team number, e.g. `17` | `/member` | team profile, domain, project + deck, mentor, timeline, guidelines, leaderboard |
-| Mentor | registration number `3111xxxxxxxx` | `/mentor` | profile, domains, my teams, timeline, guidelines, leaderboard |
-| Faculty / Jury | any login ID, e.g. `vjsharmila` | `/evaluate` | mark the teams in their rooms for the live round |
-| Admin | e.g. `envisionlicet` | `/admin` | everything |
+| Role              | Signs in with                        | Lands on      | Can                                                                             |
+| ----------------- | ------------------------------------ | ------------- | ------------------------------------------------------------------------------- |
+| Team (`member`) | team number, e.g. `17`             | `/member`   | team profile, domain, project + deck, mentor, timeline, guidelines, leaderboard |
+| Mentor            | registration number `3111xxxxxxxx` | `/mentor`   | profile, domains, my teams, timeline, guidelines, leaderboard                   |
+| Faculty / Jury    | any login ID, e.g. `vjsharmila`    | `/evaluate` | mark the teams in their rooms for the live round                                |
+| Admin             | e.g. `envisionlicet`               | `/admin`    | everything                                                                      |
 
 New team and mentor accounts start with the password **`licet@123`** and must change it on first sign-in; teams must also add the team lead's email. Faculty and jury aren't forced to change it.
 
@@ -94,12 +94,12 @@ npm run dev                  # http://localhost:3000
 
 `.env.local`:
 
-| Variable | What it is |
-|---|---|
-| `NEXT_PUBLIC_SUPABASE_URL` | The Supabase project URL |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | The Supabase anon (public) key |
-| `SESSION_SECRET` | Long random string that signs session cookies and MCP tokens. Changing it signs everyone out. |
-| `NEXT_PUBLIC_SUBMISSION_DRIVE_FOLDER_URL` | Optional: the shared Google Drive folder teams upload decks to |
+| Variable                                    | What it is                                                                                    |
+| ------------------------------------------- | --------------------------------------------------------------------------------------------- |
+| `NEXT_PUBLIC_SUPABASE_URL`                | The Supabase project URL                                                                      |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY`           | The Supabase anon (public) key                                                                |
+| `SESSION_SECRET`                          | Long random string that signs session cookies and MCP tokens. Changing it signs everyone out. |
+| `NEXT_PUBLIC_SUBMISSION_DRIVE_FOLDER_URL` | Optional: the shared Google Drive folder teams upload decks to                                |
 
 Scripts: `npm run dev` (webpack dev server), `npm run build`, `npm run start`, `npm run lint`. Type-check with `npx tsc --noEmit`.
 
@@ -219,11 +219,11 @@ See `MCP.md`.
 
 ## Troubleshooting
 
-| Problem | Check |
-|---|---|
-| Someone can't sign in | Login ID format; the account exists in the **current** year; not hidden; reset the password to `licet@123`. |
-| An admin change doesn't show | Reload (pages auto-refresh every ~30 s); check the Year dropdown — you may be editing another year. |
-| A yellow "You're working in …" banner | You switched the admin pages to another year; click *Back to …*. |
-| Everyone signed out | `SESSION_SECRET` changed. |
-| Year list looks out of date after editing `editions` by hand | It refreshes within 5 minutes, or on the next year action in the admin. |
-| Locked out of every admin account | Reset an admin's `password_hash` in `app_users_all` with `extensions.crypt('newpass', extensions.gen_salt('bf'))`. |
+| Problem                                                        | Check                                                                                                                    |
+| -------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
+| Someone can't sign in                                          | Login ID format; the account exists in the **current** year; not hidden; reset the password to `licet@123`.      |
+| An admin change doesn't show                                   | Reload (pages auto-refresh every ~30 s); check the Year dropdown — you may be editing another year.                     |
+| A yellow "You're working in …" banner                         | You switched the admin pages to another year; click *Back to …*.                                                      |
+| Everyone signed out                                            | `SESSION_SECRET` changed.                                                                                              |
+| Year list looks out of date after editing `editions` by hand | It refreshes within 5 minutes, or on the next year action in the admin.                                                  |
+| Locked out of every admin account                              | Reset an admin's `password_hash` in `app_users_all` with `extensions.crypt('newpass', extensions.gen_salt('bf'))`. |
